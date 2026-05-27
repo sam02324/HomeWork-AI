@@ -1,0 +1,22 @@
+.page { padding: var(--space-6) var(--space-8); animation: fadeInUp var(--duration-slow) var(--ease-out) both; }
+@keyframes fadeInUp { from { opacity:0;transform:translateY(16px); } to { opacity:1;transform:translateY(0); } }
+.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-8); }
+.title { font-size:1.5rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em; }
+.subtitle { font-size:0.875rem; color:var(--text-secondary); margin-top:var(--space-1); }
+.createBtn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-3) var(--space-5); background:var(--accent); color:white; font-size:0.85rem; font-weight:600; border-radius:var(--radius-md); cursor:pointer; transition:all var(--duration-fast) var(--ease-out); }
+.createBtn:hover { background:var(--accent-hover); box-shadow:var(--accent-glow); transform:translateY(-1px); }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-5); }
+.card { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-xl); overflow:hidden; transition:all var(--duration-normal) var(--ease-out); cursor:pointer; }
+.card:hover { background:var(--glass-bg-hover); border-color:var(--glass-border-hover); transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+.cardBorder { height:3px; }
+.cardBody { padding:var(--space-6); }
+.cardHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); }
+.subjectIcon { width:40px; height:40px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; }
+.cardArrow { color:var(--text-tertiary); opacity:0; transition:all var(--duration-fast); }
+.card:hover .cardArrow { opacity:1; transform:translateX(2px); }
+.cardTitle { font-size:1.05rem; font-weight:700; color:var(--text-primary); }
+.cardClass { font-size:0.82rem; color:var(--text-secondary); margin-top:2px; margin-bottom:var(--space-4); }
+.cardStats { display:flex; gap:var(--space-4); }
+.cardStat { display:flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--text-tertiary); }
+@media (max-width:1024px) { .grid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:768px) { .page { padding:var(--space-4); } .grid { grid-template-columns:1fr; } .header { flex-direction:column; gap:var(--space-4); } }

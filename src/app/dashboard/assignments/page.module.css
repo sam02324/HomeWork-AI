@@ -1,0 +1,36 @@
+.page { padding: var(--space-6) var(--space-8); animation: fadeInUp var(--duration-slow) var(--ease-out) both; }
+@keyframes fadeInUp { from { opacity:0;transform:translateY(16px); } to { opacity:1;transform:translateY(0); } }
+.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-6); }
+.title { font-size:1.5rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em; }
+.subtitle { font-size:0.875rem; color:var(--text-secondary); margin-top:var(--space-1); }
+.createBtn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-3) var(--space-5); background:var(--accent); color:white; font-size:0.85rem; font-weight:600; border-radius:var(--radius-md); transition:all var(--duration-fast) var(--ease-out); }
+.createBtn:hover { background:var(--accent-hover); box-shadow:var(--accent-glow); transform:translateY(-1px); }
+.filters { display:flex; gap:var(--space-3); margin-bottom:var(--space-5); flex-wrap:wrap; }
+.searchWrap { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-md); color:var(--text-tertiary); flex:1; min-width:200px; }
+.searchInput { background:transparent; border:none; outline:none; color:var(--text-primary); font-size:0.85rem; width:100%; }
+.searchInput::placeholder { color:var(--text-tertiary); }
+.filterSelect { padding:var(--space-2) var(--space-4); background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-md); color:var(--text-secondary); font-size:0.82rem; cursor:pointer; outline:none; appearance:none; padding-right:28px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 12L2 6h12z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; }
+.tableWrap { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-lg); overflow:hidden; }
+.table { width:100%; border-collapse:collapse; }
+.table th { text-align:left; padding:var(--space-3) var(--space-4); font-size:0.75rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--glass-border); background:rgba(255,255,255,0.02); }
+.table td { padding:var(--space-4); font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--glass-border); }
+.row { transition:background var(--duration-fast); }
+.row:hover { background:var(--glass-bg-hover); }
+.row:last-child td { border-bottom:none; }
+.titleCell { font-weight:600; color:var(--text-primary) !important; }
+.classCell { font-size:0.78rem !important; }
+.mono { font-family:var(--font-mono); font-size:0.82rem; }
+.dateCell { font-size:0.78rem !important; color:var(--text-tertiary) !important; }
+.badge { display:inline-flex; align-items:center; gap:4px; font-size:0.7rem; font-weight:600; padding:3px 10px; border-radius:var(--radius-full); }
+.statusDraft { background:rgba(255,255,255,0.05); color:var(--text-tertiary); }
+.statusPublished { background:var(--info-bg); color:var(--info); }
+.statusGrading { background:var(--warning-bg); color:var(--warning); }
+.statusGraded { background:var(--success-bg); color:var(--success); }
+.pulseDot { width:6px; height:6px; border-radius:50%; background:currentColor; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.actions { display:flex; gap:var(--space-2); }
+.gradeBtn { padding:4px 12px; background:var(--accent); color:white; border-radius:var(--radius-sm); font-size:0.75rem; font-weight:600; cursor:pointer; transition:all var(--duration-fast); }
+.gradeBtn:hover { background:var(--accent-hover); }
+.viewBtn { padding:4px 12px; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-secondary); border-radius:var(--radius-sm); font-size:0.75rem; font-weight:500; cursor:pointer; transition:all var(--duration-fast); }
+.viewBtn:hover { background:var(--glass-bg-hover); color:var(--text-primary); }
+@media (max-width:768px) { .page { padding:var(--space-4); } .header { flex-direction:column; gap:var(--space-4); } .tableWrap { overflow-x:auto; } }
