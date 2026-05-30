@@ -15,21 +15,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import styles from './page.module.css';
-
-/* ═══ Mock Data ═══ */
-const STATS = [
-  { label: 'Total Students', value: '342', icon: Users, trend: '+12%', trendUp: true, color: 'var(--accent)' },
-  { label: 'Pending Gradings', value: '47', icon: Clock, trend: '', trendUp: false, color: 'var(--warning)' },
-  { label: 'Avg. Class Score', value: '78.4%', icon: TrendingUp, trend: '+3.2%', trendUp: true, color: 'var(--score-good)' },
-  { label: 'Graded This Week', value: '156', icon: CheckCircle, trend: '', trendUp: true, color: 'var(--success)' },
-];
-
-const ASSIGNMENTS = [
-  { id: '1', title: 'Thermodynamics Chapter Test', class: '12th Physics — Class A', graded: 28, total: 32, status: 'grading', dueDate: 'May 28', avgScore: null },
-  { id: '2', title: 'Organic Chemistry Worksheet', class: '12th Chemistry — Class B', graded: 45, total: 45, status: 'completed', dueDate: null, avgScore: 74 },
-  { id: '3', title: 'Integration Practice Set', class: '12th Maths — Class A', graded: 0, total: 32, status: 'pending', dueDate: 'May 30', avgScore: null },
-  { id: '4', title: 'Kinematics Weekly Quiz', class: '11th Physics — Class C', graded: 38, total: 38, status: 'completed', dueDate: null, avgScore: 82 },
-];
+import { useDashboardStats, useAssignments } from '@/lib/api-client';
+import { useUser } from '@clerk/nextjs';
 
 const AT_RISK = [
   { name: 'Ananya Gupta', class: '12th Physics', avg: 42, trend: 'declining', risk: 'high', initials: 'AG' },
@@ -37,20 +24,33 @@ const AT_RISK = [
   { name: 'Meera Singh', class: '12th Chemistry', avg: 55, trend: 'flat', risk: 'medium', initials: 'MS' },
 ];
 
-const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
-  grading: { label: 'Grading', class: styles.statusGrading || '' },
-  completed: { label: 'Completed', class: styles.statusCompleted || '' },
-  pending: { label: 'Pending', class: styles.statusPending || '' },
-};
-
 export default function DashboardPage() {
+  const { user } = useUser();
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: assignments, isLoading: assignmentsLoading } = useAssignments();
+
+  const firstName = user?.firstName || 'Teacher';
+
+  const STATS = [
+    { label: 'Total Students', value: statsLoading ? '...' : (stats?.totalStudents ?? 0), icon: Users, trend: '', trendUp: true, color: 'var(--accent)' },
+    { label: 'Pending Gradings', value: statsLoading ? '...' : (stats?.pendingGradings ?? 0), icon: Clock, trend: '', trendUp: false, color: 'var(--warning)' },
+    { label: 'Avg. Class Score', value: statsLoading ? '...' : `${stats?.avgScore ?? 0}%`, icon: TrendingUp, trend: '', trendUp: true, color: 'var(--score-good)' },
+    { label: 'Graded This Week', value: statsLoading ? '...' : (stats?.gradedThisWeek ?? 0), icon: CheckCircle, trend: '', trendUp: true, color: 'var(--success)' },
+  ];
+
+  // Get active grading assignments
+  const gradingAssignments = assignments?.filter((a) => a.status === 'grading') || [];
+  const recentAssignments = assignments?.slice(0, 4) || [];
+
   return (
     <div className={styles.page}>
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <h1 className={styles.greeting}>Good evening, Rajesh 👋</h1>
-          <p className={styles.subGreeting}>You have <strong>47 submissions</strong> waiting to be graded</p>
+          <h1 className={styles.greeting}>Good evening, {firstName} 👋</h1>
+          <p className={styles.subGreeting}>
+            You have <strong>{stats?.pendingGradings || 0} submissions</strong> waiting to be graded
+          </p>
         </div>
         <div className={styles.headerActions}>
           <Link href="/dashboard/assignments/new" className={styles.primaryBtn}>
@@ -96,54 +96,53 @@ export default function DashboardPage() {
           </div>
 
           <div className={styles.assignmentList}>
-            {ASSIGNMENTS.map((a) => (
-              <div key={a.id} className={styles.assignmentCard}>
-                <div className={styles.assignmentInfo}>
-                  <div className={styles.assignmentDot} style={{
-                    background: a.status === 'completed' ? 'var(--success)' :
-                                a.status === 'grading' ? 'var(--warning)' : 'var(--text-tertiary)'
-                  }} />
-                  <div>
-                    <h3 className={styles.assignmentTitle}>{a.title}</h3>
-                    <p className={styles.assignmentClass}>{a.class}</p>
-                  </div>
-                </div>
-
-                <div className={styles.assignmentMeta}>
-                  <div className={styles.progressWrap}>
-                    <div className={styles.progressBar}>
-                      <div
-                        className={styles.progressFill}
-                        style={{
-                          width: `${(a.graded / a.total) * 100}%`,
-                          background: a.status === 'completed'
-                            ? 'var(--success)'
-                            : 'var(--accent)',
-                        }}
-                      />
+            {assignmentsLoading ? (
+              <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>Loading assignments...</div>
+            ) : recentAssignments.length === 0 ? (
+              <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>No assignments yet. Create one!</div>
+            ) : (
+              recentAssignments.map((a) => (
+                <div key={a.id} className={styles.assignmentCard}>
+                  <div className={styles.assignmentInfo}>
+                    <div className={styles.assignmentDot} style={{
+                      background: a.status === 'graded' ? 'var(--success)' :
+                                  a.status === 'grading' ? 'var(--warning)' : 'var(--text-tertiary)'
+                    }} />
+                    <div>
+                      <h3 className={styles.assignmentTitle}>{a.title}</h3>
+                      <p className={styles.assignmentClass}>Due: {a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '—'}</p>
                     </div>
-                    <span className={styles.progressText}>{a.graded}/{a.total}</span>
                   </div>
 
-                  <span className={`${styles.statusBadge} ${
-                    a.status === 'grading' ? styles.statusGrading :
-                    a.status === 'completed' ? styles.statusCompleted :
-                    styles.statusPending
-                  }`}>
-                    {a.status === 'grading' && <span className={styles.pulseDot} />}
-                    {a.status === 'grading' ? 'Grading' :
-                     a.status === 'completed' ? 'Completed' : 'Pending'}
-                  </span>
+                  <div className={styles.assignmentMeta}>
+                    <div className={styles.progressWrap}>
+                      <div className={styles.progressBar}>
+                        <div
+                          className={styles.progressFill}
+                          style={{
+                            width: a.submissionCount > 0 ? `${(a.gradedCount / a.submissionCount) * 100}%` : '0%',
+                            background: a.status === 'graded'
+                              ? 'var(--success)'
+                              : 'var(--accent)',
+                          }}
+                        />
+                      </div>
+                      <span className={styles.progressText}>{a.gradedCount}/{a.submissionCount}</span>
+                    </div>
 
-                  {a.avgScore && (
-                    <span className={styles.avgScore}>Avg: {a.avgScore}%</span>
-                  )}
-                  {a.dueDate && (
-                    <span className={styles.dueDate}>Due: {a.dueDate}</span>
-                  )}
+                    <span className={`${styles.statusBadge} ${
+                      a.status === 'grading' ? styles.statusGrading :
+                      a.status === 'graded' ? styles.statusCompleted :
+                      styles.statusPending
+                    }`}>
+                      {a.status === 'grading' && <span className={styles.pulseDot} />}
+                      {a.status === 'grading' ? 'Grading' :
+                       a.status === 'graded' ? 'Graded' : 'Pending'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -158,22 +157,28 @@ export default function DashboardPage() {
               </h2>
             </div>
 
-            <div className={styles.gradingCard}>
-              <div className={styles.gradingHeader}>
-                <span className={styles.gradingTitle}>Thermodynamics Chapter Test</span>
-                <span className={styles.gradingEta}>ETA: 2 min</span>
-              </div>
-              <div className={styles.gradingProgress}>
-                <div className={styles.gradingBar}>
-                  <div className={styles.gradingFill} style={{ width: '87.5%' }} />
+            {gradingAssignments.length === 0 ? (
+              <div style={{ padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>No assignments currently being graded.</div>
+            ) : (
+              gradingAssignments.map(ga => (
+                <div key={ga.id} className={styles.gradingCard} style={{ marginBottom: '12px' }}>
+                  <div className={styles.gradingHeader}>
+                    <span className={styles.gradingTitle}>{ga.title}</span>
+                    <span className={styles.gradingEta}>ETA: ~2 min</span>
+                  </div>
+                  <div className={styles.gradingProgress}>
+                    <div className={styles.gradingBar}>
+                      <div className={styles.gradingFill} style={{ width: ga.submissionCount > 0 ? `${(ga.gradedCount / ga.submissionCount) * 100}%` : '0%' }} />
+                    </div>
+                    <span className={styles.gradingPercent}>{ga.gradedCount}/{ga.submissionCount}</span>
+                  </div>
+                  <div className={styles.gradingStatus}>
+                    <span className={styles.aiPulse} />
+                    <span>AI is grading...</span>
+                  </div>
                 </div>
-                <span className={styles.gradingPercent}>28/32 (87.5%)</span>
-              </div>
-              <div className={styles.gradingStatus}>
-                <span className={styles.aiPulse} />
-                <span>AI is grading...</span>
-              </div>
-            </div>
+              ))
+            )}
           </div>
 
           {/* At-Risk Students */}
@@ -181,7 +186,7 @@ export default function DashboardPage() {
             <div className={styles.sectionHeader}>
               <h2>
                 <AlertTriangle size={16} className={styles.warnIcon} />
-                At-Risk Students
+                At-Risk Students (Mock)
               </h2>
             </div>
 

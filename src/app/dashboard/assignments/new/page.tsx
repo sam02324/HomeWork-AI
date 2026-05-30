@@ -17,7 +17,9 @@ import {
   Sparkles,
   ClipboardList,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import { useClassrooms, useCreateAssignment, useUploadFile } from '@/lib/api-client';
 
 /* ───── types ───── */
 interface RubricCriterion {
@@ -29,13 +31,7 @@ interface RubricCriterion {
 }
 
 /* ───── mock data ───── */
-const CLASSES = [
-  { id: '1', name: '12th Physics — Class A', students: 32 },
-  { id: '2', name: '12th Physics — Class B', students: 28 },
-  { id: '3', name: '12th Chemistry — Class B', students: 45 },
-  { id: '4', name: '11th Physics — Class C', students: 38 },
-  { id: '5', name: '12th Maths — Class A', students: 32 },
-];
+// CLASSES are now fetched from the database
 
 const SUBJECTS = ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English', 'Computer Science'];
 
@@ -101,6 +97,10 @@ function defaultCriterion(): RubricCriterion {
    PAGE COMPONENT
    ════════════════════════════════════════════════════════ */
 export default function NewAssignmentPage() {
+  const router = useRouter();
+  const { data: classrooms } = useClassrooms();
+  const createAssignment = useCreateAssignment();
+  const uploadFile = useUploadFile();
   const [step, setStep] = useState(0);
 
   /* step 1 state */
@@ -145,8 +145,16 @@ export default function NewAssignmentPage() {
     setCriteria(newCriteria);
   }
 
-  function addReferenceFile() {
-    setReferenceFiles([...referenceFiles, `reference_${referenceFiles.length + 1}.pdf`]);
+  async function handleAddReferenceFile(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        const file = e.target.files[0];
+        const res = await uploadFile.mutateAsync(file);
+        setReferenceFiles([...referenceFiles, res.filename]);
+      } catch (error) {
+        console.error('Failed to upload', error);
+      }
+    }
   }
 
   const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
@@ -166,7 +174,29 @@ export default function NewAssignmentPage() {
     if (step > 0) setStep(step - 1);
   }
 
-  const selectedClass = CLASSES.find((c) => c.id === classId);
+  const selectedClass = classrooms?.find((c) => c.id === classId);
+
+  async function handlePublish() {
+    try {
+      await createAssignment.mutateAsync({
+        classroomId: classId,
+        title,
+        subject,
+        topic: topic || undefined,
+        description: description || undefined,
+        maxScore: Number(maxScore),
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        submissionType,
+        rubric: criteria,
+        gradingInstructions: gradingInstructions || undefined,
+        referenceAnswers: referenceAnswers || undefined,
+        strictness,
+      });
+      router.push('/dashboard/assignments');
+    } catch (error) {
+      console.error('Failed to create assignment', error);
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -226,9 +256,9 @@ export default function NewAssignmentPage() {
                 <label className={styles.label}>Class *</label>
                 <select className={styles.select} value={classId} onChange={(e) => setClassId(e.target.value)}>
                   <option value="">Select a class</option>
-                  {CLASSES.map((c) => (
+                  {classrooms?.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.students} students)
+                      {c.name} ({c.studentCount} students)
                     </option>
                   ))}
                 </select>
@@ -488,9 +518,17 @@ export default function NewAssignmentPage() {
                   ))}
                 </div>
               )}
-              <button className={styles.addFileBtn} onClick={addReferenceFile}>
+              <label className={styles.addFileBtn} style={{ cursor: 'pointer' }}>
                 <Plus size={14} /> Add sample file
-              </button>
+                <input 
+                  type="file" 
+                  style={{ display: 'none' }} 
+                  onChange={handleAddReferenceFile}
+                  accept=".pdf,image/*,text/plain" 
+                  disabled={uploadFile.isPending}
+                />
+              </label>
+              {uploadFile.isPending && <span style={{ marginLeft: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Uploading...</span>}
             </div>
           </div>
         )}
@@ -551,10 +589,10 @@ export default function NewAssignmentPage() {
                   <h4>AI Grading Estimate</h4>
                   <p>
                     {selectedClass
-                      ? `~${selectedClass.students} submissions × ₹0.50 avg = ₹${(selectedClass.students * 0.5).toFixed(0)} estimated cost`
+                      ? `~${selectedClass.studentCount} submissions × ₹0.50 avg = ₹${(selectedClass.studentCount * 0.5).toFixed(0)} estimated cost`
                       : 'Select a class to see estimate'}
                   </p>
-                  <p className={styles.estimateNote}>Estimated grading time: ~{selectedClass ? Math.ceil(selectedClass.students * 0.15) : '—'} minutes</p>
+                  <p className={styles.estimateNote}>Estimated grading time: ~{selectedClass ? Math.ceil(selectedClass.studentCount * 0.15) : '—'} minutes</p>
                 </div>
               </div>
             </div>
@@ -580,9 +618,13 @@ export default function NewAssignmentPage() {
               <ArrowRight size={16} />
             </button>
           ) : (
-            <button className={styles.publishBtn}>
+            <button 
+              className={styles.publishBtn} 
+              onClick={handlePublish}
+              disabled={createAssignment.isPending}
+            >
               <Sparkles size={16} />
-              <span>Publish Assignment</span>
+              <span>{createAssignment.isPending ? 'Publishing...' : 'Publish Assignment'}</span>
             </button>
           )}
         </div>

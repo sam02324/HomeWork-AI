@@ -12,12 +12,11 @@ import { getGradeLetter } from '@/lib/utils';
 
 let client: Anthropic | null = null;
 
-function getClient(): Anthropic {
+function getClient(): Anthropic | null {
   if (!client) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error('ANTHROPIC_API_KEY is not set');
+    if (process.env.ANTHROPIC_API_KEY) {
+      client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     }
-    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
   return client;
 }
@@ -97,36 +96,61 @@ export async function gradeSubmission(
       throw new Error('Submission has no content to grade');
     }
 
-    // 4. Call Claude API
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userContent,
-        },
-      ],
-    });
+    let result: GradingResult;
+    let tokensUsed = 0;
 
-    // 5. Parse response
-    const responseText = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('');
+    if (anthropic) {
+      // 4. Call Claude API
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userContent,
+          },
+        ],
+      });
 
-    // Extract JSON from response (handle markdown code blocks)
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Claude did not return valid JSON');
+      // 5. Parse response
+      const responseText = response.content
+        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+        .map((block) => block.text)
+        .join('');
+
+      // Extract JSON from response (handle markdown code blocks)
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Claude did not return valid JSON');
+      }
+
+      result = JSON.parse(jsonMatch[0]);
+      tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+    } else {
+      // 4b. MOCK GRADING (if no key provided)
+      console.log('Mock grading: simulating 2 second delay...');
+      await new Promise(r => setTimeout(r, 2000));
+      
+      const mockScore = Math.floor(Math.random() * (assignment.maxScore - (assignment.maxScore / 2))) + (assignment.maxScore / 2);
+      
+      result = {
+        totalScore: mockScore,
+        gradeLetter: getGradeLetter((mockScore / assignment.maxScore) * 100),
+        feedback: "This is a mocked feedback response. The student demonstrated good understanding of the core concepts but missed some minor details in the calculations.",
+        strengths: ["Clear handwriting", "Correct formula usage", "Logical progression"],
+        improvements: ["Check units on final answer", "Provide more context in step 2"],
+        criteriaScores: rubric.map(c => ({
+          criterionName: c.name,
+          score: Math.floor(Math.random() * c.weight),
+          maxScore: c.weight,
+          feedback: "Mock feedback for this criterion."
+        }))
+      };
+      tokensUsed = 1500;
     }
 
-    const result: GradingResult = JSON.parse(jsonMatch[0]);
-
-    // 6. Calculate tokens used
-    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
-
+    // 6. Calculate tokens used (handled above)
     // 7. Ensure grade letter is correct
     const percentage = (result.totalScore / assignment.maxScore) * 100;
     const gradeLetter = result.gradeLetter || getGradeLetter(percentage);

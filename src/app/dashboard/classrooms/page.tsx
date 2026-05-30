@@ -1,19 +1,29 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Users, BookOpen, TrendingUp, ChevronRight } from 'lucide-react';
+import { Plus, Users, BookOpen, TrendingUp, ChevronRight, X } from 'lucide-react';
 import styles from './page.module.css';
-
-const CLASSROOMS = [
-  { id: '1', name: 'Class A', subject: 'Physics', grade: '12th', students: 32, avg: 74, assignments: 8, color: '#4A90D9' },
-  { id: '2', name: 'Class B', subject: 'Physics', grade: '12th', students: 28, avg: 68, assignments: 8, color: '#7C5CFC' },
-  { id: '3', name: 'Class B', subject: 'Chemistry', grade: '12th', students: 45, avg: 71, assignments: 6, color: '#22C55E' },
-  { id: '4', name: 'Class C', subject: 'Physics', grade: '11th', students: 38, avg: 76, assignments: 5, color: '#F59E0B' },
-  { id: '5', name: 'Class D', subject: 'Physics', grade: '11th', students: 35, avg: 69, assignments: 5, color: '#EF4444' },
-  { id: '6', name: 'Class A', subject: 'Maths', grade: '12th', students: 32, avg: 78, assignments: 7, color: '#06B6D4' },
-];
+import { useClassrooms, useCreateClassroom } from '@/lib/api-client';
 
 export default function ClassroomsPage() {
+  const { data: classrooms, isLoading } = useClassrooms();
+  const createClassroom = useCreateClassroom();
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', subject: '', grade: '', color: '#e11d48' }); // default crimson rose (hsl 350, 80%, 45%)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createClassroom.mutateAsync(formData);
+      setIsModalOpen(false);
+      setFormData({ name: '', subject: '', grade: '', color: '#e11d48' });
+    } catch (error) {
+      console.error('Failed to create classroom', error);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -21,40 +31,116 @@ export default function ClassroomsPage() {
           <h1 className={styles.title}>My Classrooms</h1>
           <p className={styles.subtitle}>Manage your classes, students, and assignments</p>
         </div>
-        <button className={styles.createBtn}><Plus size={16} /> Create Classroom</button>
+        <button className={styles.createBtn} onClick={() => setIsModalOpen(true)}>
+          <Plus size={16} /> Create Classroom
+        </button>
       </div>
 
-      <div className={styles.grid}>
-        {CLASSROOMS.map((c) => (
-          <Link key={c.id} href={`/dashboard/classrooms/${c.id}`} className={styles.card}>
-            <div className={styles.cardBorder} style={{ background: c.color }} />
-            <div className={styles.cardBody}>
-              <div className={styles.cardHeader}>
-                <div className={styles.subjectIcon} style={{ background: `${c.color}20`, color: c.color }}>
-                  <BookOpen size={18} />
+      {isLoading ? (
+        <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>Loading classrooms...</div>
+      ) : !classrooms || classrooms.length === 0 ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+          No classrooms yet. Click "Create Classroom" to get started.
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {classrooms.map((c) => (
+            <Link key={c.id} href={`/dashboard/classrooms/${c.id}`} className={styles.card}>
+              <div className={styles.cardBorder} style={{ background: c.color || 'var(--accent)' }} />
+              <div className={styles.cardBody}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.subjectIcon} style={{ background: `${c.color || '#e11d48'}20`, color: c.color || '#e11d48' }}>
+                    <BookOpen size={18} />
+                  </div>
+                  <ChevronRight size={16} className={styles.cardArrow} />
                 </div>
-                <ChevronRight size={16} className={styles.cardArrow} />
+                <h3 className={styles.cardTitle}>{c.grade} {c.subject}</h3>
+                <p className={styles.cardClass}>{c.name}</p>
+                <div className={styles.cardStats}>
+                  <div className={styles.cardStat}>
+                    <Users size={13} />
+                    <span>{c.studentCount} students</span>
+                  </div>
+                  <div className={styles.cardStat}>
+                    <TrendingUp size={13} />
+                    <span>Avg: {c.avgScore ?? '-'}%</span>
+                  </div>
+                </div>
               </div>
-              <h3 className={styles.cardTitle}>{c.grade} {c.subject}</h3>
-              <p className={styles.cardClass}>{c.name}</p>
-              <div className={styles.cardStats}>
-                <div className={styles.cardStat}>
-                  <Users size={13} />
-                  <span>{c.students}</span>
-                </div>
-                <div className={styles.cardStat}>
-                  <TrendingUp size={13} />
-                  <span>Avg: {c.avg}%</span>
-                </div>
-                <div className={styles.cardStat}>
-                  <BookOpen size={13} />
-                  <span>{c.assignments} assignments</span>
-                </div>
-              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Create Classroom Modal */}
+      {isModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Create New Classroom</h2>
+              <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>
+                <X size={20} />
+              </button>
             </div>
-          </Link>
-        ))}
-      </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Class Name / Section (e.g., Class A)</label>
+                <input 
+                  type="text" 
+                  required 
+                  className={styles.input} 
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Class A" 
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Subject (e.g., Physics)</label>
+                <input 
+                  type="text" 
+                  required 
+                  className={styles.input} 
+                  value={formData.subject}
+                  onChange={e => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="Physics" 
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Grade / Level (e.g., 12th)</label>
+                <input 
+                  type="text" 
+                  required 
+                  className={styles.input} 
+                  value={formData.grade}
+                  onChange={e => setFormData({ ...formData, grade: e.target.value })}
+                  placeholder="12th" 
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Theme Color</label>
+                <input 
+                  type="color" 
+                  className={styles.input} 
+                  value={formData.color}
+                  onChange={e => setFormData({ ...formData, color: e.target.value })}
+                  style={{ height: '40px', padding: '4px' }}
+                />
+              </div>
+              
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className={styles.submitBtn} disabled={createClassroom.isPending}>
+                  {createClassroom.isPending ? 'Creating...' : 'Create Classroom'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

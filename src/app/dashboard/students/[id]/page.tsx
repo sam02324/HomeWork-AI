@@ -3,17 +3,11 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Area, AreaChart } from 'recharts';
 import { ArrowLeft, TrendingUp, Award, Target, BarChart3, BookOpen, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import styles from './page.module.css';
+import { useStudentAnalytics } from '@/lib/api-client';
 
-/* Mock data */
-const STUDENT = { name: 'Priya Sharma', class: '12th Physics — Class A', roll: 17, avg: 72.4, completed: 18, total: 22, rank: 8, totalStudents: 32, consistency: 7.2, risk: 'Low' };
-
-const SCORE_TREND = [
-  { name: 'Test 1', score: 68 }, { name: 'Test 2', score: 72 }, { name: 'Test 3', score: 65 },
-  { name: 'Test 4', score: 78 }, { name: 'Test 5', score: 71 }, { name: 'Test 6', score: 82 },
-  { name: 'Test 7', score: 69 }, { name: 'Test 8', score: 75 }, { name: 'Test 9', score: 80 },
-  { name: 'Test 10', score: 76 },
-];
+/* Mock data for advanced analytics not yet in DB */
 
 const RADAR_DATA = [
   { topic: 'Mechanics', score: 85 }, { topic: 'Thermo', score: 62 },
@@ -60,6 +54,16 @@ function scoreColor(score: number | null) {
 }
 
 export default function StudentAnalyticsPage() {
+  const params = useParams();
+  const studentId = params.id as string;
+  const { data: analytics, isLoading } = useStudentAnalytics(studentId);
+
+  if (isLoading) return <div style={{ padding: 40, color: 'var(--text-tertiary)' }}>Loading student data...</div>;
+  if (!analytics) return <div style={{ padding: 40, color: 'var(--text-tertiary)' }}>Student not found.</div>;
+
+  const { student, avgScore, totalSubmissions, scoreTrend } = analytics;
+  const initials = student.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -69,21 +73,21 @@ export default function StudentAnalyticsPage() {
 
       {/* Hero */}
       <div className={styles.hero}>
-        <div className={styles.avatarLg}>PS</div>
+        <div className={styles.avatarLg}>{initials}</div>
         <div className={styles.heroInfo}>
-          <h1 className={styles.heroName}>{STUDENT.name}</h1>
-          <p className={styles.heroClass}>{STUDENT.class} · Roll No: {STUDENT.roll}</p>
-          <span className={styles.riskBadge} style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>{STUDENT.risk} Risk</span>
+          <h1 className={styles.heroName}>{student.name}</h1>
+          <p className={styles.heroClass}>{student.classroom.subject} — {student.classroom.name} · Roll No: {student.rollNumber}</p>
+          <span className={styles.riskBadge} style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>Low Risk</span>
         </div>
       </div>
 
       {/* Stats */}
       <div className={styles.statsRow}>
         {[
-          { icon: TrendingUp, label: 'Average Score', value: `${STUDENT.avg}%` },
-          { icon: Target, label: 'Completed', value: `${STUDENT.completed}/${STUDENT.total}` },
-          { icon: Award, label: 'Class Rank', value: `#${STUDENT.rank}/${STUDENT.totalStudents}` },
-          { icon: BarChart3, label: 'Consistency', value: `${STUDENT.consistency}/10` },
+          { icon: TrendingUp, label: 'Average Score', value: `${avgScore}%` },
+          { icon: Target, label: 'Completed', value: `${totalSubmissions}` },
+          { icon: Award, label: 'Class Rank', value: `#—` },
+          { icon: BarChart3, label: 'Consistency', value: `—/10` },
         ].map((s, i) => {
           const Icon = s.icon;
           return (
@@ -103,17 +107,17 @@ export default function StudentAnalyticsPage() {
           <h3 className={styles.chartTitle}>Performance Trend</h3>
           <div className={styles.chartWrap}>
             <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={SCORE_TREND}>
+              <AreaChart data={scoreTrend}>
                 <defs>
                   <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(350, 80%, 45%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(350, 80%, 45%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="assignmentTitle" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13 }} />
-                <Area type="monotone" dataKey="score" stroke="hsl(217, 91%, 60%)" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: 'hsl(217, 91%, 60%)', r: 4, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="score" stroke="hsl(350, 80%, 45%)" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: 'hsl(350, 80%, 45%)', r: 4, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -128,7 +132,7 @@ export default function StudentAnalyticsPage() {
                 <PolarGrid stroke="var(--glass-border)" />
                 <PolarAngleAxis dataKey="topic" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar dataKey="score" stroke="hsl(217, 91%, 60%)" fill="hsl(217, 91%, 60%)" fillOpacity={0.2} strokeWidth={2} dot={{ r: 3, fill: 'hsl(217, 91%, 60%)' }} />
+                <Radar dataKey="score" stroke="hsl(350, 80%, 45%)" fill="hsl(350, 80%, 45%)" fillOpacity={0.2} strokeWidth={2} dot={{ r: 3, fill: 'hsl(350, 80%, 45%)' }} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
