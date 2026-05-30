@@ -9,7 +9,7 @@
 
 /* ── Gradient Text ── */
 .gradientText {
-  background: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(280, 65%, 65%) 50%, hsl(217, 91%, 70%) 100%);
+  background: linear-gradient(135deg, hsl(350, 80%, 55%) 0%, hsl(25, 95%, 55%) 50%, hsl(350, 80%, 65%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -150,7 +150,7 @@
 .blob1 {
   width: 600px;
   height: 600px;
-  background: hsl(217, 91%, 50%);
+  background: hsl(350, 80%, 45%);
   top: -200px;
   right: -100px;
   animation-delay: 0s;
@@ -159,7 +159,7 @@
 .blob2 {
   width: 500px;
   height: 500px;
-  background: hsl(280, 65%, 50%);
+  background: hsl(25, 95%, 40%);
   bottom: -150px;
   left: -100px;
   animation-delay: -7s;
@@ -168,7 +168,7 @@
 .blob3 {
   width: 400px;
   height: 400px;
-  background: hsl(152, 69%, 40%);
+  background: hsl(280, 40%, 30%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -201,7 +201,7 @@
   gap: var(--space-2);
   padding: var(--space-1) var(--space-4);
   background: var(--accent-muted);
-  border: 1px solid hsla(217, 91%, 60%, 0.2);
+  border: 1px solid hsla(350, 80%, 55%, 0.2);
   border-radius: var(--radius-full);
   font-size: 0.78rem;
   font-weight: 600;
@@ -251,8 +251,8 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 hsla(217, 91%, 60%, 0.4); }
-  50% { box-shadow: 0 0 0 12px hsla(217, 91%, 60%, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 hsla(350, 80%, 55%, 0.4); }
+  50% { box-shadow: 0 0 0 12px hsla(350, 80%, 55%, 0); }
 }
 
 .heroCtaPrimary:hover {
@@ -337,7 +337,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent), hsl(280, 65%, 60%));
+  background: linear-gradient(135deg, var(--accent), hsl(25, 95%, 55%));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -783,7 +783,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent), hsl(280, 65%, 60%));
+  background: linear-gradient(135deg, var(--accent), hsl(25, 95%, 55%));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -806,7 +806,7 @@
 
 /* ═══════════ FINAL CTA ═══════════ */
 .finalCta {
-  background: linear-gradient(135deg, hsl(225, 25%, 8%), hsl(217, 40%, 12%));
+  background: linear-gradient(135deg, hsl(0, 0%, 6%), hsl(350, 15%, 10%));
   border-top: 1px solid var(--glass-border);
 }
 

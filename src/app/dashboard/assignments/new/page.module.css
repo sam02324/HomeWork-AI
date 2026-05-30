@@ -674,7 +674,7 @@
 }
 
 .publishBtn {
-  background: linear-gradient(135deg, var(--accent), hsl(280, 65%, 60%));
+  background: linear-gradient(135deg, var(--accent), hsl(25, 95%, 55%));
   color: white;
   box-shadow: var(--accent-glow);
 }

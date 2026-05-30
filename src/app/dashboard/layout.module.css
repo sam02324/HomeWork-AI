@@ -142,7 +142,7 @@
   width: 34px;
   height: 34px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent), hsl(280, 65%, 60%));
+  background: linear-gradient(135deg, var(--accent), hsl(25, 95%, 55%));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,7 +320,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent), hsl(280, 65%, 60%));
+  background: linear-gradient(135deg, var(--accent), hsl(25, 95%, 55%));
   display: flex;
   align-items: center;
   justify-content: center;
