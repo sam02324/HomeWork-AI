@@ -11,16 +11,20 @@ export default function ClassroomsPage() {
   const createClassroom = useCreateClassroom();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', subject: '', grade: '', color: '#e11d48' }); // default crimson rose (hsl 350, 80%, 45%)
+  const [formData, setFormData] = useState({ name: '', subject: '', grade: '', color: '#e11d48' });
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       await createClassroom.mutateAsync(formData);
       setIsModalOpen(false);
       setFormData({ name: '', subject: '', grade: '', color: '#e11d48' });
-    } catch (error) {
-      console.error('Failed to create classroom', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create classroom';
+      setError(message);
+      console.error('Failed to create classroom', err);
     }
   };
 
@@ -84,6 +88,19 @@ export default function ClassroomsPage() {
             </div>
             
             <form onSubmit={handleSubmit}>
+              {error && (
+                <div style={{
+                  padding: '10px 14px',
+                  marginBottom: '16px',
+                  background: 'hsl(0, 80%, 95%)',
+                  border: '1px solid hsl(0, 70%, 80%)',
+                  borderRadius: '8px',
+                  color: 'hsl(0, 70%, 40%)',
+                  fontSize: '0.85rem',
+                }}>
+                  ⚠️ {error}
+                </div>
+              )}
               <div className={styles.formGroup}>
                 <label className={styles.label}>Class Name / Section (e.g., Class A)</label>
                 <input 

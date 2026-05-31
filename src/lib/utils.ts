@@ -1,14 +1,39 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 /**
  * Get the authenticated user's Clerk ID or return a 401 response.
+ * Also ensures the user exists in the local database (auto-provision).
  */
 export async function getAuthUserId(): Promise<string | NextResponse> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Auto-provision: ensure user exists in our DB
+  try {
+    const existing = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!existing) {
+      const clerkUser = await currentUser();
+      await db.insert(users).values({
+        id: userId,
+        email: clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@clerk.dev`,
+        name: [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(' ') || 'Teacher',
+        role: 'teacher',
+      }).onConflictDoNothing();
+    }
+  } catch (err) {
+    console.error('Auto-provision user error (non-fatal):', err);
+    // Don't block the request if provisioning fails for a race condition
+  }
+
   return userId;
 }
 
