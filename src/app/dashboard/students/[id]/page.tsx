@@ -76,7 +76,7 @@ export default function StudentAnalyticsPage() {
         <div className={styles.avatarLg}>{initials}</div>
         <div className={styles.heroInfo}>
           <h1 className={styles.heroName}>{student.name}</h1>
-          <p className={styles.heroClass}>{student.classroom.subject} — {student.classroom.name} · Roll No: {student.rollNumber}</p>
+          <p className={styles.heroClass}>{student.classroom?.subject} — {student.classroom?.name} · Roll No: {student.rollNumber}</p>
           <span className={styles.riskBadge} style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>Low Risk</span>
         </div>
       </div>
@@ -100,123 +100,139 @@ export default function StudentAnalyticsPage() {
         })}
       </div>
 
-      {/* Charts Grid */}
-      <div className={styles.chartsGrid}>
-        {/* Score Trend */}
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Performance Trend</h3>
-          <div className={styles.chartWrap}>
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={scoreTrend}>
-                <defs>
-                  <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(350, 80%, 45%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(350, 80%, 45%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="assignmentTitle" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13 }} />
-                <Area type="monotone" dataKey="score" stroke="hsl(350, 80%, 45%)" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: 'hsl(350, 80%, 45%)', r: 4, strokeWidth: 0 }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+      {/* Coming Soon Section */}
+      <div style={{ position: 'relative', marginTop: 40 }}>
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 10, backdropFilter: 'blur(4px)', background: 'rgba(255,255,255,0.02)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 12, border: '1px solid var(--glass-border)'
+        }}>
+          <Sparkles size={32} style={{ color: 'var(--accent)', marginBottom: 16 }} />
+          <h2 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0' }}>Advanced AI Analytics Coming Soon</h2>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: 400, textAlign: 'center' }}>
+            Topic extraction, detailed strengths/weaknesses mapping, and personalized AI improvement roadmaps will be available in the next release.
+          </p>
         </div>
+        
+        <div style={{ opacity: 0.3, pointerEvents: 'none' }}>
+          {/* Charts Grid */}
+          <div className={styles.chartsGrid}>
+            {/* Score Trend */}
+            <div className={styles.chartCard}>
+              <h3 className={styles.chartTitle}>Performance Trend</h3>
+              <div className={styles.chartWrap}>
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={scoreTrend}>
+                    <defs>
+                      <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(350, 80%, 45%)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(350, 80%, 45%)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="assignmentTitle" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13 }} />
+                    <Area type="monotone" dataKey="score" stroke="hsl(350, 80%, 45%)" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: 'hsl(350, 80%, 45%)', r: 4, strokeWidth: 0 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-        {/* Radar */}
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Topic Strengths</h3>
-          <div className={styles.chartWrap}>
-            <ResponsiveContainer width="100%" height={250}>
-              <RadarChart data={RADAR_DATA}>
-                <PolarGrid stroke="var(--glass-border)" />
-                <PolarAngleAxis dataKey="topic" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar dataKey="score" stroke="hsl(350, 80%, 45%)" fill="hsl(350, 80%, 45%)" fillOpacity={0.2} strokeWidth={2} dot={{ r: 3, fill: 'hsl(350, 80%, 45%)' }} />
-              </RadarChart>
-            </ResponsiveContainer>
+            {/* Radar */}
+            <div className={styles.chartCard}>
+              <h3 className={styles.chartTitle}>Topic Strengths</h3>
+              <div className={styles.chartWrap}>
+                <ResponsiveContainer width="100%" height={250}>
+                  <RadarChart data={RADAR_DATA}>
+                    <PolarGrid stroke="var(--glass-border)" />
+                    <PolarAngleAxis dataKey="topic" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                    <Radar dataKey="score" stroke="hsl(350, 80%, 45%)" fill="hsl(350, 80%, 45%)" fillOpacity={0.2} strokeWidth={2} dot={{ r: 3, fill: 'hsl(350, 80%, 45%)' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Heatmap */}
-      <div className={styles.chartCard}>
-        <h3 className={styles.chartTitle}>Activity Heatmap</h3>
-        <div className={styles.heatmap}>
-          <div className={styles.heatmapDays}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <span key={d} className={styles.heatmapDay}>{d}</span>
-            ))}
-          </div>
-          <div className={styles.heatmapGrid}>
-            {HEATMAP_DATA.map((week, wi) => (
-              <div key={wi} className={styles.heatmapCol}>
-                {week.map((score, di) => (
-                  <div
-                    key={di}
-                    className={styles.heatmapCell}
-                    style={{ background: scoreColor(score) }}
-                    title={score !== null ? `${score}%` : 'No data'}
-                  />
+          {/* Heatmap */}
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Activity Heatmap</h3>
+            <div className={styles.heatmap}>
+              <div className={styles.heatmapDays}>
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                  <span key={d} className={styles.heatmapDay}>{d}</span>
                 ))}
               </div>
-            ))}
-          </div>
-          <div className={styles.heatmapLegend}>
-            <span>Less</span>
-            <div className={styles.heatmapCell} style={{ background: 'var(--bg-tertiary)' }} />
-            <div className={styles.heatmapCell} style={{ background: 'var(--score-poor)' }} />
-            <div className={styles.heatmapCell} style={{ background: 'var(--score-average)' }} />
-            <div className={styles.heatmapCell} style={{ background: 'var(--score-good)' }} />
-            <div className={styles.heatmapCell} style={{ background: 'var(--score-excellent)' }} />
-            <span>More</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Grid */}
-      <div className={styles.bottomGrid}>
-        {/* Weak Topics */}
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <Target size={16} style={{ color: 'var(--warning)' }} /> Weak Topics
-          </h3>
-          <div className={styles.weakList}>
-            {WEAK_TOPICS.map((t, i) => (
-              <div key={i} className={styles.weakItem}>
-                <div className={styles.weakHeader}>
-                  <span className={styles.weakName}>{t.topic}</span>
-                  <span className={styles.weakScore} style={{ color: scoreColor(t.avg) }}>Avg: {t.avg}%</span>
-                </div>
-                <p className={styles.weakDesc}>{t.desc}</p>
-                <button className={styles.quizBtn}><Sparkles size={12} /> Create Practice Quiz</button>
+              <div className={styles.heatmapGrid}>
+                {HEATMAP_DATA.map((week, wi) => (
+                  <div key={wi} className={styles.heatmapCol}>
+                    {week.map((score, di) => (
+                      <div
+                        key={di}
+                        className={styles.heatmapCell}
+                        style={{ background: scoreColor(score) }}
+                        title={score !== null ? `${score}%` : 'No data'}
+                      />
+                    ))}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Roadmap */}
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <Sparkles size={16} style={{ color: 'var(--accent)' }} /> AI Improvement Roadmap
-          </h3>
-          <div className={styles.roadmap}>
-            {ROADMAP.map((r, i) => (
-              <div key={i} className={styles.roadmapItem}>
-                <div className={styles.roadmapTimeline}>
-                  <div className={`${styles.roadmapDot} ${r.status === 'in_progress' ? styles.roadmapActive : ''}`}>{i + 1}</div>
-                  {i < ROADMAP.length - 1 && <div className={styles.roadmapLine} />}
-                </div>
-                <div className={styles.roadmapContent}>
-                  <span className={styles.roadmapWeek}>{r.week}</span>
-                  <h4>{r.title}</h4>
-                  <p>{r.desc}</p>
-                  <span className={`${styles.roadmapStatus} ${r.status === 'in_progress' ? styles.roadmapInProgress : ''}`}>
-                    {r.status === 'in_progress' ? 'In Progress' : 'Not Started'}
-                  </span>
-                </div>
+              <div className={styles.heatmapLegend}>
+                <span>Less</span>
+                <div className={styles.heatmapCell} style={{ background: 'var(--bg-tertiary)' }} />
+                <div className={styles.heatmapCell} style={{ background: 'var(--score-poor)' }} />
+                <div className={styles.heatmapCell} style={{ background: 'var(--score-average)' }} />
+                <div className={styles.heatmapCell} style={{ background: 'var(--score-good)' }} />
+                <div className={styles.heatmapCell} style={{ background: 'var(--score-excellent)' }} />
+                <span>More</span>
               </div>
-            ))}
+            </div>
+          </div>
+
+          {/* Bottom Grid */}
+          <div className={styles.bottomGrid}>
+            {/* Weak Topics */}
+            <div className={styles.chartCard}>
+              <h3 className={styles.chartTitle}>
+                <Target size={16} style={{ color: 'var(--warning)' }} /> Weak Topics
+              </h3>
+              <div className={styles.weakList}>
+                {WEAK_TOPICS.map((t, i) => (
+                  <div key={i} className={styles.weakItem}>
+                    <div className={styles.weakHeader}>
+                      <span className={styles.weakName}>{t.topic}</span>
+                      <span className={styles.weakScore} style={{ color: scoreColor(t.avg) }}>Avg: {t.avg}%</span>
+                    </div>
+                    <p className={styles.weakDesc}>{t.desc}</p>
+                    <button className={styles.quizBtn}><Sparkles size={12} /> Create Practice Quiz</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Roadmap */}
+            <div className={styles.chartCard}>
+              <h3 className={styles.chartTitle}>
+                <Sparkles size={16} style={{ color: 'var(--accent)' }} /> AI Improvement Roadmap
+              </h3>
+              <div className={styles.roadmap}>
+                {ROADMAP.map((r, i) => (
+                  <div key={i} className={styles.roadmapItem}>
+                    <div className={styles.roadmapTimeline}>
+                      <div className={`${styles.roadmapDot} ${r.status === 'in_progress' ? styles.roadmapActive : ''}`}>{i + 1}</div>
+                      {i < ROADMAP.length - 1 && <div className={styles.roadmapLine} />}
+                    </div>
+                    <div className={styles.roadmapContent}>
+                      <span className={styles.roadmapWeek}>{r.week}</span>
+                      <h4>{r.title}</h4>
+                      <p>{r.desc}</p>
+                      <span className={`${styles.roadmapStatus} ${r.status === 'in_progress' ? styles.roadmapInProgress : ''}`}>
+                        {r.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -11,34 +11,18 @@ import {
   Search,
   BarChart3,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 import styles from './page.module.css';
+import { useClassroom, useStudents, useAddStudents } from '@/lib/api-client';
 
-const CLASSROOM = {
-  id: '1',
-  name: 'Class A',
-  subject: 'Physics',
-  grade: '12th',
-  students: 32,
-  avg: 74,
-  assignments: 8,
-  color: '#4A90D9',
-};
-
-const STUDENTS = [
-  { id: '1', name: 'Aarav Patel', roll: 1, avg: 92, submissions: 8, status: 'excellent', initials: 'AP' },
-  { id: '2', name: 'Ananya Gupta', roll: 2, avg: 42, submissions: 7, status: 'at-risk', initials: 'AG' },
-  { id: '3', name: 'Arjun Mehta', roll: 3, avg: 78, submissions: 8, status: 'good', initials: 'AM' },
-  { id: '4', name: 'Diya Sharma', roll: 4, avg: 85, submissions: 8, status: 'excellent', initials: 'DS' },
-  { id: '5', name: 'Ishaan Reddy', roll: 5, avg: 67, submissions: 6, status: 'average', initials: 'IR' },
-  { id: '6', name: 'Kavya Singh', roll: 6, avg: 73, submissions: 8, status: 'good', initials: 'KS' },
-  { id: '7', name: 'Nisha Jain', roll: 7, avg: 88, submissions: 8, status: 'excellent', initials: 'NJ' },
-  { id: '8', name: 'Priya Sharma', roll: 8, avg: 72, submissions: 7, status: 'good', initials: 'PS' },
-  { id: '9', name: 'Rahul Verma', roll: 9, avg: 55, submissions: 5, status: 'average', initials: 'RV' },
-  { id: '10', name: 'Rohit Patel', roll: 10, avg: 51, submissions: 6, status: 'at-risk', initials: 'RP' },
-  { id: '11', name: 'Shreya Kapoor', roll: 11, avg: 81, submissions: 8, status: 'good', initials: 'SK' },
-  { id: '12', name: 'Vikram Nair', roll: 12, avg: 69, submissions: 7, status: 'average', initials: 'VN' },
-];
+function getStatus(score: number | null) {
+  if (score === null) return 'no-data';
+  if (score >= 85) return 'excellent';
+  if (score >= 70) return 'good';
+  if (score >= 50) return 'average';
+  return 'at-risk';
+}
 
 function statusColor(status: string) {
   switch (status) {
@@ -52,6 +36,57 @@ function statusColor(status: string) {
 
 export default function ClassroomDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  
+  const { data: classroom, isLoading: isClassLoading } = useClassroom(id);
+  const { data: students, isLoading: isStudentsLoading } = useStudents(id);
+  const addStudents = useAddStudents(id);
+
+  const [search, setSearch] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newRoll, setNewRoll] = useState('');
+
+  if (isClassLoading || isStudentsLoading) {
+    return <div className={styles.loading}>Loading classroom data...</div>;
+  }
+
+  if (!classroom) {
+    return <div className={styles.error}>Classroom not found.</div>;
+  }
+
+  const filteredStudents = students?.filter(s => 
+    s.name.toLowerCase().includes(search.toLowerCase()) || 
+    s.rollNumber.toString().includes(search)
+  ) || [];
+
+  const excellentCount = students?.filter(s => getStatus(s.avgScore) === 'excellent').length || 0;
+  const goodCount = students?.filter(s => getStatus(s.avgScore) === 'good').length || 0;
+  const averageCount = students?.filter(s => getStatus(s.avgScore) === 'average').length || 0;
+  const atRiskCount = students?.filter(s => getStatus(s.avgScore) === 'at-risk').length || 0;
+
+  const studentCount = students?.length || 0;
+  const avgScore = studentCount > 0 
+    ? Math.round(students!.reduce((acc, s) => acc + (s.avgScore || 0), 0) / studentCount)
+    : 0;
+
+  async function handleAddStudent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newName || !newRoll) return;
+    try {
+      await addStudents.mutateAsync({
+        students: [{
+          name: newName,
+          rollNumber: parseInt(newRoll, 10),
+        }]
+      });
+      setIsModalOpen(false);
+      setNewName('');
+      setNewRoll('');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add student');
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -61,13 +96,12 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
 
       {/* Hero */}
       <div className={styles.hero}>
-        <div className={styles.heroColor} style={{ background: CLASSROOM.color }} />
+        <div className={styles.heroColor} style={{ background: classroom.color || '#4A90D9' }} />
         <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>{CLASSROOM.grade} {CLASSROOM.subject} — {CLASSROOM.name}</h1>
+          <h1 className={styles.heroTitle}>{classroom.grade} {classroom.subject} — {classroom.name}</h1>
           <div className={styles.heroStats}>
-            <span><Users size={14} /> {CLASSROOM.students} students</span>
-            <span><TrendingUp size={14} /> Avg: {CLASSROOM.avg}%</span>
-            <span><FileText size={14} /> {CLASSROOM.assignments} assignments</span>
+            <span><Users size={14} /> {studentCount} students</span>
+            <span><TrendingUp size={14} /> Avg: {avgScore}%</span>
           </div>
         </div>
         <Link href="/dashboard/assignments/new" className={styles.addBtn}>
@@ -78,10 +112,10 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
       {/* Stats Row */}
       <div className={styles.statsRow}>
         {[
-          { label: 'Excellent (≥85)', count: STUDENTS.filter(s => s.status === 'excellent').length, color: 'var(--score-excellent)' },
-          { label: 'Good (70-84)', count: STUDENTS.filter(s => s.status === 'good').length, color: 'var(--score-good)' },
-          { label: 'Average (50-69)', count: STUDENTS.filter(s => s.status === 'average').length, color: 'var(--score-average)' },
-          { label: 'At-Risk (<50)', count: STUDENTS.filter(s => s.status === 'at-risk').length, color: 'var(--score-poor)' },
+          { label: 'Excellent (≥85)', count: excellentCount, color: 'var(--score-excellent)' },
+          { label: 'Good (70-84)', count: goodCount, color: 'var(--score-good)' },
+          { label: 'Average (50-69)', count: averageCount, color: 'var(--score-average)' },
+          { label: 'At-Risk (<50)', count: atRiskCount, color: 'var(--score-poor)' },
         ].map((s, i) => (
           <div key={i} className={styles.statMini}>
             <div className={styles.statDot} style={{ background: s.color }} />
@@ -91,12 +125,20 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search & Actions */}
       <div className={styles.toolbar}>
         <div className={styles.searchWrap}>
           <Search size={16} />
-          <input className={styles.searchInput} placeholder="Search students..." />
+          <input 
+            className={styles.searchInput} 
+            placeholder="Search students..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
+        <button className={styles.addStudentBtn} onClick={() => setIsModalOpen(true)}>
+          <Plus size={16} /> Add Student
+        </button>
       </div>
 
       {/* Student Table */}
@@ -113,26 +155,42 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
             </tr>
           </thead>
           <tbody>
-            {STUDENTS.map((s) => {
-              const sc = statusColor(s.status);
+            {filteredStudents.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-tertiary)' }}>
+                  No students found. Add a student to get started!
+                </td>
+              </tr>
+            ) : filteredStudents.map((s) => {
+              const status = getStatus(s.avgScore);
+              const sc = statusColor(status);
+              const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
               return (
                 <tr key={s.id} className={styles.row}>
-                  <td className={styles.rollCell}>{s.roll}</td>
+                  <td className={styles.rollCell}>{s.rollNumber}</td>
                   <td>
                     <div className={styles.studentCell}>
-                      <div className={styles.studentAvatar} style={{ background: `${CLASSROOM.color}22`, color: CLASSROOM.color }}>{s.initials}</div>
+                      <div className={styles.studentAvatar} style={{ background: `${classroom.color}22`, color: classroom.color || '#4A90D9' }}>{initials}</div>
                       <span className={styles.studentName}>{s.name}</span>
                     </div>
                   </td>
                   <td>
-                    <span className={styles.avgScore} style={{ color: sc.color }}>{s.avg}%</span>
+                    {s.avgScore !== null ? (
+                      <span className={styles.avgScore} style={{ color: sc.color }}>{s.avgScore}%</span>
+                    ) : (
+                      <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+                    )}
                   </td>
-                  <td><span className={styles.mono}>{s.submissions}/{CLASSROOM.assignments}</span></td>
+                  <td><span className={styles.mono}>{s.submissionCount}</span></td>
                   <td>
-                    <span className={styles.statusBadge} style={{ background: sc.bg, color: sc.color }}>
-                      {s.status === 'at-risk' && <AlertTriangle size={10} />}
-                      {s.status}
-                    </span>
+                    {status === 'no-data' ? (
+                      <span className={styles.statusBadge} style={{ background: sc.bg, color: sc.color }}>No Data</span>
+                    ) : (
+                      <span className={styles.statusBadge} style={{ background: sc.bg, color: sc.color }}>
+                        {status === 'at-risk' && <AlertTriangle size={10} />}
+                        {status}
+                      </span>
+                    )}
                   </td>
                   <td>
                     <Link href={`/dashboard/students/${s.id}`} className={styles.viewBtn}>
@@ -145,6 +203,48 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
           </tbody>
         </table>
       </div>
+
+      {/* Add Student Modal */}
+      {isModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2>Add Student</h2>
+              <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddStudent} className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label>Student Name</label>
+                <input 
+                  type="text" 
+                  value={newName} 
+                  onChange={e => setNewName(e.target.value)} 
+                  placeholder="e.g. Aarav Patel"
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Roll Number</label>
+                <input 
+                  type="number" 
+                  value={newRoll} 
+                  onChange={e => setNewRoll(e.target.value)} 
+                  placeholder="e.g. 1"
+                  required
+                />
+              </div>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className={styles.submitBtn} disabled={addStudents.isPending}>
+                  {addStudents.isPending ? 'Adding...' : 'Add Student'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
