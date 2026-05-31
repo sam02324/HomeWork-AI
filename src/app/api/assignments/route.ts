@@ -42,10 +42,10 @@ export async function GET(request: Request) {
         createdAt: assignments.createdAt,
         updatedAt: assignments.updatedAt,
         submissionCount: sql<number>`(
-          SELECT COUNT(*)::int FROM submissions WHERE submissions.assignment_id = ${assignments.id}
+          SELECT COUNT(*)::int FROM submissions WHERE submissions.assignment_id = assignments.id
         )`,
         gradedCount: sql<number>`(
-          SELECT COUNT(*)::int FROM submissions WHERE submissions.assignment_id = ${assignments.id} AND submissions.status = 'graded'
+          SELECT COUNT(*)::int FROM submissions WHERE submissions.assignment_id = assignments.id AND submissions.status = 'graded'
         )`,
       })
       .from(assignments)

@@ -7,7 +7,7 @@ import styles from './page.module.css';
 import { useClassrooms, useCreateClassroom } from '@/lib/api-client';
 
 export default function ClassroomsPage() {
-  const { data: classrooms, isLoading } = useClassrooms();
+  const { data: classrooms, isLoading, error: fetchError } = useClassrooms();
   const createClassroom = useCreateClassroom();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +42,10 @@ export default function ClassroomsPage() {
 
       {isLoading ? (
         <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>Loading classrooms...</div>
+      ) : fetchError ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--error)' }}>
+          Error loading classrooms: {fetchError instanceof Error ? fetchError.message : String(fetchError)}
+        </div>
       ) : !classrooms || classrooms.length === 0 ? (
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
           No classrooms yet. Click "Create Classroom" to get started.
