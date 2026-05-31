@@ -5,6 +5,8 @@ import { eq, sql, count } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
 import { createClassroomSchema } from '@/lib/validations';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/classrooms — List teacher's classrooms with stats */
 export async function GET() {
   const userId = await getAuthUserId();

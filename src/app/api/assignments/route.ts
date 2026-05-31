@@ -5,6 +5,8 @@ import { eq, and, sql } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody, parseQuery } from '@/lib/utils';
 import { createAssignmentSchema, assignmentQuerySchema } from '@/lib/validations';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/assignments — List assignments with filters and stats */
 export async function GET(request: Request) {
   const userId = await getAuthUserId();

@@ -4,6 +4,8 @@ import { classrooms, students, assignments, submissions, grades } from '@/db/sch
 import { eq, and, sql, gte } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/analytics/dashboard — Teacher dashboard stats */
 export async function GET() {
   const userId = await getAuthUserId();
