@@ -24,14 +24,14 @@ export async function GET() {
         createdAt: classrooms.createdAt,
         updatedAt: classrooms.updatedAt,
         studentCount: sql<number>`(
-          SELECT COUNT(*)::int FROM students WHERE students.classroom_id = ${classrooms.id}
+          SELECT COUNT(*)::int FROM students WHERE students.classroom_id = classrooms.id
         )`,
         avgScore: sql<number | null>`(
           SELECT ROUND(AVG(g.total_score::numeric / g.max_score * 100), 1)
           FROM grades g
           JOIN submissions s ON s.id = g.submission_id
           JOIN assignments a ON a.id = s.assignment_id
-          WHERE a.classroom_id = ${classrooms.id}
+          WHERE a.classroom_id = classrooms.id
         )`,
       })
       .from(classrooms)
