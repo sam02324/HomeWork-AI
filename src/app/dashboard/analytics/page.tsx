@@ -1,49 +1,29 @@
 'use client';
 
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import { Users, FileText, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
+import { Users, FileText, TrendingUp, Clock } from 'lucide-react';
 import styles from './page.module.css';
-
-const STATS = [
-  { label: 'Total Students', value: '210', icon: Users, color: 'var(--accent)' },
-  { label: 'Total Assignments', value: '39', icon: FileText, color: 'hsl(280,65%,60%)' },
-  { label: 'Overall Average', value: '73.2%', icon: TrendingUp, color: 'var(--score-good)' },
-  { label: 'Time Saved', value: '48 hrs', icon: Clock, color: 'var(--success)' },
-];
-
-const DISTRIBUTION = [
-  { range: '0-20', count: 5 }, { range: '20-40', count: 18 },
-  { range: '40-60', count: 42 }, { range: '60-80', count: 87 },
-  { range: '80-100', count: 58 },
-];
-
-const CLASS_TRENDS = [
-  { name: 'Test 1', '12th Phy-A': 72, '12th Chem-B': 68, '11th Phy-C': 75 },
-  { name: 'Test 2', '12th Phy-A': 74, '12th Chem-B': 71, '11th Phy-C': 73 },
-  { name: 'Test 3', '12th Phy-A': 69, '12th Chem-B': 65, '11th Phy-C': 78 },
-  { name: 'Test 4', '12th Phy-A': 78, '12th Chem-B': 72, '11th Phy-C': 76 },
-  { name: 'Test 5', '12th Phy-A': 75, '12th Chem-B': 74, '11th Phy-C': 74 },
-  { name: 'Test 6', '12th Phy-A': 80, '12th Chem-B': 70, '11th Phy-C': 79 },
-  { name: 'Test 7', '12th Phy-A': 77, '12th Chem-B': 73, '11th Phy-C': 77 },
-  { name: 'Test 8', '12th Phy-A': 82, '12th Chem-B': 75, '11th Phy-C': 80 },
-];
-
-const WEAK_TOPICS = [
-  { topic: 'Electrostatics', percent: 38 },
-  { topic: 'Thermodynamics', percent: 45 },
-  { topic: 'Organic Chemistry', percent: 48 },
-  { topic: 'Integration', percent: 52 },
-  { topic: 'Modern Physics', percent: 55 },
-];
-
-const RISK_SUMMARY = [
-  { level: 'Critical', count: 3, color: 'var(--error)' },
-  { level: 'High', count: 8, color: 'hsl(25,95%,53%)' },
-  { level: 'Medium', count: 15, color: 'var(--warning)' },
-  { level: 'Low', count: 184, color: 'var(--success)' },
-];
+import { useDashboardStats, useAssignments, useClassrooms } from '@/lib/api-client';
 
 export default function AnalyticsPage() {
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: assignments } = useAssignments();
+  const { data: classrooms } = useClassrooms();
+
+  const totalStudents = stats?.totalStudents ?? 0;
+  const totalAssignments = stats?.totalAssignments ?? 0;
+  const avgScore = stats?.avgScore ?? 0;
+  const timeSaved = stats?.timeSavedMinutes ?? 0;
+  const timeSavedLabel = timeSaved >= 60 ? `${(timeSaved / 60).toFixed(1)} hrs` : `${timeSaved} min`;
+
+  const STATS = [
+    { label: 'Total Students', value: statsLoading ? '...' : totalStudents, icon: Users, color: 'var(--accent)' },
+    { label: 'Total Assignments', value: statsLoading ? '...' : totalAssignments, icon: FileText, color: 'hsl(280,65%,60%)' },
+    { label: 'Overall Average', value: statsLoading ? '...' : `${avgScore}%`, icon: TrendingUp, color: 'var(--score-good)' },
+    { label: 'Time Saved', value: statsLoading ? '...' : timeSavedLabel, icon: Clock, color: 'var(--success)' },
+  ];
+
+  const hasData = totalStudents > 0 || totalAssignments > 0;
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -65,84 +45,86 @@ export default function AnalyticsPage() {
         })}
       </div>
 
-      {/* Charts */}
-      <div className={styles.chartsGrid}>
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Score Distribution</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={DISTRIBUTION}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" />
-              <XAxis dataKey="range" tick={{ fontSize: 12, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13 }} />
-              <Bar dataKey="count" fill="hsl(217, 91%, 60%)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      {!hasData ? (
+        <div style={{
+          padding: '60px 20px',
+          textAlign: 'center',
+          color: 'var(--text-tertiary)',
+          background: 'var(--bg-secondary)',
+          borderRadius: '16px',
+          border: '1px solid var(--glass-border)',
+          marginTop: '20px',
+        }}>
+          <TrendingUp size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+          <h3 style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '1.1rem' }}>No analytics data yet</h3>
+          <p style={{ maxWidth: '400px', margin: '0 auto', lineHeight: 1.6, fontSize: '0.9rem' }}>
+            Create classrooms, add students, create assignments, and start grading to see analytics here.
+          </p>
         </div>
-
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Class Average Trends</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={CLASS_TRENDS}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
-              <YAxis domain={[50, 100]} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-secondary)' }} />
-              <Line type="monotone" dataKey="12th Phy-A" stroke="hsl(217,91%,60%)" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="12th Chem-B" stroke="hsl(152,69%,46%)" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="11th Phy-C" stroke="hsl(280,65%,60%)" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Bottom Grid */}
-      <div className={styles.chartsGrid}>
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Top 5 Weak Topics (Across All Classes)</h3>
-          <div className={styles.weakList}>
-            {WEAK_TOPICS.map((t, i) => (
-              <div key={i} className={styles.weakItem}>
-                <div className={styles.weakLabel}>
-                  <span className={styles.weakRank}>#{i + 1}</span>
-                  <span>{t.topic}</span>
-                </div>
-                <div className={styles.weakBarWrap}>
-                  <div className={styles.weakBar}>
-                    <div className={styles.weakFill} style={{ width: `${t.percent}%`, background: t.percent < 50 ? 'var(--error)' : 'var(--warning)' }} />
+      ) : (
+        <div className={styles.chartsGrid}>
+          {/* Assignment Overview */}
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Assignments by Status</h3>
+            <div style={{ padding: '20px' }}>
+              {['draft', 'published', 'grading', 'graded'].map(status => {
+                const count = assignments?.filter(a => a.status === status).length ?? 0;
+                const colors: Record<string, string> = {
+                  draft: 'var(--text-tertiary)',
+                  published: 'hsl(217, 91%, 60%)',
+                  grading: 'var(--warning)',
+                  graded: 'var(--success)',
+                };
+                return (
+                  <div key={status} style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '10px 0', borderBottom: '1px solid var(--glass-border)',
+                  }}>
+                    <div style={{
+                      width: 10, height: 10, borderRadius: '50%',
+                      background: colors[status],
+                      flexShrink: 0,
+                    }} />
+                    <span style={{ flex: 1, textTransform: 'capitalize', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{status}</span>
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{count}</strong>
                   </div>
-                  <span className={styles.weakPercent}>{t.percent}%</span>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <AlertTriangle size={16} style={{ color: 'var(--warning)' }} /> At-Risk Students Summary
-          </h3>
-          <div className={styles.riskSummary}>
-            {RISK_SUMMARY.map((r, i) => (
-              <div key={i} className={styles.riskRow}>
-                <div className={styles.riskDot} style={{ background: r.color }} />
-                <span className={styles.riskLevel}>{r.level}</span>
-                <div className={styles.riskBarWrap}>
-                  <div className={styles.riskBar}>
-                    <div className={styles.riskFill} style={{ width: `${(r.count / 210) * 100}%`, background: r.color }} />
+          {/* Classrooms Summary */}
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Classrooms Summary</h3>
+            <div style={{ padding: '20px' }}>
+              {classrooms && classrooms.length > 0 ? (
+                classrooms.map(c => (
+                  <div key={c.id} style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '10px 0', borderBottom: '1px solid var(--glass-border)',
+                  }}>
+                    <div style={{
+                      width: 10, height: 10, borderRadius: '50%',
+                      background: c.color || 'var(--accent)',
+                      flexShrink: 0,
+                    }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 500 }}>
+                        {c.grade} {c.subject} — {c.name}
+                      </div>
+                      <div style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
+                        {c.studentCount} students · Avg: {c.avgScore ?? '—'}%
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <span className={styles.riskCount}>{r.count}</span>
-              </div>
-            ))}
-          </div>
-          <div className={styles.riskTotal}>
-            <span>Total Students</span>
-            <strong>210</strong>
+                ))
+              ) : (
+                <p style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>No classrooms yet.</p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

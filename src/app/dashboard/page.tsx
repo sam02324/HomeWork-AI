@@ -18,11 +18,7 @@ import styles from './page.module.css';
 import { useDashboardStats, useAssignments } from '@/lib/api-client';
 import { useUser } from '@clerk/nextjs';
 
-const AT_RISK = [
-  { name: 'Ananya Gupta', class: '12th Physics', avg: 42, trend: 'declining', risk: 'high', initials: 'AG' },
-  { name: 'Rohit Patel', class: '11th Maths', avg: 51, trend: 'declining', risk: 'medium', initials: 'RP' },
-  { name: 'Meera Singh', class: '12th Chemistry', avg: 55, trend: 'flat', risk: 'medium', initials: 'MS' },
-];
+
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -186,34 +182,14 @@ export default function DashboardPage() {
             <div className={styles.sectionHeader}>
               <h2>
                 <AlertTriangle size={16} className={styles.warnIcon} />
-                At-Risk Students (Mock)
+                At-Risk Students
               </h2>
             </div>
 
             <div className={styles.riskList}>
-              {AT_RISK.map((student, i) => (
-                <Link
-                  key={i}
-                  href={`/dashboard/students/${i + 1}`}
-                  className={styles.riskCard}
-                >
-                  <div className={styles.riskAvatar}>{student.initials}</div>
-                  <div className={styles.riskInfo}>
-                    <div className={styles.riskName}>{student.name}</div>
-                    <div className={styles.riskClass}>{student.class} · Avg: {student.avg}%</div>
-                  </div>
-                  <div className={styles.riskRight}>
-                    <span className={styles.riskTrend}>
-                      {student.trend === 'declining' ? '↓' : '→'} {student.trend}
-                    </span>
-                    <span className={`${styles.riskBadge} ${
-                      student.risk === 'high' ? styles.riskHigh : styles.riskMedium
-                    }`}>
-                      {student.risk}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+              <div style={{ padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.9rem', textAlign: 'center' }}>
+                No at-risk students detected yet. This section will populate once you have graded assignments with student data.
+              </div>
             </div>
           </div>
 

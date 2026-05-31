@@ -98,7 +98,7 @@ function defaultCriterion(): RubricCriterion {
    ════════════════════════════════════════════════════════ */
 export default function NewAssignmentPage() {
   const router = useRouter();
-  const { data: classrooms } = useClassrooms();
+  const { data: classrooms, isLoading: classroomsLoading } = useClassrooms();
   const createAssignment = useCreateAssignment();
   const uploadFile = useUploadFile();
   const [step, setStep] = useState(0);
@@ -254,14 +254,25 @@ export default function NewAssignmentPage() {
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Class *</label>
-                <select className={styles.select} value={classId} onChange={(e) => setClassId(e.target.value)}>
-                  <option value="">Select a class</option>
-                  {classrooms?.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.studentCount} students)
-                    </option>
-                  ))}
-                </select>
+                {classroomsLoading ? (
+                  <div style={{ padding: '12px', color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>Loading classrooms...</div>
+                ) : !classrooms || classrooms.length === 0 ? (
+                  <div style={{ padding: '12px', background: 'var(--bg-tertiary)', borderRadius: '8px', fontSize: '0.9rem' }}>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>You haven&apos;t created any classrooms yet.</p>
+                    <a href="/dashboard/classrooms" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline' }}>
+                      → Create a classroom first
+                    </a>
+                  </div>
+                ) : (
+                  <select className={styles.select} value={classId} onChange={(e) => setClassId(e.target.value)}>
+                    <option value="">Select a class</option>
+                    {classrooms.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.grade} {c.subject} — {c.name} ({c.studentCount} students)
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className={styles.formGroup}>
