@@ -129,7 +129,7 @@ export function useAssignments(filters?: { classroomId?: string; status?: string
 }
 
 export function useAssignment(id: string) {
-  return useQuery<Assignment & { submissionCount: number; gradedCount: number; pendingCount: number }>({
+  return useQuery<Assignment & { classroom: Classroom, submissionCount: number; gradedCount: number; pendingCount: number }>({
     queryKey: ['assignments', id],
     queryFn: () => apiFetch(`/api/assignments/${id}`),
     enabled: !!id,
@@ -190,6 +190,14 @@ export function useSubmission(id: string) {
     queryKey: ['submissions', id],
     queryFn: () => apiFetch(`/api/submissions/${id}`),
     enabled: !!id,
+  });
+}
+
+export function useAssignmentSubmissions(assignmentId: string) {
+  return useQuery<Array<Submission & { student: Student; grade: Grade | null }>>({
+    queryKey: ['assignments', assignmentId, 'submissions'],
+    queryFn: () => apiFetch(`/api/assignments/${assignmentId}/submissions`),
+    enabled: !!assignmentId,
   });
 }
 

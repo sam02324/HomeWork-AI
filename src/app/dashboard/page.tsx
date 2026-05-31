@@ -199,10 +199,10 @@ export default function DashboardPage() {
               <Plus size={16} />
               New Assignment
             </Link>
-            <button className={styles.quickBtnGhost}>
+            <Link href="/dashboard/assignments" className={styles.quickBtnGhost}>
               <Upload size={16} />
               Import Submissions
-            </button>
+            </Link>
           </div>
         </div>
       </div>

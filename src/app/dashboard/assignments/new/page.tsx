@@ -121,6 +121,7 @@ export default function NewAssignmentPage() {
   const [referenceAnswers, setReferenceAnswers] = useState('');
   const [gradingInstructions, setGradingInstructions] = useState('');
   const [referenceFiles, setReferenceFiles] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   /* ── rubric helpers ── */
   function addCriterion() {
@@ -147,13 +148,34 @@ export default function NewAssignmentPage() {
 
   async function handleAddReferenceFile(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
-      try {
-        const file = e.target.files[0];
-        const res = await uploadFile.mutateAsync(file);
-        setReferenceFiles([...referenceFiles, res.filename]);
-      } catch (error) {
-        console.error('Failed to upload', error);
-      }
+      await processFile(e.target.files[0]);
+    }
+  }
+
+  async function processFile(file: File) {
+    try {
+      const res = await uploadFile.mutateAsync(file);
+      setReferenceFiles(prev => [...prev, res.filename]);
+    } catch (error) {
+      console.error('Failed to upload', error);
+    }
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFile(e.dataTransfer.files[0]);
     }
   }
 
@@ -512,13 +534,26 @@ export default function NewAssignmentPage() {
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Upload Reference Documents (Optional)</label>
-              <div className={styles.uploadArea}>
+              <label 
+                className={`${styles.uploadArea} ${isDragging ? styles.uploadAreaDrag : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                style={{ cursor: 'pointer', display: 'block' }}
+              >
                 <div className={styles.uploadContent}>
                   <Upload size={24} />
                   <p>Drag & drop PDFs, images, or click to browse</p>
                   <span>Answer keys, marking schemes, sample solutions</span>
                 </div>
-              </div>
+                <input 
+                  type="file" 
+                  style={{ display: 'none' }} 
+                  onChange={handleAddReferenceFile}
+                  accept=".pdf,image/*,text/plain" 
+                  disabled={uploadFile.isPending}
+                />
+              </label>
               {referenceFiles.length > 0 && (
                 <div className={styles.uploadedFiles}>
                   {referenceFiles.map((f, i) => (
@@ -529,16 +564,6 @@ export default function NewAssignmentPage() {
                   ))}
                 </div>
               )}
-              <label className={styles.addFileBtn} style={{ cursor: 'pointer' }}>
-                <Plus size={14} /> Add sample file
-                <input 
-                  type="file" 
-                  style={{ display: 'none' }} 
-                  onChange={handleAddReferenceFile}
-                  accept=".pdf,image/*,text/plain" 
-                  disabled={uploadFile.isPending}
-                />
-              </label>
               {uploadFile.isPending && <span style={{ marginLeft: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Uploading...</span>}
             </div>
           </div>
