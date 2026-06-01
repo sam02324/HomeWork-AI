@@ -112,6 +112,7 @@ export default function NewAssignmentPage() {
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
   const [submissionType, setSubmissionType] = useState<'any' | 'pdf' | 'image' | 'text'>('any');
+  const [spreadsheetId, setSpreadsheetId] = useState('');
 
   /* step 2 state */
   const [criteria, setCriteria] = useState<RubricCriterion[]>([defaultCriterion()]);
@@ -213,6 +214,7 @@ export default function NewAssignmentPage() {
         gradingInstructions: gradingInstructions || undefined,
         referenceAnswers: referenceAnswers || undefined,
         strictness,
+        spreadsheetId: spreadsheetId || undefined,
       });
       router.push('/dashboard/assignments');
     } catch (error) {
@@ -337,6 +339,19 @@ export default function NewAssignmentPage() {
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                 />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Google Spreadsheet ID</label>
+                <input
+                  className={styles.input}
+                  placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                  value={spreadsheetId}
+                  onChange={(e) => setSpreadsheetId(e.target.value)}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 4 }}>
+                  From the Google Sheet URL: docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit
+                </span>
               </div>
             </div>
 

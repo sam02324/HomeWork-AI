@@ -76,6 +76,8 @@ export const assignments = pgTable('assignments', {
   gradingInstructions: text('grading_instructions'),
   referenceAnswers: text('reference_answers'),
   strictness: integer('strictness').notNull().default(3),
+  /** Google Spreadsheet ID linked to this assignment's Google Form responses */
+  spreadsheetId: text('spreadsheet_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -89,6 +91,10 @@ export const submissions = pgTable('submissions', {
   fileType: text('file_type'),
   textContent: text('text_content'),
   status: submissionStatusEnum('status').notNull().default('pending'),
+  /** Dedup key from Google Sheets: hash of timestamp + email, prevents duplicate syncs */
+  googleFormResponseId: text('google_form_response_id'),
+  /** Google Drive file ID for the uploaded file from the form */
+  googleDriveFileId: text('google_drive_file_id'),
   submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

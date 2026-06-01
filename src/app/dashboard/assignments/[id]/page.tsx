@@ -8,7 +8,11 @@ import {
   CheckCircle, 
   Clock, 
   FileText,
-  Play
+  Play,
+  CloudDownload,
+  Loader2,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import styles from './page.module.css';
 import { 
@@ -17,7 +21,8 @@ import {
   useAssignmentSubmissions,
   useCreateSubmission,
   useUploadFile,
-  useGradeAssignment
+  useGradeAssignment,
+  useSyncSubmissions,
 } from '@/lib/api-client';
 
 export default function AssignmentDetailsPage() {
@@ -32,8 +37,10 @@ export default function AssignmentDetailsPage() {
   const uploadFile = useUploadFile();
   const createSubmission = useCreateSubmission();
   const gradeAssignment = useGradeAssignment();
+  const syncSubmissions = useSyncSubmissions();
 
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<{ message: string; errors: string[] } | null>(null);
 
   if (assignmentLoading || studentsLoading || submissionsLoading) {
     return <div className={styles.loading}>Loading assignment details...</div>;
@@ -87,6 +94,29 @@ export default function AssignmentDetailsPage() {
           </p>
         </div>
         <div className={styles.headerRight}>
+          <button
+            className={styles.syncBtn}
+            onClick={async () => {
+              setSyncResult(null);
+              try {
+                const result = await syncSubmissions.mutateAsync({ assignmentId: id });
+                setSyncResult({ message: result.message, errors: result.errors });
+              } catch (err) {
+                setSyncResult({ 
+                  message: 'Sync failed', 
+                  errors: [err instanceof Error ? err.message : 'Unknown error'] 
+                });
+              }
+            }}
+            disabled={syncSubmissions.isPending || !assignment.spreadsheetId}
+            title={!assignment.spreadsheetId ? 'No Google Sheet linked — edit assignment to add one' : 'Sync from Google Forms'}
+          >
+            {syncSubmissions.isPending ? (
+              <><Loader2 size={16} className={styles.spin} /> Syncing...</>
+            ) : (
+              <><CloudDownload size={16} /> Sync from Google Forms</>
+            )}
+          </button>
           <button 
             className={styles.gradeBtn} 
             onClick={handleGradeAll}
@@ -97,6 +127,26 @@ export default function AssignmentDetailsPage() {
           </button>
         </div>
       </div>
+
+      {/* Sync result banner */}
+      {syncResult && (
+        <div className={`${styles.syncBanner} ${syncResult.errors.length > 0 ? styles.syncBannerWarn : styles.syncBannerSuccess}`}>
+          <div className={styles.syncBannerContent}>
+            {syncResult.errors.length > 0 ? <AlertCircle size={16} /> : <CheckCircle size={16} />}
+            <div>
+              <strong>{syncResult.message}</strong>
+              {syncResult.errors.length > 0 && (
+                <ul className={styles.syncErrors}>
+                  {syncResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              )}
+            </div>
+          </div>
+          <button className={styles.syncBannerClose} onClick={() => setSyncResult(null)}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       <div className={styles.statsRow}>
         <div className={styles.statCard}>

@@ -57,6 +57,7 @@ export const createAssignmentSchema = z.object({
   gradingInstructions: z.string().max(5000).optional().nullable(),
   referenceAnswers: z.string().max(10000).optional().nullable(),
   strictness: z.number().int().min(1).max(5).default(3),
+  spreadsheetId: z.string().max(200).optional().nullable(),
 });
 
 export const updateAssignmentSchema = createAssignmentSchema.partial().extend({

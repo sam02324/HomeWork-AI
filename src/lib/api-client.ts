@@ -260,3 +260,33 @@ export function useUploadFile() {
     },
   });
 }
+
+/* ═══════════════════════════════════════
+   Google Forms Sync
+   ═══════════════════════════════════════ */
+
+interface SyncResult {
+  synced: number;
+  skipped: number;
+  autoCreated: number;
+  errors: string[];
+  message: string;
+}
+
+export function useSyncSubmissions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { assignmentId: string }) =>
+      apiFetch<SyncResult>('/api/sync-submissions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['assignments'] });
+      qc.invalidateQueries({ queryKey: ['assignments', variables.assignmentId, 'submissions'] });
+      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
+    },
+  });
+}
+

@@ -39,6 +39,7 @@ export async function GET(request: Request) {
         submissionType: assignments.submissionType,
         status: assignments.status,
         strictness: assignments.strictness,
+        spreadsheetId: assignments.spreadsheetId,
         createdAt: assignments.createdAt,
         updatedAt: assignments.updatedAt,
         submissionCount: sql<number>`(
