@@ -43,12 +43,19 @@ export default function SettingsPage() {
   const [selectedFolder, setSelectedFolder] = useState('');
   const [loadingFolders, setLoadingFolders] = useState(false);
   const [savingFolder, setSavingFolder] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === 'integrations') {
       setLoadingFolders(true);
+      setFetchError(null);
       fetch('/api/google-folders')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error || 'Failed to fetch folders'); });
+          }
+          return res.json();
+        })
         .then(data => {
           if (data.data && data.data.folders) {
             setFolders(data.data.folders);
@@ -56,6 +63,10 @@ export default function SettingsPage() {
               setSelectedFolder(data.data.currentSyncFolderId);
             }
           }
+        })
+        .catch(err => {
+          console.error('Fetch error:', err);
+          setFetchError(err.message);
         })
         .finally(() => setLoadingFolders(false));
     }
@@ -288,6 +299,12 @@ export default function SettingsPage() {
                   GradeAI will only automatically sync Google Forms and Sheets that are inside this specific folder.
                   If you leave this blank, it will scan your entire Google Drive.
                 </p>
+                {fetchError && (
+                  <div style={{ color: 'red', fontSize: '0.85rem', marginBottom: 12, padding: '8px', border: '1px solid red', borderRadius: '4px' }}>
+                    <strong>Google API Error:</strong> {fetchError}
+                    <p style={{ marginTop: '4px' }}>You may need to <a href="/api/auth/google" style={{ textDecoration: 'underline' }}>Reconnect your Google Account</a> to update permissions.</p>
+                  </div>
+                )}
                 {loadingFolders ? (
                   <p>Loading your Google Drive folders...</p>
                 ) : (

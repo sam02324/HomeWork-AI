@@ -46,8 +46,8 @@ export async function GET() {
       folders: results,
       currentSyncFolderId: token?.syncFolderId || null
     });
-  } catch (error) {
-    console.error('GET /api/google-folders error:', error);
-    return errorResponse('Failed to list Google Folders.', 500);
+  } catch (error: any) {
+    console.error('GET /api/google-folders error:', error.message || error);
+    return errorResponse(`Failed to list Google Folders: ${error.message || 'Unknown error'}`, 500);
   }
 }
