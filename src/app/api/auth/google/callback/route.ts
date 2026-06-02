@@ -14,7 +14,9 @@ export async function GET(request: Request) {
   const state = url.searchParams.get('state'); // userId
   const error = url.searchParams.get('error');
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const host = request.headers.get('host');
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000');
 
   if (error) {
     return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=${error}`);
