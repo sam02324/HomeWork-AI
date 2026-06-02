@@ -13,6 +13,18 @@ export async function GET() {
   if (userId instanceof NextResponse) return userId;
 
   try {
+    const token = await db.query.googleTokens.findFirst({
+      where: eq(googleTokens.userId, userId),
+    });
+
+    if (!token) {
+      return errorResponse('No Google account connected.', 401);
+    }
+
+    if (!token.scopes?.includes('drive.readonly') && !token.scopes?.includes('drive')) {
+      return errorResponse('Missing Google Drive permissions. You must reconnect your account to grant folder access.', 403);
+    }
+
     const auth = await getOAuthClientForUser(userId);
     const drive = google.drive({ version: 'v3', auth });
 
@@ -26,9 +38,12 @@ export async function GET() {
         orderBy: 'name',
         pageSize: 100,
         pageToken: nextPageToken,
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
       });
 
       const files = res.data.files || [];
+      console.log(`[Google API] Found ${files.length} folders on this page.`);
       for (const f of files) {
         if (f.id && f.name) {
           results.push({ id: f.id, name: f.name });
@@ -38,13 +53,9 @@ export async function GET() {
       nextPageToken = res.data.nextPageToken ?? undefined;
     } while (nextPageToken);
 
-    const token = await db.query.googleTokens.findFirst({
-      where: eq(googleTokens.userId, userId),
-    });
-
     return successResponse({
       folders: results,
-      currentSyncFolderId: token?.syncFolderId || null
+      currentSyncFolderId: token.syncFolderId || null
     });
   } catch (error: any) {
     console.error('GET /api/google-folders error:', error.message || error);
