@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -23,7 +23,7 @@ import { useUser } from '@clerk/nextjs';
 
 
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user } = useUser();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: assignments, isLoading: assignmentsLoading } = useAssignments();
@@ -273,5 +273,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 'var(--space-6) var(--space-8)', color: 'var(--text-tertiary)' }}>Loading dashboard...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
