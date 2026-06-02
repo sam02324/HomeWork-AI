@@ -49,7 +49,7 @@ export default function SettingsPage() {
     if (activeTab === 'integrations') {
       setLoadingFolders(true);
       setFetchError(null);
-      fetch('/api/google-folders')
+      fetch(`/api/google-folders?t=${Date.now()}`)
         .then(res => {
           if (!res.ok) {
             return res.json().then(err => { throw new Error(err.error || 'Failed to fetch folders'); });

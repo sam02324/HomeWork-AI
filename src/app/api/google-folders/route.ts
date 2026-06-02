@@ -17,11 +17,14 @@ export async function GET() {
       where: eq(googleTokens.userId, userId),
     });
 
+    console.log(`[Google API] User ${userId} requested folders. Token exists: ${!!token}, Scopes: ${token?.scopes}`);
+
     if (!token) {
       return errorResponse('No Google account connected.', 401);
     }
 
     if (!token.scopes?.includes('drive.readonly') && !token.scopes?.includes('drive')) {
+      console.log(`[Google API] User ${userId} missing drive.readonly scope. Throwing 403.`);
       return errorResponse('Missing Google Drive permissions. You must reconnect your account to grant folder access.', 403);
     }
 
@@ -53,10 +56,17 @@ export async function GET() {
       nextPageToken = res.data.nextPageToken ?? undefined;
     } while (nextPageToken);
 
-    return successResponse({
+    const response = successResponse({
       folders: results,
       currentSyncFolderId: token.syncFolderId || null
     });
+    
+    // Hard-disable Next.js caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    
+    return response;
   } catch (error: any) {
     console.error('GET /api/google-folders error:', error.message || error);
     return errorResponse(`Failed to list Google Folders: ${error.message || 'Unknown error'}`, 500);
