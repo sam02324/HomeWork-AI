@@ -7,6 +7,7 @@ import { getOAuthClientForUser, downloadDriveFile, fetchSheetRows } from '@/lib/
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import { google } from 'googleapis';
+import { PDFParse } from 'pdf-parse';
 
 function getR2Client() {
   return new S3Client({
@@ -168,13 +169,13 @@ export async function GET() {
 
         // Find or Create Student
         let studentId: string | null = null;
-        if (row.studentEmail) {
+        if (row.rollNumber) {
           const s = await db.query.students.findFirst({
-            where: and(eq(students.classroomId, classroom.id), ilike(students.email, row.studentEmail)),
+            where: and(eq(students.classroomId, classroom.id), eq(students.rollNumber, row.rollNumber)),
           });
           if (s) {
-            if (row.rollNumber && String(s.rollNumber) !== String(row.rollNumber)) {
-              await db.update(students).set({ rollNumber: row.rollNumber }).where(eq(students.id, s.id));
+            if (!s.email && row.studentEmail) {
+              await db.update(students).set({ email: row.studentEmail }).where(eq(students.id, s.id));
             }
             studentId = s.id;
           }
@@ -184,7 +185,7 @@ export async function GET() {
             where: and(eq(students.classroomId, classroom.id), ilike(students.name, row.studentName)),
           });
           if (s) {
-            if (row.rollNumber && String(s.rollNumber) !== String(row.rollNumber)) {
+            if (row.rollNumber && !s.rollNumber) {
               await db.update(students).set({ rollNumber: row.rollNumber }).where(eq(students.id, s.id));
             }
             studentId = s.id;
@@ -215,14 +216,30 @@ export async function GET() {
         // Download file if exists
         let fileUrl: string | null = null;
         let fileType: string | null = null;
+        let textContent: string | null = null;
 
         if (row.driveFileId) {
           try {
             const driveFile = await downloadDriveFile(row.driveFileId, userId);
-            fileUrl = await uploadBufferToR2(driveFile.buffer, driveFile.mimeType, driveFile.name, userId);
+            fileUrl = await uploadBufferToR2(
+              driveFile.buffer,
+              driveFile.mimeType,
+              driveFile.name,
+              userId
+            );
             fileType = driveFile.mimeType;
-          } catch (err) {
-            console.error(`Sync-All: Failed to download Drive file ${row.driveFileId}:`, err);
+
+            if (fileType === 'application/pdf') {
+              try {
+                const parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
+                const pdfData = await parser.getText();
+                textContent = pdfData.text;
+              } catch (e) {
+                console.error(`PDF parse error for ${row.driveFileId}`, e);
+              }
+            }
+          } catch (fileErr) {
+            console.error(`Sync-All: Failed to download Drive file ${row.driveFileId}:`, fileErr);
           }
         }
 
@@ -232,12 +249,13 @@ export async function GET() {
           if (!isNaN(parsed.getTime())) submittedAt = parsed;
         }
 
-        // Create Submission
+        // Create submission
         await db.insert(submissions).values({
           assignmentId: assignment.id,
-          studentId,
+          studentId: studentId!,
           fileUrl,
           fileType,
+          textContent,
           status: 'pending',
           googleFormResponseId: row.responseId,
           googleDriveFileId: row.driveFileId,

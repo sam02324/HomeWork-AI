@@ -19,6 +19,7 @@ import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 import { fetchSheetRows, downloadDriveFile } from '@/lib/google-sheets';
 import type { FormResponse } from '@/lib/google-sheets';
 import { randomUUID } from 'crypto';
+import { PDFParse } from 'pdf-parse';
 
 /* ═══════════════════════════════════════
    R2 Upload Helper (reuse from upload route)
@@ -72,19 +73,19 @@ async function findOrCreateStudent(
   email: string,
   providedRollNumber?: string
 ): Promise<string> {
-  // 1. Try to match by email first (most reliable)
-  if (email) {
-    const byEmail = await db.query.students.findFirst({
+  // 1. Try to match by rollNumber first (most reliable identifier if provided)
+  if (providedRollNumber) {
+    const byRoll = await db.query.students.findFirst({
       where: and(
         eq(students.classroomId, classroomId),
-        ilike(students.email, email)
+        eq(students.rollNumber, providedRollNumber)
       ),
     });
-    if (byEmail) {
-      if (providedRollNumber && byEmail.rollNumber !== providedRollNumber) {
-        await db.update(students).set({ rollNumber: providedRollNumber }).where(eq(students.id, byEmail.id));
+    if (byRoll) {
+      if (!byRoll.email && email) {
+        await db.update(students).set({ email }).where(eq(students.id, byRoll.id));
       }
-      return byEmail.id;
+      return byRoll.id;
     }
   }
 
@@ -96,7 +97,7 @@ async function findOrCreateStudent(
     ),
   });
   if (byName) {
-    if (providedRollNumber && byName.rollNumber !== providedRollNumber) {
+    if (providedRollNumber && !byName.rollNumber) {
       await db.update(students).set({ rollNumber: providedRollNumber }).where(eq(students.id, byName.id));
     }
     return byName.id;
@@ -257,6 +258,7 @@ export async function POST(request: Request) {
         // Download file from Drive and upload to R2 (if file exists)
         let fileUrl: string | null = null;
         let fileType: string | null = null;
+        let textContent: string | null = null;
 
         if (row.driveFileId) {
           try {
@@ -268,6 +270,17 @@ export async function POST(request: Request) {
               userId
             );
             fileType = driveFile.mimeType;
+
+            // Extract text if it's a PDF
+            if (fileType === 'application/pdf') {
+              try {
+                const parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
+                const pdfData = await parser.getText();
+                textContent = pdfData.text;
+              } catch (pdfErr) {
+                console.error(`Failed to parse PDF for ${row.driveFileId}:`, pdfErr);
+              }
+            }
           } catch (fileErr) {
             console.error(`Failed to download Drive file ${row.driveFileId}:`, fileErr);
             errors.push(
@@ -295,6 +308,7 @@ export async function POST(request: Request) {
           studentId,
           fileUrl,
           fileType,
+          textContent,
           status: 'pending',
           googleFormResponseId: row.responseId,
           googleDriveFileId: row.driveFileId,
