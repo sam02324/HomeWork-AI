@@ -290,3 +290,25 @@ export function useSyncSubmissions() {
   });
 }
 
+/* ═══════════════════════════════════════
+   Google Sheets Discovery
+   ═══════════════════════════════════════ */
+
+interface SharedSpreadsheet {
+  id: string;
+  name: string;
+  modifiedTime: string;
+  ownerEmail: string | null;
+  webViewLink: string | null;
+}
+
+/** Fetches all Google Sheets shared with the service account */
+export function useGoogleSheets(enabled = true) {
+  return useQuery<SharedSpreadsheet[]>({
+    queryKey: ['google-sheets'],
+    queryFn: () => apiFetch<SharedSpreadsheet[]>('/api/google-sheets'),
+    enabled,
+    staleTime: 60_000, // Cache for 1 minute
+  });
+}
+

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
-import { useClassrooms, useCreateAssignment, useUploadFile } from '@/lib/api-client';
+import { useClassrooms, useCreateAssignment, useUploadFile, useGoogleSheets } from '@/lib/api-client';
 
 /* ───── types ───── */
 interface RubricCriterion {
@@ -113,6 +113,10 @@ export default function NewAssignmentPage() {
   const [description, setDescription] = useState('');
   const [submissionType, setSubmissionType] = useState<'any' | 'pdf' | 'image' | 'text'>('any');
   const [spreadsheetId, setSpreadsheetId] = useState('');
+  const [sheetPickerMode, setSheetPickerMode] = useState<'browse' | 'manual'>('browse');
+
+  /* Google Sheets discovery */
+  const { data: googleSheets, isLoading: sheetsLoading } = useGoogleSheets();
 
   /* step 2 state */
   const [criteria, setCriteria] = useState<RubricCriterion[]>([defaultCriterion()]);
@@ -342,16 +346,71 @@ export default function NewAssignmentPage() {
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Google Spreadsheet ID</label>
-                <input
-                  className={styles.input}
-                  placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-                  value={spreadsheetId}
-                  onChange={(e) => setSpreadsheetId(e.target.value)}
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 4 }}>
-                  From the Google Sheet URL: docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit
-                </span>
+                <label className={styles.label}>Google Spreadsheet</label>
+
+                {/* Mode toggle */}
+                <div className={styles.sheetPickerToggle}>
+                  <button
+                    type="button"
+                    className={`${styles.pickerToggleBtn} ${sheetPickerMode === 'browse' ? styles.pickerToggleActive : ''}`}
+                    onClick={() => setSheetPickerMode('browse')}
+                  >
+                    Browse Shared Sheets
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.pickerToggleBtn} ${sheetPickerMode === 'manual' ? styles.pickerToggleActive : ''}`}
+                    onClick={() => setSheetPickerMode('manual')}
+                  >
+                    Paste ID Manually
+                  </button>
+                </div>
+
+                {sheetPickerMode === 'browse' ? (
+                  <div className={styles.sheetList}>
+                    {sheetsLoading ? (
+                      <div className={styles.sheetListLoading}>Scanning shared Google Sheets...</div>
+                    ) : !googleSheets || googleSheets.length === 0 ? (
+                      <div className={styles.sheetListEmpty}>
+                        <p>No shared Google Sheets found.</p>
+                        <span>Share your Google Form response sheet with the service account email, then refresh.</span>
+                      </div>
+                    ) : (
+                      googleSheets.map((sheet) => (
+                        <button
+                          key={sheet.id}
+                          type="button"
+                          className={`${styles.sheetItem} ${spreadsheetId === sheet.id ? styles.sheetItemActive : ''}`}
+                          onClick={() => setSpreadsheetId(sheet.id)}
+                        >
+                          <div className={styles.sheetItemInfo}>
+                            <strong>{sheet.name}</strong>
+                            <span>
+                              {sheet.ownerEmail ? `Shared by ${sheet.ownerEmail}` : 'Shared sheet'}
+                              {' · '}
+                              {sheet.modifiedTime ? new Date(sheet.modifiedTime).toLocaleDateString() : ''}
+                            </span>
+                          </div>
+                          {spreadsheetId === sheet.id && (
+                            <Check size={16} className={styles.sheetItemCheck} />
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      className={styles.input}
+                      placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                      value={spreadsheetId}
+                      onChange={(e) => setSpreadsheetId(e.target.value)}
+                    />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 4 }}>
+                      From the Google Sheet URL: docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 

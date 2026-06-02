@@ -683,6 +683,121 @@
   transform: translateY(-1px);
 }
 
+/* ── Google Sheet Picker ── */
+.sheetPickerToggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.pickerToggleBtn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--glass-bg);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.pickerToggleBtn:not(:last-child) {
+  border-right: 1px solid var(--glass-border);
+}
+.pickerToggleBtn:hover {
+  background: var(--glass-bg-hover);
+}
+.pickerToggleBtn.pickerToggleActive {
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sheetList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+}
+
+.sheetListLoading,
+.sheetListEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+  text-align: center;
+  gap: var(--space-1);
+}
+.sheetListEmpty p {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.sheetListEmpty span {
+  font-size: 0.75rem;
+}
+.sheetListLoading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  text-align: left;
+  width: 100%;
+}
+.sheetItem:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+}
+.sheetItem.sheetItemActive {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
+
+.sheetItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sheetItemInfo strong {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sheetItemInfo span {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+.sheetItemCheck {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .header {

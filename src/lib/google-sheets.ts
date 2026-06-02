@@ -94,6 +94,68 @@ function getGoogleAuth(): JWT {
 }
 
 /* ═══════════════════════════════════════
+   Google Drive — List Shared Spreadsheets
+   ═══════════════════════════════════════ */
+
+/** Metadata for a discovered Google Sheet */
+export interface SharedSpreadsheet {
+  /** Google Spreadsheet / Drive file ID */
+  id: string;
+  /** Display name of the spreadsheet */
+  name: string;
+  /** The last time the file was modified */
+  modifiedTime: string;
+  /** The owner's email (the professor who shared it) */
+  ownerEmail: string | null;
+  /** Web link to the spreadsheet */
+  webViewLink: string | null;
+}
+
+/**
+ * Lists all Google Sheets that have been shared with the service account.
+ * This lets professors simply share their form-response sheet with the
+ * service account email, and it will appear in the picker automatically —
+ * no need to copy/paste spreadsheet IDs.
+ *
+ * @param pageSize - Max results per page (default 50)
+ * @returns Array of SharedSpreadsheet metadata
+ */
+export async function listSharedSpreadsheets(
+  pageSize = 50
+): Promise<SharedSpreadsheet[]> {
+  const auth = getGoogleAuth();
+  const drive = google.drive({ version: 'v3', auth });
+
+  const results: SharedSpreadsheet[] = [];
+  let nextPageToken: string | undefined;
+
+  do {
+    const res = await drive.files.list({
+      q: "mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",
+      fields: 'nextPageToken, files(id, name, modifiedTime, owners, webViewLink)',
+      orderBy: 'modifiedTime desc',
+      pageSize,
+      pageToken: nextPageToken,
+    });
+
+    const files = res.data.files || [];
+    for (const f of files) {
+      results.push({
+        id: f.id!,
+        name: f.name || 'Untitled',
+        modifiedTime: f.modifiedTime || '',
+        ownerEmail: f.owners?.[0]?.emailAddress || null,
+        webViewLink: f.webViewLink || null,
+      });
+    }
+
+    nextPageToken = res.data.nextPageToken ?? undefined;
+  } while (nextPageToken);
+
+  return results;
+}
+
+/* ═══════════════════════════════════════
    Google Sheets — Fetch Rows
    ═══════════════════════════════════════ */
 
