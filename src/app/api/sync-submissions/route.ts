@@ -66,7 +66,8 @@ async function uploadBufferToR2(
 async function findOrCreateStudent(
   classroomId: string,
   name: string,
-  email: string
+  email: string,
+  providedRollNumber?: number
 ): Promise<string> {
   // 1. Try to match by email first (most reliable)
   if (email) {
@@ -76,7 +77,12 @@ async function findOrCreateStudent(
         ilike(students.email, email)
       ),
     });
-    if (byEmail) return byEmail.id;
+    if (byEmail) {
+      if (providedRollNumber && byEmail.rollNumber !== providedRollNumber) {
+        await db.update(students).set({ rollNumber: providedRollNumber }).where(eq(students.id, byEmail.id));
+      }
+      return byEmail.id;
+    }
   }
 
   // 2. Try to match by name (case-insensitive)
@@ -86,7 +92,12 @@ async function findOrCreateStudent(
       ilike(students.name, name)
     ),
   });
-  if (byName) return byName.id;
+  if (byName) {
+    if (providedRollNumber && byName.rollNumber !== providedRollNumber) {
+      await db.update(students).set({ rollNumber: providedRollNumber }).where(eq(students.id, byName.id));
+    }
+    return byName.id;
+  }
 
   // 3. Auto-create the student
   // Determine the next roll number
@@ -100,11 +111,13 @@ async function findOrCreateStudent(
     0
   );
 
+  const finalRollNumber = providedRollNumber ?? (maxRoll + 1);
+
   const [newStudent] = await db.insert(students).values({
     classroomId,
     name: name,
     email: email || null,
-    rollNumber: maxRoll + 1,
+    rollNumber: finalRollNumber,
   }).returning();
 
   return newStudent.id;
@@ -203,11 +216,9 @@ export async function POST(request: Request) {
 
     for (const row of rows) {
       try {
-        // Skip duplicates
-        if (existingIds.has(row.responseId)) {
-          skipped++;
-          continue;
-        }
+        // We intentionally find/create the student before the duplicate check
+        // so that student records (like roll numbers) can self-heal/update 
+        // even if the submission is already synced.
 
         // Find or create the student
         const studentCountBefore = await db.query.students.findMany({
@@ -218,7 +229,8 @@ export async function POST(request: Request) {
         const studentId = await findOrCreateStudent(
           assignment.classroomId,
           row.studentName,
-          row.studentEmail
+          row.studentEmail,
+          row.rollNumber
         );
 
         const studentCountAfter = await db.query.students.findMany({
@@ -228,6 +240,12 @@ export async function POST(request: Request) {
 
         if (studentCountAfter.length > studentCountBefore.length) {
           autoCreated++;
+        }
+
+        // Now we can safely skip the submission processing if it's a duplicate
+        if (existingIds.has(row.responseId)) {
+          skipped++;
+          continue;
         }
 
         // Download file from Drive and upload to R2 (if file exists)

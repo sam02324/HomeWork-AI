@@ -211,7 +211,16 @@ export default function AssignmentDetailsPage() {
                     </td>
                     <td>
                       {sub ? (
-                        <button className={styles.viewSubBtn}>
+                        <button 
+                          className={styles.viewSubBtn}
+                          onClick={() => {
+                            if (sub.fileUrl) {
+                              window.open(sub.fileUrl, '_blank');
+                            } else {
+                              alert('No file URL available for this submission.');
+                            }
+                          }}
+                        >
                           <FileText size={14} /> View
                         </button>
                       ) : (

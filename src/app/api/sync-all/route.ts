@@ -169,13 +169,23 @@ export async function GET() {
           const s = await db.query.students.findFirst({
             where: and(eq(students.classroomId, classroom.id), ilike(students.email, row.studentEmail)),
           });
-          if (s) studentId = s.id;
+          if (s) {
+            if (row.rollNumber && s.rollNumber !== row.rollNumber) {
+              await db.update(students).set({ rollNumber: row.rollNumber }).where(eq(students.id, s.id));
+            }
+            studentId = s.id;
+          }
         }
         if (!studentId && row.studentName) {
           const s = await db.query.students.findFirst({
             where: and(eq(students.classroomId, classroom.id), ilike(students.name, row.studentName)),
           });
-          if (s) studentId = s.id;
+          if (s) {
+            if (row.rollNumber && s.rollNumber !== row.rollNumber) {
+              await db.update(students).set({ rollNumber: row.rollNumber }).where(eq(students.id, s.id));
+            }
+            studentId = s.id;
+          }
         }
         
         if (!studentId) {
@@ -185,11 +195,13 @@ export async function GET() {
           });
           const maxRoll = allStudents.reduce((max, st) => Math.max(max, st.rollNumber), 0);
           
+          const finalRollNumber = row.rollNumber ?? (maxRoll + 1);
+          
           const [newStudent] = await db.insert(students).values({
             classroomId: classroom.id,
             name: row.studentName || 'Unknown Student',
             email: row.studentEmail || null,
-            rollNumber: maxRoll + 1,
+            rollNumber: finalRollNumber,
           }).returning();
           studentId = newStudent.id;
         }

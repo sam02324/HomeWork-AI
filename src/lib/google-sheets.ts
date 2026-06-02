@@ -24,16 +24,18 @@ export interface FormResponse {
   timestamp: string;
   /** Student's name as entered in the form */
   studentName: string;
-  /** Student's email as entered in the form */
+  /** The student's email address (if collected) */
   studentEmail: string;
-  /** Class/Subject value from the dropdown */
-  classSubject: string;
+  /** The student's roll number */
+  rollNumber?: number;
+  /** The class/subject (if collected in the form) */
+  classSubject?: string;
   /** Google Drive URL for the uploaded file (if any) */
-  fileUrl: string | null;
+  fileUrl?: string | null;
   /** Extracted Google Drive file ID (if any) */
   driveFileId: string | null;
   /** The raw row values for debugging */
-  rawRow: string[];
+  rawRow?: string[];
 }
 
 /** Result of downloading a file from Google Drive */
@@ -239,34 +241,53 @@ export async function fetchSheetRows(
     // No data rows (only header or empty sheet)
     return [];
   }
+  const headers = rows[0].map((h: any) => String(h).toLowerCase().trim());
+  const tsIdx = headers.findIndex((h: string) => h.includes('timestamp') || h === 'date');
+  const nameIdx = headers.findIndex((h: string) => h.includes('name'));
+  const emailIdx = headers.findIndex((h: string) => h.includes('email') || h.includes('e-mail'));
+  const rollIdx = headers.findIndex((h: string) => h.includes('roll') || h.includes('id') || h.includes('student number'));
+  const fileIdx = headers.findIndex((h: string) => h.includes('file') || h.includes('upload') || h.includes('assignment') || h.includes('submission'));
 
   // Skip header row (index 0), parse each data row
   const dataRows = rows.slice(1);
 
   return dataRows
     .map((row): FormResponse | null => {
-      const timestamp = (row[0] || '').trim();
-      const studentName = (row[1] || '').trim();
-      const studentEmail = (row[2] || '').trim();
-      const classSubject = (row[3] || '').trim();
-      const fileUrl = (row[4] || '').trim() || null;
+      const timestamp = tsIdx >= 0 ? (row[tsIdx] || '').trim() : '';
+      const studentName = nameIdx >= 0 ? (row[nameIdx] || '').trim() : (row[1] || '').trim();
+      const studentEmail = emailIdx >= 0 ? (row[emailIdx] || '').trim() : '';
+      const fileUrl = fileIdx >= 0 ? (row[fileIdx] || '').trim() : null;
+      
+      let rollNumber: number | undefined = undefined;
+      if (rollIdx >= 0 && row[rollIdx]) {
+        const parsed = parseInt(row[rollIdx].trim(), 10);
+        if (!isNaN(parsed)) rollNumber = parsed;
+      }
 
       // Skip rows missing essential data
-      if (!timestamp || !studentName) {
+      if (!timestamp && !studentName) {
         return null;
       }
 
-      // Generate a unique dedup key from timestamp + email
-      const responseId = generateResponseId(timestamp, studentEmail || studentName);
+      // Generate a unique dedup key from timestamp + email/name
+      const responseId = generateResponseId(timestamp || String(Date.now()), studentEmail || studentName || 'unknown');
+
+      let driveFileId = null;
+      if (fileUrl && fileUrl.includes('id=')) {
+        driveFileId = fileUrl.split('id=')[1].split('&')[0];
+      } else if (fileUrl && fileUrl.includes('/d/')) {
+        driveFileId = fileUrl.split('/d/')[1].split('/')[0];
+      }
 
       return {
         responseId,
-        timestamp,
-        studentName,
+        timestamp: timestamp || new Date().toISOString(),
+        studentName: studentName || 'Unknown Student',
         studentEmail,
-        classSubject,
+        rollNumber,
+        classSubject: '',
         fileUrl,
-        driveFileId: fileUrl ? extractDriveFileId(fileUrl) : null,
+        driveFileId,
         rawRow: row.map(String),
       };
     })
