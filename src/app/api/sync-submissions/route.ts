@@ -337,9 +337,8 @@ export async function POST(request: Request) {
       skipped,
       autoCreated,
       errors,
-      message: `Synced ${synced} new submission${synced !== 1 ? 's' : ''}. ` +
-        `${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped. ` +
-        (autoCreated > 0 ? `${autoCreated} new student${autoCreated !== 1 ? 's' : ''} auto-created.` : ''),
+      message: `Sync successful! ${synced} new submission${synced !== 1 ? 's' : ''} added.` +
+        (autoCreated > 0 ? ` ${autoCreated} new student${autoCreated !== 1 ? 's' : ''} auto-created.` : ''),
     });
 
   } catch (error) {
