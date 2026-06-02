@@ -108,17 +108,17 @@ export default function SettingsPage() {
                   <label className={styles.label}>
                     <Phone size={14} /> Phone
                   </label>
-                  <input className={styles.input} defaultValue="+91 98765 43210" />
+                  <input className={styles.input} placeholder="+1 234 567 8900" defaultValue="" />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Subject Expertise</label>
-                  <input className={styles.input} defaultValue="Physics" />
+                  <input className={styles.input} placeholder="e.g. Mathematics" defaultValue="" />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
                     <MapPin size={14} /> Location
                   </label>
-                  <input className={styles.input} defaultValue="Kota, Rajasthan" />
+                  <input className={styles.input} placeholder="City, Country" defaultValue="" />
                 </div>
               </div>
 
@@ -127,7 +127,8 @@ export default function SettingsPage() {
                 <textarea
                   className={styles.textarea}
                   rows={3}
-                  defaultValue="Senior Physics Teacher with 12+ years of experience in IIT-JEE coaching. Specializing in Mechanics and Thermodynamics."
+                  placeholder="Tell us about your teaching experience..."
+                  defaultValue=""
                 />
               </div>
 
@@ -144,23 +145,23 @@ export default function SettingsPage() {
               <p className={styles.sectionDesc}>Manage your coaching institute or school settings</p>
 
               <div className={styles.orgCard}>
-                <div className={styles.orgLogo}>AC</div>
+                <div className={styles.orgLogo}>O</div>
                 <div>
-                  <h3 className={styles.orgName}>Allen Career Institute</h3>
-                  <p className={styles.orgMeta}>Kota, Rajasthan · 45 Teachers · Pro Plan</p>
+                  <h3 className={styles.orgName}>My Organization</h3>
+                  <p className={styles.orgMeta}>Setup your organization details below</p>
                 </div>
               </div>
 
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Organization Name</label>
-                  <input className={styles.input} defaultValue="Allen Career Institute" />
+                  <input className={styles.input} placeholder="e.g. Springfield High School" defaultValue="" />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
                     <Globe size={14} /> Website
                   </label>
-                  <input className={styles.input} defaultValue="https://allen.ac.in" />
+                  <input className={styles.input} placeholder="https://" defaultValue="" />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Organization Type</label>
@@ -199,53 +200,42 @@ export default function SettingsPage() {
                 <div className={styles.planHeader}>
                   <div>
                     <span className={styles.planBadge}>Current Plan</span>
-                    <h3 className={styles.planName}>Pro Plan</h3>
-                    <p className={styles.planPrice}>₹999<span>/month</span></p>
+                    <h3 className={styles.planName}>Free Tier</h3>
+                    <p className={styles.planPrice}>₹0<span>/month</span></p>
                   </div>
-                  <button className={styles.upgradeBtn}>Upgrade to Institute</button>
+                  <button className={styles.upgradeBtn}>Upgrade to Pro</button>
                 </div>
 
                 <div className={styles.usageGrid}>
                   <div className={styles.usageItem}>
                     <div className={styles.usageLabel}>Gradings Used</div>
                     <div className={styles.usageBar}>
-                      <div className={styles.usageFill} style={{ width: '68%' }} />
+                      <div className={styles.usageFill} style={{ width: '0%' }} />
                     </div>
-                    <div className={styles.usageText}>1,360 / 2,000</div>
+                    <div className={styles.usageText}>0 / 100</div>
                   </div>
                   <div className={styles.usageItem}>
                     <div className={styles.usageLabel}>Classes</div>
                     <div className={styles.usageBar}>
-                      <div className={styles.usageFill} style={{ width: '30%' }} />
+                      <div className={styles.usageFill} style={{ width: '0%' }} />
                     </div>
-                    <div className={styles.usageText}>6 / 20</div>
+                    <div className={styles.usageText}>0 / 3</div>
                   </div>
                   <div className={styles.usageItem}>
                     <div className={styles.usageLabel}>Students</div>
                     <div className={styles.usageBar}>
-                      <div className={styles.usageFill} style={{ width: '42%' }} />
+                      <div className={styles.usageFill} style={{ width: '0%' }} />
                     </div>
-                    <div className={styles.usageText}>210 / 500</div>
+                    <div className={styles.usageText}>0 / 50</div>
                   </div>
                 </div>
               </div>
 
               <h3 className={styles.invoiceTitle}>Recent Invoices</h3>
               <div className={styles.invoiceList}>
-                {[
-                  { date: 'May 1, 2026', amount: '₹999', status: 'Paid' },
-                  { date: 'Apr 1, 2026', amount: '₹999', status: 'Paid' },
-                  { date: 'Mar 1, 2026', amount: '₹999', status: 'Paid' },
-                ].map((inv, i) => (
-                  <div key={i} className={styles.invoiceRow}>
-                    <span>{inv.date}</span>
-                    <span>{inv.amount}</span>
-                    <span className={styles.invoicePaid}>{inv.status}</span>
-                    <button className={styles.invoiceLink}>
-                      <ExternalLink size={14} />
-                    </button>
-                  </div>
-                ))}
+                <div className={styles.invoiceRow} style={{ color: 'var(--text-tertiary)', border: 'none', justifyContent: 'center' }}>
+                  No recent invoices found.
+                </div>
               </div>
             </div>
           )}

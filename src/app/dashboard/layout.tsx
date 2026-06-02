@@ -168,7 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Bell size={18} />
                 <span className={styles.notifDot} />
               </button>
-              <div className={styles.topbarAvatar}>RK</div>
+              <div className={styles.topbarAvatar}>{initials}</div>
             </div>
           </header>
 
