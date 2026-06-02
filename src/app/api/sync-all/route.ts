@@ -59,8 +59,14 @@ export async function GET() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
+    let query = `mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and modifiedTime > '${sevenDaysAgo.toISOString()}'`;
+    
+    if (tokenRecord.syncFolderId) {
+      query += ` and '${tokenRecord.syncFolderId}' in parents`;
+    }
+
     const res = await drive.files.list({
-      q: `mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and modifiedTime > '${sevenDaysAgo.toISOString()}'`,
+      q: query,
       fields: 'files(id, name, modifiedTime, parents)',
       orderBy: 'modifiedTime desc',
       pageSize: 50,

@@ -124,6 +124,8 @@ export const googleTokens = pgTable('google_tokens', {
   tokenExpiry: timestamp('token_expiry', { withTimezone: true }).notNull(),
   googleEmail: text('google_email'),
   scopes: text('scopes'),
+  syncFolderId: text('sync_folder_id'),
+  syncFolderName: text('sync_folder_name'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

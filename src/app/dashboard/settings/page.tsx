@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Building2,
@@ -16,6 +16,7 @@ import {
   MapPin,
   Check,
   ExternalLink,
+  Link2,
 } from 'lucide-react';
 import styles from './page.module.css';
 import { useUser } from '@clerk/nextjs';
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'organization', label: 'Organization', icon: Building2 },
   { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
+  { id: 'integrations', label: 'Integrations', icon: Link2 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
@@ -36,6 +38,40 @@ export default function SettingsPage() {
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
+
+  const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState('');
+  const [loadingFolders, setLoadingFolders] = useState(false);
+  const [savingFolder, setSavingFolder] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'integrations') {
+      setLoadingFolders(true);
+      fetch('/api/google-folders')
+        .then(res => res.json())
+        .then(data => {
+          if (data.data && data.data.folders) {
+            setFolders(data.data.folders);
+            if (data.data.currentSyncFolderId) {
+              setSelectedFolder(data.data.currentSyncFolderId);
+            }
+          }
+        })
+        .finally(() => setLoadingFolders(false));
+    }
+  }, [activeTab]);
+
+  async function handleSaveFolder() {
+    setSavingFolder(true);
+    const folder = folders.find(f => f.id === selectedFolder);
+    await fetch('/api/settings/sync-folder', {
+      method: 'POST',
+      body: JSON.stringify({ folderId: selectedFolder, folderName: folder?.name }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    setSavingFolder(false);
+    handleSave();
+  }
 
   function handleSave() {
     setSaved(true);
@@ -237,6 +273,44 @@ export default function SettingsPage() {
                   No recent invoices found.
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Integrations */}
+          {activeTab === 'integrations' && (
+            <div className={styles.section} key="integrations">
+              <h2 className={styles.sectionTitle}>Integrations</h2>
+              <p className={styles.sectionDesc}>Manage your connected apps and sync preferences.</p>
+
+              <div className={styles.formGroup} style={{ marginTop: 20 }}>
+                <label className={styles.label}>Target Sync Folder (Google Drive)</label>
+                <p className={styles.sectionDesc} style={{ fontSize: '0.85rem', marginBottom: 12 }}>
+                  GradeAI will only automatically sync Google Forms and Sheets that are inside this specific folder.
+                  If you leave this blank, it will scan your entire Google Drive.
+                </p>
+                {loadingFolders ? (
+                  <p>Loading your Google Drive folders...</p>
+                ) : (
+                  <select 
+                    className={styles.select} 
+                    value={selectedFolder} 
+                    onChange={e => setSelectedFolder(e.target.value)}
+                  >
+                    <option value="">-- Scan Entire Drive --</option>
+                    {folders.map(f => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <button 
+                className={styles.saveBtn} 
+                onClick={handleSaveFolder} 
+                disabled={savingFolder || loadingFolders}
+              >
+                {saved ? <><Check size={16} /> Saved!</> : 'Save Sync Settings'}
+              </button>
             </div>
           )}
 
