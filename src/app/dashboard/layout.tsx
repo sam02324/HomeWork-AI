@@ -21,6 +21,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import styles from './layout.module.css';
+import { useUser, useClerk } from '@clerk/nextjs';
 
 /* ═══ Theme Context ═══ */
 const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
@@ -39,6 +40,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  
+  const fullName = user?.fullName || user?.firstName || 'Teacher';
+  const initials = fullName.substring(0, 2).toUpperCase();
 
   function toggleTheme() {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -88,12 +94,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className={styles.sidebarFooter}>
             <div className={styles.userCard}>
-              <div className={styles.userAvatar}>RK</div>
+              <div className={styles.userAvatar}>{initials}</div>
               <div className={styles.userInfo}>
-                <div className={styles.userName}>Rajesh Kumar</div>
-                <div className={styles.userRole}>Physics Teacher</div>
+                <div className={styles.userName}>{fullName}</div>
+                <div className={styles.userRole}>Teacher</div>
               </div>
-              <LogOut size={16} className={styles.logoutIcon} />
+              <button 
+                onClick={() => signOut({ redirectUrl: '/' })} 
+                title="Log out"
+                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }}
+              >
+                <LogOut size={16} className={styles.logoutIcon} />
+              </button>
             </div>
           </div>
         </aside>

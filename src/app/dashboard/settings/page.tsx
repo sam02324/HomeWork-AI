@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import styles from './page.module.css';
+import { useUser } from '@clerk/nextjs';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -31,6 +32,10 @@ const TABS = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [saved, setSaved] = useState(false);
+  const { user } = useUser();
+  
+  const fullName = user?.fullName || user?.firstName || 'Teacher';
+  const initials = fullName.substring(0, 2).toUpperCase();
 
   function handleSave() {
     setSaved(true);
@@ -73,7 +78,7 @@ export default function SettingsPage() {
 
               <div className={styles.avatarSection}>
                 <div className={styles.avatar}>
-                  <span>RK</span>
+                  <span>{initials}</span>
                 </div>
                 <div className={styles.avatarActions}>
                   <button className={styles.avatarBtn}>
@@ -87,17 +92,17 @@ export default function SettingsPage() {
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Full Name</label>
-                  <input className={styles.input} defaultValue="Rajesh Kumar" />
+                  <input className={styles.input} defaultValue={fullName} />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Display Name</label>
-                  <input className={styles.input} defaultValue="Rajesh Sir" />
+                  <input className={styles.input} defaultValue={user?.firstName || 'Teacher'} />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
                     <Mail size={14} /> Email
                   </label>
-                  <input className={styles.input} defaultValue="rajesh.kumar@allencareer.in" type="email" />
+                  <input className={styles.input} defaultValue={user?.primaryEmailAddress?.emailAddress || ''} type="email" />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>

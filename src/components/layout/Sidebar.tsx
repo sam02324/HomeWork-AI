@@ -14,8 +14,10 @@ import {
   ChevronsUpDown,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
+import { useUser, useClerk } from '@clerk/nextjs';
 
 interface NavItem {
   label: string;
@@ -39,6 +41,11 @@ const bottomNavItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  
+  const fullName = user?.fullName || user?.firstName || 'Teacher';
+  const initials = fullName.substring(0, 2).toUpperCase();
 
   const toggleMobile = useCallback(() => {
     setMobileOpen((prev) => !prev);
@@ -125,12 +132,19 @@ export function Sidebar() {
         {/* User section */}
         <div className={styles.userSection}>
           <div className={styles.userCard}>
-            <div className={styles.userAvatar}>RK</div>
+            <div className={styles.userAvatar}>{initials}</div>
             <div className={styles.userInfo}>
-              <div className={styles.userName}>Rajesh Kumar</div>
-              <div className={styles.userRole}>Physics Teacher</div>
+              <div className={styles.userName}>{fullName}</div>
+              <div className={styles.userRole}>Teacher</div>
             </div>
-            <ChevronsUpDown className={styles.userChevron} />
+            <button 
+              onClick={() => signOut({ redirectUrl: '/' })} 
+              className={styles.logoutButton}
+              title="Log out"
+              style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }}
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>
