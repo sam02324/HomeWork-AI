@@ -93,6 +93,54 @@ function getGoogleAuth(): JWT {
   return auth;
 }
 
+/**
+ * Creates an OAuth2 client using a teacher's stored tokens.
+ * Automatically refreshes the access token if it's expired.
+ */
+export async function getOAuthClientForUser(userId: string) {
+  const { db } = await import('@/db');
+  const { googleTokens } = await import('@/db/schema');
+  const { eq } = await import('drizzle-orm');
+
+  const token = await db.query.googleTokens.findFirst({
+    where: eq(googleTokens.userId, userId),
+  });
+
+  if (!token) {
+    throw new Error('Google account not connected. Please connect your Google account first.');
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+    `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/google/callback`
+  );
+
+  oauth2Client.setCredentials({
+    access_token: token.accessToken,
+    refresh_token: token.refreshToken,
+    expiry_date: token.tokenExpiry.getTime(),
+  });
+
+  // Auto-refresh if expired
+  if (token.tokenExpiry.getTime() <= Date.now()) {
+    const { credentials } = await oauth2Client.refreshAccessToken();
+
+    // Update stored tokens
+    await db.update(googleTokens)
+      .set({
+        accessToken: credentials.access_token!,
+        tokenExpiry: new Date(credentials.expiry_date || Date.now() + 3600_000),
+        updatedAt: new Date(),
+      })
+      .where(eq(googleTokens.userId, userId));
+
+    oauth2Client.setCredentials(credentials);
+  }
+
+  return oauth2Client;
+}
+
 /* ═══════════════════════════════════════
    Google Drive — List Shared Spreadsheets
    ═══════════════════════════════════════ */
@@ -121,9 +169,10 @@ export interface SharedSpreadsheet {
  * @returns Array of SharedSpreadsheet metadata
  */
 export async function listSharedSpreadsheets(
-  pageSize = 50
+  pageSize = 50,
+  userId?: string
 ): Promise<SharedSpreadsheet[]> {
-  const auth = getGoogleAuth();
+  const auth = userId ? await getOAuthClientForUser(userId) : getGoogleAuth();
   const drive = google.drive({ version: 'v3', auth });
 
   const results: SharedSpreadsheet[] = [];
@@ -173,9 +222,10 @@ export async function listSharedSpreadsheets(
  * @returns Array of parsed FormResponse objects (excludes header row)
  */
 export async function fetchSheetRows(
-  spreadsheetId: string
+  spreadsheetId: string,
+  userId?: string
 ): Promise<FormResponse[]> {
-  const auth = getGoogleAuth();
+  const auth = userId ? await getOAuthClientForUser(userId) : getGoogleAuth();
   const sheets = google.sheets({ version: 'v4', auth });
 
   // Fetch the entire first sheet
@@ -236,8 +286,8 @@ export async function fetchSheetRows(
  * @param fileId - The Google Drive file ID
  * @returns DriveFile with buffer, mimeType, and name
  */
-export async function downloadDriveFile(fileId: string): Promise<DriveFile> {
-  const auth = getGoogleAuth();
+export async function downloadDriveFile(fileId: string, userId?: string): Promise<DriveFile> {
+  const auth = userId ? await getOAuthClientForUser(userId) : getGoogleAuth();
   const drive = google.drive({ version: 'v3', auth });
 
   // First, get file metadata to know the name and MIME type

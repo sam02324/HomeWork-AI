@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Users,
   Clock,
@@ -13,9 +15,10 @@ import {
   ChevronRight,
   AlertTriangle,
   Sparkles,
+  X,
 } from 'lucide-react';
 import styles from './page.module.css';
-import { useDashboardStats, useAssignments } from '@/lib/api-client';
+import { useDashboardStats, useAssignments, useGoogleAuthStatus } from '@/lib/api-client';
 import { useUser } from '@clerk/nextjs';
 
 
@@ -26,6 +29,27 @@ export default function DashboardPage() {
   const { data: assignments, isLoading: assignmentsLoading } = useAssignments();
 
   const firstName = user?.firstName || 'Teacher';
+  const { data: googleAuth } = useGoogleAuthStatus();
+  const searchParams = useSearchParams();
+
+  const [googleBannerDismissed, setGoogleBannerDismissed] = useState(false);
+  const [oauthMessage, setOauthMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Handle OAuth callback params
+  useEffect(() => {
+    const authResult = searchParams.get('google_auth');
+    if (authResult === 'success') {
+      setOauthMessage({ type: 'success', text: 'Google account connected successfully!' });
+      // Clean URL
+      window.history.replaceState({}, '', '/dashboard');
+    } else if (authResult === 'error') {
+      const reason = searchParams.get('reason') || 'unknown';
+      setOauthMessage({ type: 'error', text: `Failed to connect Google: ${reason}` });
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [searchParams]);
+
+  const showGoogleBanner = googleAuth && !googleAuth.connected && !googleBannerDismissed;
 
   const STATS = [
     { label: 'Total Students', value: statsLoading ? '...' : (stats?.totalStudents ?? 0), icon: Users, trend: '', trendUp: true, color: 'var(--accent)' },
@@ -79,6 +103,48 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* OAuth callback message */}
+      {oauthMessage && (
+        <div className={`${styles.oauthBanner} ${oauthMessage.type === 'success' ? styles.oauthSuccess : styles.oauthError}`}>
+          <span>{oauthMessage.text}</span>
+          <button onClick={() => setOauthMessage(null)} className={styles.oauthDismiss}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Google Connect Banner */}
+      {showGoogleBanner && (
+        <div className={styles.googleBanner}>
+          <div className={styles.googleBannerLeft}>
+            <div className={styles.googleBannerIcon}>
+              <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            </div>
+            <div className={styles.googleBannerText}>
+              <strong>Connect your Google Account</strong>
+              <span>Allow GradeAI to access your Google Forms responses and Drive files for seamless submission syncing.</span>
+            </div>
+          </div>
+          <div className={styles.googleBannerActions}>
+            <a href="/api/auth/google" className={styles.googleConnectBtn}>
+              <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#fff" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#fff" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#fff" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#fff" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              Allow Access
+            </a>
+            <button className={styles.googleLaterBtn} onClick={() => setGoogleBannerDismissed(true)}>
+              Maybe Later
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Connected indicator (subtle) */}
+      {googleAuth?.connected && (
+        <div className={styles.googleConnected}>
+          <CheckCircle size={14} />
+          <span>Google connected: {googleAuth.googleEmail}</span>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className={styles.mainGrid}>

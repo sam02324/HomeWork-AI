@@ -115,13 +115,27 @@ export const grades = pgTable('grades', {
   reviewedByTeacher: boolean('reviewed_by_teacher').notNull().default(false),
 });
 
+/** Google OAuth tokens — one per teacher for Google Drive/Sheets access */
+export const googleTokens = pgTable('google_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token').notNull(),
+  tokenExpiry: timestamp('token_expiry', { withTimezone: true }).notNull(),
+  googleEmail: text('google_email'),
+  scopes: text('scopes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 /* ═══════════════════════════════════════
    RELATIONS
    ═══════════════════════════════════════ */
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   classrooms: many(classrooms),
   assignments: many(assignments),
+  googleToken: one(googleTokens),
 }));
 
 export const classroomsRelations = relations(classrooms, ({ one, many }) => ({
@@ -149,6 +163,10 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 
 export const gradesRelations = relations(grades, ({ one }) => ({
   submission: one(submissions, { fields: [grades.submissionId], references: [submissions.id] }),
+}));
+
+export const googleTokensRelations = relations(googleTokens, ({ one }) => ({
+  user: one(users, { fields: [googleTokens.userId], references: [users.id] }),
 }));
 
 /* ═══════════════════════════════════════
@@ -183,3 +201,5 @@ export type Submission = typeof submissions.$inferSelect;
 export type NewSubmission = typeof submissions.$inferInsert;
 export type Grade = typeof grades.$inferSelect;
 export type NewGrade = typeof grades.$inferInsert;
+export type GoogleToken = typeof googleTokens.$inferSelect;
+export type NewGoogleToken = typeof googleTokens.$inferInsert;

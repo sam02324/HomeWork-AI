@@ -1,13 +1,16 @@
 /**
  * GET /api/google-sheets
  *
- * Lists all Google Spreadsheets shared with the service account.
- * Professors share their form-response sheet, and it auto-appears here.
+ * Lists all Google Spreadsheets accessible to the teacher.
+ * Uses OAuth tokens if available, otherwise falls back to service account.
  */
 
 import { NextResponse } from 'next/server';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 import { listSharedSpreadsheets } from '@/lib/google-sheets';
+import { db } from '@/db';
+import { googleTokens } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,12 +19,18 @@ export async function GET() {
   if (userId instanceof NextResponse) return userId;
 
   try {
-    const sheets = await listSharedSpreadsheets();
+    // Check if user has connected Google OAuth
+    const token = await db.query.googleTokens.findFirst({
+      where: eq(googleTokens.userId, userId),
+    });
+
+    // Use OAuth tokens if available, otherwise fall back to service account
+    const sheets = await listSharedSpreadsheets(50, token ? userId : undefined);
     return successResponse(sheets);
   } catch (error) {
     console.error('GET /api/google-sheets error:', error);
     return errorResponse(
-      'Failed to list Google Sheets. Check service account configuration.',
+      'Failed to list Google Sheets. Check your Google connection.',
       500
     );
   }

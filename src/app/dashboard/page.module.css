@@ -515,6 +515,150 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Google OAuth Banner ── */
+.oauthBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: slideDown 0.3s var(--ease-out);
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.oauthSuccess {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+.oauthError {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+.oauthDismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+}
+.oauthDismiss:hover {
+  opacity: 1;
+}
+
+.googleBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.08), rgba(52, 168, 83, 0.06));
+  border: 1px solid rgba(66, 133, 244, 0.2);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
+  animation: slideDown 0.4s var(--ease-out);
+  gap: var(--space-6);
+}
+
+.googleBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.googleBannerIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.googleBannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.googleBannerText strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.googleBannerText span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.googleBannerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.googleConnectBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: linear-gradient(135deg, #4285F4, #356ac3);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.25);
+}
+.googleConnectBtn:hover {
+  background: linear-gradient(135deg, #356ac3, #2a58a4);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.35);
+  transform: translateY(-1px);
+}
+
+.googleLaterBtn {
+  background: none;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  white-space: nowrap;
+}
+.googleLaterBtn:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+}
+
+.googleConnected {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.78rem;
+  color: var(--success);
+  opacity: 0.7;
+  margin-bottom: var(--space-4);
+}
+
 @media (max-width: 768px) {
   .page {
     padding: var(--space-4);
@@ -530,5 +674,17 @@
   .assignmentMeta {
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+  .googleBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .googleBannerActions {
+    width: 100%;
+  }
+  .googleConnectBtn {
+    flex: 1;
+    justify-content: center;
   }
 }

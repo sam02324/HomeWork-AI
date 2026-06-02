@@ -302,13 +302,45 @@ interface SharedSpreadsheet {
   webViewLink: string | null;
 }
 
-/** Fetches all Google Sheets shared with the service account */
+/** Fetches all Google Sheets the teacher has access to (via OAuth or service account) */
 export function useGoogleSheets(enabled = true) {
   return useQuery<SharedSpreadsheet[]>({
     queryKey: ['google-sheets'],
     queryFn: () => apiFetch<SharedSpreadsheet[]>('/api/google-sheets'),
     enabled,
     staleTime: 60_000, // Cache for 1 minute
+  });
+}
+
+/* ═══════════════════════════════════════
+   Google OAuth Connection
+   ═══════════════════════════════════════ */
+
+interface GoogleAuthStatus {
+  connected: boolean;
+  googleEmail: string | null;
+  connectedAt: string | null;
+}
+
+/** Checks whether the current teacher has connected their Google account */
+export function useGoogleAuthStatus() {
+  return useQuery<GoogleAuthStatus>({
+    queryKey: ['google-auth-status'],
+    queryFn: () => apiFetch<GoogleAuthStatus>('/api/auth/google/status'),
+    staleTime: 30_000,
+  });
+}
+
+/** Disconnects the teacher's Google account (revokes + deletes tokens) */
+export function useDisconnectGoogle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch('/api/auth/google/status', { method: 'DELETE' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['google-auth-status'] });
+      qc.invalidateQueries({ queryKey: ['google-sheets'] });
+    },
   });
 }
 

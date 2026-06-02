@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { db } from '@/db';
-import { assignments, submissions, students, classrooms } from '@/db/schema';
+import { assignments, submissions, students, classrooms, googleTokens } from '@/db/schema';
 import { eq, and, or, ilike } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 import { fetchSheetRows, downloadDriveFile } from '@/lib/google-sheets';
@@ -155,9 +155,15 @@ export async function POST(request: Request) {
     }
 
     // 2. Fetch all rows from the linked Google Sheet
+    // Check if user has OAuth tokens
+    const tokenRecord = await db.query.googleTokens.findFirst({
+      where: eq(googleTokens.userId, userId),
+    });
+    const oauthUserId = tokenRecord ? userId : undefined;
+
     let rows: FormResponse[];
     try {
-      rows = await fetchSheetRows(assignment.spreadsheetId);
+      rows = await fetchSheetRows(assignment.spreadsheetId, oauthUserId);
     } catch (err) {
       console.error('Failed to fetch Google Sheet:', err);
       return errorResponse(
@@ -230,7 +236,7 @@ export async function POST(request: Request) {
 
         if (row.driveFileId) {
           try {
-            const driveFile = await downloadDriveFile(row.driveFileId);
+            const driveFile = await downloadDriveFile(row.driveFileId, oauthUserId);
             fileUrl = await uploadBufferToR2(
               driveFile.buffer,
               driveFile.mimeType,
