@@ -31,13 +31,13 @@ export async function GET(_req: Request, { params }: Params) {
         parentPhone: students.parentPhone,
         createdAt: students.createdAt,
         submissionCount: sql<number>`(
-          SELECT COUNT(*)::int FROM submissions WHERE submissions.student_id = ${students.id}
+          SELECT COUNT(*)::int FROM submissions WHERE submissions.student_id = students.id
         )`,
         avgScore: sql<number | null>`(
           SELECT ROUND(AVG(g.total_score::numeric / g.max_score * 100), 1)
           FROM grades g
           JOIN submissions s ON s.id = g.submission_id
-          WHERE s.student_id = ${students.id}
+          WHERE s.student_id = students.id
         )`,
       })
       .from(students)
