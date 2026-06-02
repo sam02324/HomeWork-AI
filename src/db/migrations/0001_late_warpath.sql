@@ -1,0 +1,1 @@
+ALTER TABLE "students" ALTER COLUMN "roll_number" SET DATA TYPE text;

@@ -99,7 +99,7 @@ export function useStudents(classroomId: string) {
 export function useAddStudents(classroomId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { students: Array<{ name: string; rollNumber: number; email?: string; parentPhone?: string }> }) =>
+    mutationFn: (data: { students: Array<{ name: string; rollNumber: string; email?: string; parentPhone?: string }> }) =>
       apiFetch(`/api/classrooms/${classroomId}/students`, { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['students', classroomId] });

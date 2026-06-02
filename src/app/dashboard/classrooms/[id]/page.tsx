@@ -76,7 +76,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
       await addStudents.mutateAsync({
         students: [{
           name: newName,
-          rollNumber: parseInt(newRoll, 10),
+          rollNumber: newRoll,
         }]
       });
       setIsModalOpen(false);

@@ -53,7 +53,7 @@ export const students = pgTable('students', {
   id: uuid('id').defaultRandom().primaryKey(),
   classroomId: uuid('classroom_id').notNull().references(() => classrooms.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  rollNumber: integer('roll_number').notNull(),
+  rollNumber: text('roll_number').notNull(),
   email: text('email'),
   parentPhone: text('parent_phone'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

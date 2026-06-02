@@ -144,13 +144,16 @@ export async function POST(request: Request) {
           where: eq(students.classroomId, classroom.id),
           columns: { rollNumber: true },
         });
-        const maxRoll = allStudents.reduce((max, st) => Math.max(max, st.rollNumber), 0);
+        const maxRoll = allStudents.reduce((max, st) => {
+          const n = parseInt(st.rollNumber, 10);
+          return isNaN(n) ? max : Math.max(max, n);
+        }, 0);
         
         const [newStudent] = await db.insert(students).values({
           classroomId: classroom.id,
           name: row.studentName || 'Unknown Student',
           email: row.studentEmail || null,
-          rollNumber: maxRoll + 1,
+          rollNumber: String(maxRoll + 1),
         }).returning();
         studentId = newStudent.id;
       }

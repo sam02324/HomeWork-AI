@@ -170,7 +170,7 @@ export async function GET() {
             where: and(eq(students.classroomId, classroom.id), ilike(students.email, row.studentEmail)),
           });
           if (s) {
-            if (row.rollNumber && s.rollNumber !== row.rollNumber) {
+            if (row.rollNumber && String(s.rollNumber) !== String(row.rollNumber)) {
               await db.update(students).set({ rollNumber: row.rollNumber }).where(eq(students.id, s.id));
             }
             studentId = s.id;
@@ -181,7 +181,7 @@ export async function GET() {
             where: and(eq(students.classroomId, classroom.id), ilike(students.name, row.studentName)),
           });
           if (s) {
-            if (row.rollNumber && s.rollNumber !== row.rollNumber) {
+            if (row.rollNumber && String(s.rollNumber) !== String(row.rollNumber)) {
               await db.update(students).set({ rollNumber: row.rollNumber }).where(eq(students.id, s.id));
             }
             studentId = s.id;
@@ -193,9 +193,12 @@ export async function GET() {
             where: eq(students.classroomId, classroom.id),
             columns: { rollNumber: true },
           });
-          const maxRoll = allStudents.reduce((max, st) => Math.max(max, st.rollNumber), 0);
+          const maxRoll = allStudents.reduce((max, st) => {
+            const n = parseInt(st.rollNumber, 10);
+            return isNaN(n) ? max : Math.max(max, n);
+          }, 0);
           
-          const finalRollNumber = row.rollNumber ?? (maxRoll + 1);
+          const finalRollNumber = row.rollNumber ?? String(maxRoll + 1);
           
           const [newStudent] = await db.insert(students).values({
             classroomId: classroom.id,

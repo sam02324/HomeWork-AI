@@ -68,7 +68,7 @@ export async function POST(request: Request, { params }: Params) {
     const rawBody = await request.json();
 
     // Support both { student: {...} } and { students: [...] }
-    let studentList: Array<{ name: string; rollNumber: number; email?: string | null; parentPhone?: string | null }>;
+    let studentList: Array<{ name: string; rollNumber: string; email?: string | null; parentPhone?: string | null }>;
 
     if (rawBody.students && Array.isArray(rawBody.students)) {
       const parsed = createStudentsBulkSchema.parse(rawBody);

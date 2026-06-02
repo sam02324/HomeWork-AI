@@ -67,7 +67,7 @@ async function findOrCreateStudent(
   classroomId: string,
   name: string,
   email: string,
-  providedRollNumber?: number
+  providedRollNumber?: string
 ): Promise<string> {
   // 1. Try to match by email first (most reliable)
   if (email) {
@@ -107,11 +107,14 @@ async function findOrCreateStudent(
   });
 
   const maxRoll = existingStudents.reduce(
-    (max, s) => Math.max(max, s.rollNumber),
+    (max, s) => {
+      const n = parseInt(s.rollNumber, 10);
+      return isNaN(n) ? max : Math.max(max, n);
+    },
     0
   );
 
-  const finalRollNumber = providedRollNumber ?? (maxRoll + 1);
+  const finalRollNumber = providedRollNumber ?? String(maxRoll + 1);
 
   const [newStudent] = await db.insert(students).values({
     classroomId,

@@ -27,7 +27,7 @@ export interface FormResponse {
   /** The student's email address (if collected) */
   studentEmail: string;
   /** The student's roll number */
-  rollNumber?: number;
+  rollNumber?: string;
   /** The class/subject (if collected in the form) */
   classSubject?: string;
   /** Google Drive URL for the uploaded file (if any) */
@@ -258,10 +258,10 @@ export async function fetchSheetRows(
       const studentEmail = emailIdx >= 0 ? (row[emailIdx] || '').trim() : '';
       const fileUrl = fileIdx >= 0 ? (row[fileIdx] || '').trim() : null;
       
-      let rollNumber: number | undefined = undefined;
+      let rollNumber: string | undefined = undefined;
       if (rollIdx >= 0 && row[rollIdx]) {
-        const parsed = parseInt(row[rollIdx].trim(), 10);
-        if (!isNaN(parsed)) rollNumber = parsed;
+        const trimmed = row[rollIdx].trim();
+        if (trimmed) rollNumber = trimmed;
       }
 
       // Skip rows missing essential data

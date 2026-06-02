@@ -19,7 +19,7 @@ export const updateClassroomSchema = createClassroomSchema.partial();
 
 export const createStudentSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  rollNumber: z.number().int().min(1),
+  rollNumber: z.string().min(1, 'Roll number is required'),
   email: z.string().email().optional().nullable(),
   parentPhone: z.string().max(15).optional().nullable(),
 });
