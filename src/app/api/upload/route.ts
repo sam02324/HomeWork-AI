@@ -54,17 +54,20 @@ export async function POST(request: Request) {
 
     // Upload to R2
     const s3 = getR2Client();
+    const bucketName = process.env.R2_BUCKET_NAME || 'gradeai-uploads';
+    const publicUrl = process.env.R2_PUBLIC_URL || 'https://pub-e8ac62539691450290f9818cb9c462ff.r2.dev';
+
     await s3.send(new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME!,
+      Bucket: bucketName,
       Key: filename,
       Body: buffer,
       ContentType: file.type,
     }));
 
-    const publicUrl = `${process.env.R2_PUBLIC_URL}/${filename}`;
+    const fileUrl = `${publicUrl}/${filename}`;
 
     return successResponse({
-      url: publicUrl,
+      url: fileUrl,
       filename: file.name,
       size: file.size,
       type: file.type,
