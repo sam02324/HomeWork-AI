@@ -3,6 +3,7 @@
 import { useState, createContext, useContext } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -51,6 +52,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
   }
+
+  // Zero-setup background auto-sync
+  useEffect(() => {
+    // Fire and forget, no need to await or block UI
+    fetch('/api/sync-all').catch(err => console.error('Background sync failed:', err));
+  }, []);
 
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === '/dashboard';
