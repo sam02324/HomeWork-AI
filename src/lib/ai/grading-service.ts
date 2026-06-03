@@ -32,6 +32,8 @@ interface GradingResult {
   strengths: string[];
   improvements: string[];
   gradeLetter: string;
+  aiDetectionScore?: number;
+  aiDetectionReason?: string;
 }
 
 /* ═══════════════════════════════════════
