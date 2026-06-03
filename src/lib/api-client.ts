@@ -233,6 +233,15 @@ export function useCreateSubmission() {
   });
 }
 
+export function useDeleteSubmission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/submissions/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assignments'] }),
+  });
+}
+
 /* ═══════════════════════════════════════
    Analytics
    ═══════════════════════════════════════ */

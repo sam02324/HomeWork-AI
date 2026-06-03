@@ -36,3 +36,30 @@ export async function GET(_req: Request, { params }: Params) {
     return errorResponse('Failed to fetch submission', 500);
   }
 }
+
+/** DELETE /api/submissions/[id] — Delete a submission */
+export async function DELETE(_req: Request, { params }: Params) {
+  const userId = await getAuthUserId();
+  if (userId instanceof NextResponse) return userId;
+
+  const { id } = await params;
+
+  try {
+    const submission = await db.query.submissions.findFirst({
+      where: eq(submissions.id, id),
+      with: { assignment: true },
+    });
+
+    if (!submission) return errorResponse('Submission not found', 404);
+    if (submission.assignment.teacherId !== userId) {
+      return errorResponse('Not authorized', 403);
+    }
+
+    await db.delete(submissions).where(eq(submissions.id, id));
+
+    return successResponse({ message: 'Submission deleted' });
+  } catch (error) {
+    console.error('DELETE /api/submissions/[id] error:', error);
+    return errorResponse('Failed to delete submission', 500);
+  }
+}

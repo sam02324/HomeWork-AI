@@ -17,7 +17,8 @@ import {
   MessageSquareWarning,
   Eye,
   Save,
-  Pencil
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import styles from './page.module.css';
 import { 
@@ -31,6 +32,7 @@ import {
   useUpdateGrade,
   useUpdateAssignment,
   useCreateGrade,
+  useDeleteSubmission,
 } from '@/lib/api-client';
 import type { Grade } from '@/db/schema';
 
@@ -47,6 +49,7 @@ export default function AssignmentDetailsPage() {
   const createSubmission = useCreateSubmission();
   const gradeAssignment = useGradeAssignment();
   const syncSubmissions = useSyncSubmissions();
+  const deleteSubmission = useDeleteSubmission();
 
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<{ message: string; errors: string[] } | null>(null);
@@ -387,6 +390,30 @@ export default function AssignmentDetailsPage() {
                                 <Eye size={14} /> Edit Score
                               </button>
                             )}
+                            <button
+                              className={styles.deleteBtn}
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this submission?')) {
+                                  deleteSubmission.mutate(sub.id);
+                                }
+                              }}
+                              disabled={deleteSubmission.isPending}
+                              title="Delete Submission"
+                              style={{ 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '4px', 
+                                padding: '4px 8px', 
+                                background: 'transparent', 
+                                border: '1px solid var(--danger-color)', 
+                                color: 'var(--danger-color)', 
+                                borderRadius: '4px', 
+                                cursor: 'pointer',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
                           </>
                         ) : (
                           <label className={styles.uploadBtn}>
