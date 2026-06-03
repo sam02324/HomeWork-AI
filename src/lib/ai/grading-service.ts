@@ -114,7 +114,7 @@ export async function gradeSubmission(
 
     // 4. Call Claude API
     const response = await anthropic.messages.create({
-      model: 'claude-3-7-sonnet-20250219',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4000,
       system: systemPrompt,
       messages: [
@@ -159,7 +159,7 @@ export async function gradeSubmission(
       criteriaScores: result.criteriaScores,
       strengths: result.strengths,
       improvements: result.improvements,
-      aiModel: 'claude-3-7-sonnet-20250219',
+      aiModel: 'claude-sonnet-4-6',
       aiTokensUsed: tokensUsed,
       aiDetectionScore,
       aiDetectionFlag,
