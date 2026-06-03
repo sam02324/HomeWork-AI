@@ -209,9 +209,9 @@ export default function AssignmentDetailsPage() {
           <button
             className={styles.syncBtn}
             onClick={openPreGradeModal}
-            title="Edit the AI Grading Rubric"
+            title="Review and edit the AI Grading Rubric and Reference Answers"
           >
-            <FileText size={16} /> Edit Rubric
+            <FileText size={16} /> Review Rubric
           </button>
           <button
             className={styles.syncBtn}
@@ -238,11 +238,16 @@ export default function AssignmentDetailsPage() {
           </button>
           <button 
             className={styles.gradeBtn} 
-            onClick={openPreGradeModal}
+            onClick={() => {
+              if (confirm('Are you sure you want to start grading all pending submissions?')) {
+                gradeAssignment.mutate(id);
+              }
+            }}
             disabled={gradeAssignment.isPending || assignment.status === 'graded'}
+            title="Start grading all pending submissions using the saved rubric"
           >
             <Play size={16} />
-            {gradeAssignment.isPending ? 'Grading...' : 'Review Rubric & Grade'}
+            {gradeAssignment.isPending ? 'Grading...' : 'Grade All Pending'}
           </button>
         </div>
       </div>
@@ -557,16 +562,17 @@ export default function AssignmentDetailsPage() {
 
               <div className={styles.modalActions}>
                 <button type="button" className={styles.cancelBtn} onClick={() => setShowPreGradeModal(false)}>Cancel</button>
-                <button type="button" className={styles.cancelBtn} onClick={async () => {
+                <button type="button" className={styles.submitBtn} onClick={async () => {
                   try {
-                    await updateAssignment.mutateAsync({ gradingInstructions: localInstructions, rubric: localRubric });
+                    await updateAssignment.mutateAsync({ 
+                      gradingInstructions: localInstructions, 
+                      referenceAnswers: localReferenceAnswers,
+                      rubric: localRubric 
+                    });
                     setShowPreGradeModal(false);
                   } catch(e) { alert('Save failed'); }
                 }} disabled={updateAssignment.isPending}>
-                  {updateAssignment.isPending ? 'Saving...' : 'Just Save'}
-                </button>
-                <button type="button" className={styles.submitBtn} onClick={startGrading} disabled={updateAssignment.isPending || gradeAssignment.isPending}>
-                  {updateAssignment.isPending || gradeAssignment.isPending ? 'Preparing...' : <><Play size={14}/> Save & Start Grading</>}
+                  {updateAssignment.isPending ? 'Saving...' : <><Save size={14}/> Save Rubric</>}
                 </button>
               </div>
             </div>
