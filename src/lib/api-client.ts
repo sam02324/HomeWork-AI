@@ -247,6 +247,7 @@ interface StudentAnalytics {
   avgScore: number;
   totalSubmissions: number;
   scoreTrend: Array<{ date: string; score: number; assignmentTitle: string }>;
+  grades: Array<any>;
 }
 
 export function useStudentAnalytics(studentId: string) {
