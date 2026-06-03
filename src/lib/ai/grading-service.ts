@@ -32,8 +32,6 @@ interface GradingResult {
   strengths: string[];
   improvements: string[];
   gradeLetter: string;
-  aiDetectionScore?: number;
-  aiDetectionReason?: string;
 }
 
 /* ═══════════════════════════════════════
@@ -148,8 +146,9 @@ export async function gradeSubmission(
     const gradeLetter = result.gradeLetter || getGradeLetter(percentage);
 
     // 8. Save grade to database
-    const aiDetectionScore = result.aiDetectionScore ?? 0;
-    const aiDetectionFlag = aiDetectionScore > 60;
+    // AI detection is disabled, hardcode default safe values
+    const aiDetectionScore = 0;
+    const aiDetectionFlag = false;
 
     await db.insert(grades).values({
       submissionId: submission.id,

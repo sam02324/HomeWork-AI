@@ -69,21 +69,8 @@ You MUST respond with valid JSON matching this exact structure:
   "feedback": "<overall feedback paragraph — professional, encouraging, specific>",
   "strengths": ["<strength 1>", "<strength 2>"],
   "improvements": ["<area for improvement 1>", "<area for improvement 2>"],
-  "gradeLetter": "<A+/A/A-/B+/B/B-/C+/C/C-/D+/D/F>",
-  "aiDetectionScore": <number between 0 and 100>,
-  "aiDetectionReason": "<brief reason for AI detection score>"
+  "gradeLetter": "<A+/A/A-/B+/B/B-/C+/C/C-/D+/D/F>"
 }
-
-## AI Detection Instructions
-You must also evaluate whether the submission appears to be AI-generated.
-Assign an "aiDetectionScore" from 0 to 100:
-- 0-20: Clearly human-written (natural mistakes, personal voice, handwriting-style errors)
-- 21-40: Likely human-written with minor polishing
-- 41-60: Uncertain — could be either
-- 61-80: Likely AI-generated (too perfect, generic phrasing, no personal voice)
-- 81-100: Almost certainly AI-generated (perfect grammar, formulaic structure, no authentic mistakes)
-
-Provide a brief "aiDetectionReason" explaining your assessment.
 
 ## Grading Guidelines
 - Be specific in feedback — reference exact parts of the student's answer

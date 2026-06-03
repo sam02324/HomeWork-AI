@@ -367,7 +367,7 @@ export default function AssignmentDetailsPage() {
                             </button>
                             {sub.status === 'graded' && grade ? (
                               <button
-                                className={`${styles.reviewBtn} ${grade.aiDetectionFlag && !grade.reviewedByTeacher ? styles.reviewBtnWarn : ''}`}
+                                className={styles.reviewBtn}
                                 onClick={() => openReviewModal(grade, student.name, sub.id)}
                                 title="Review AI Grade"
                               >
@@ -425,16 +425,6 @@ export default function AssignmentDetailsPage() {
             </div>
             
             <div className={styles.modalContent}>
-              {reviewGrade?.aiDetectionFlag && !reviewGrade?.reviewedByTeacher && (
-                <div className={styles.aiWarningBanner}>
-                  <MessageSquareWarning size={18} />
-                  <div>
-                    <strong>Potential AI Submission Detected</strong>
-                    <p>AI generated probability: {reviewGrade.aiDetectionScore}%</p>
-                  </div>
-                </div>
-              )}
-
               {reviewGrade && (
                 <div className={styles.gradeSection}>
                   <h3>AI Feedback</h3>
