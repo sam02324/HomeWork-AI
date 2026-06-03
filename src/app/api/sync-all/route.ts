@@ -221,12 +221,6 @@ export async function GET() {
         if (row.driveFileId) {
           try {
             const driveFile = await downloadDriveFile(row.driveFileId, userId);
-            fileUrl = await uploadBufferToR2(
-              driveFile.buffer,
-              driveFile.mimeType,
-              driveFile.name,
-              userId
-            );
             fileType = driveFile.mimeType;
 
             if (fileType === 'application/pdf') {
@@ -238,6 +232,18 @@ export async function GET() {
                 console.error(`PDF parse error for ${row.driveFileId}`, e);
               }
             }
+
+            try {
+              fileUrl = await uploadBufferToR2(
+                driveFile.buffer,
+                driveFile.mimeType,
+                driveFile.name,
+                userId
+              );
+            } catch (r2Err) {
+              console.warn(`Skipping R2 upload (using Drive URL fallback) due to:`, (r2Err as Error).message);
+            }
+
           } catch (fileErr) {
             console.error(`Sync-All: Failed to download Drive file ${row.driveFileId}:`, fileErr);
           }

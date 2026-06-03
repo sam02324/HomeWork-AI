@@ -263,12 +263,6 @@ export async function POST(request: Request) {
         if (row.driveFileId) {
           try {
             const driveFile = await downloadDriveFile(row.driveFileId, oauthUserId);
-            fileUrl = await uploadBufferToR2(
-              driveFile.buffer,
-              driveFile.mimeType,
-              driveFile.name,
-              userId
-            );
             fileType = driveFile.mimeType;
 
             // Extract text if it's a PDF
@@ -280,6 +274,17 @@ export async function POST(request: Request) {
               } catch (pdfErr) {
                 console.error(`Failed to parse PDF for ${row.driveFileId}:`, pdfErr);
               }
+            }
+
+            try {
+              fileUrl = await uploadBufferToR2(
+                driveFile.buffer,
+                driveFile.mimeType,
+                driveFile.name,
+                userId
+              );
+            } catch (r2Err) {
+              console.warn(`Skipping R2 upload (using Drive URL fallback) due to:`, (r2Err as Error).message);
             }
           } catch (fileErr) {
             console.error(`Failed to download Drive file ${row.driveFileId}:`, fileErr);
