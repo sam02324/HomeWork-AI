@@ -156,6 +156,9 @@ export async function gradeSubmission(
     const gradeLetter = result.gradeLetter || getGradeLetter(percentage);
 
     // 8. Save grade to database
+    const aiDetectionScore = result.aiDetectionScore ?? 0;
+    const aiDetectionFlag = aiDetectionScore > 60;
+
     await db.insert(grades).values({
       submissionId: submission.id,
       totalScore: result.totalScore.toString(),
@@ -167,6 +170,8 @@ export async function gradeSubmission(
       improvements: result.improvements,
       aiModel: 'claude-sonnet-4-20250514',
       aiTokensUsed: tokensUsed,
+      aiDetectionScore,
+      aiDetectionFlag,
     });
 
     // 9. Update submission status to 'graded'

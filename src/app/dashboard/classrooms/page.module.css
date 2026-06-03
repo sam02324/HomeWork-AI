@@ -11,6 +11,8 @@
 .cardBorder { height:3px; }
 .cardBody { padding:var(--space-6); }
 .cardHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); }
+.cardHeaderRight { display:flex; align-items:center; gap:var(--space-1); }
+.cardHeaderWrap { position:relative; }
 .subjectIcon { width:40px; height:40px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; }
 .cardArrow { color:var(--text-tertiary); opacity:0; transition:all var(--duration-fast); }
 .card:hover .cardArrow { opacity:1; transform:translateX(2px); }
@@ -21,6 +23,19 @@
 @media (max-width:1024px) { .grid { grid-template-columns:repeat(2,1fr); } }
 @media (max-width:768px) { .page { padding:var(--space-4); } .grid { grid-template-columns:1fr; } .header { flex-direction:column; gap:var(--space-4); } }
 
+/* 3-dot menu */
+.moreBtn { background:none; border:none; color:var(--text-tertiary); cursor:pointer; padding:4px; border-radius:var(--radius-sm); opacity:0; transition:all var(--duration-fast); }
+.card:hover .moreBtn { opacity:1; }
+.moreBtn:hover { color:var(--text-primary); background:var(--glass-bg-hover); }
+
+/* Dropdown */
+.dropdown { position:absolute; right:0; top:calc(100% + 4px); background:var(--bg-secondary); border:1px solid var(--glass-border); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); min-width:140px; z-index:10; overflow:hidden; }
+.dropdownItem { display:flex; align-items:center; gap:8px; width:100%; padding:8px 14px; font-size:0.82rem; text-align:left; background:none; border:none; color:var(--text-secondary); cursor:pointer; transition:all var(--duration-fast); font-family:inherit; }
+.dropdownItem:hover { background:var(--glass-bg-hover); color:var(--text-primary); }
+.dropdownItemDanger { display:flex; align-items:center; gap:8px; width:100%; padding:8px 14px; font-size:0.82rem; text-align:left; background:none; border:none; color:var(--error); cursor:pointer; transition:all var(--duration-fast); font-family:inherit; }
+.dropdownItemDanger:hover { background:hsla(0,70%,50%,0.1); }
+
+/* Modal styles */
 .modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:100; }
 .modal { background:var(--bg-secondary); border:1px solid var(--glass-border); border-radius:var(--radius-lg); width:400px; max-width:90vw; padding:var(--space-6); box-shadow:var(--shadow-xl); }
 .modalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6); }
@@ -37,4 +52,6 @@
 .submitBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; font-weight:600; color:white; background:var(--accent); border:none; border-radius:var(--radius-md); cursor:pointer; }
 .submitBtn:hover:not(:disabled) { background:var(--accent-hover); box-shadow:var(--accent-glow); }
 .submitBtn:disabled { opacity:0.6; cursor:not-allowed; }
-
+.deleteBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; font-weight:600; color:white; background:hsl(0,70%,50%); border:none; border-radius:var(--radius-md); cursor:pointer; transition:all var(--duration-fast); }
+.deleteBtn:hover:not(:disabled) { background:hsl(0,70%,45%); }
+.deleteBtn:disabled { opacity:0.6; cursor:not-allowed; }

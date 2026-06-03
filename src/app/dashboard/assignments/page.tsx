@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
 import styles from './page.module.css';
 
-import { useState } from 'react';
-import { useAssignments, useClassrooms, useGradeAssignment } from '@/lib/api-client';
+import { useState, useRef, useEffect } from 'react';
+import { useAssignments, useClassrooms, useGradeAssignment, useDeleteAssignment } from '@/lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   draft: { label: 'Draft', cls: 'statusDraft' },
@@ -25,6 +26,31 @@ export default function AssignmentsPage() {
   });
   const { data: classrooms } = useClassrooms();
   const gradeAssignment = useGradeAssignment();
+  const deleteAssignment = useDeleteAssignment();
+  const queryClient = useQueryClient();
+
+  // Edit/Delete state
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<{ id: string; title: string } | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [editError, setEditError] = useState('');
+  const [deletingAssignment, setDeletingAssignment] = useState<{ id: string; title: string } | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    }
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }
+  }, [openDropdown]);
 
   // Simple client-side search
   const filteredAssignments = assignments?.filter(a => 
@@ -36,6 +62,38 @@ export default function AssignmentsPage() {
       await gradeAssignment.mutateAsync(id);
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  async function handleRename(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingAssignment) return;
+    setEditError('');
+    setIsRenaming(true);
+    try {
+      const res = await fetch(`/api/assignments/${editingAssignment.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      });
+      if (!res.ok) throw new Error('Failed to rename');
+      setEditingAssignment(null);
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to rename';
+      setEditError(message);
+    } finally {
+      setIsRenaming(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deletingAssignment) return;
+    try {
+      await deleteAssignment.mutateAsync(deletingAssignment.id);
+      setDeletingAssignment(null);
+    } catch (err) {
+      console.error('Failed to delete assignment', err);
     }
   }
 
@@ -119,10 +177,41 @@ export default function AssignmentsPage() {
                             onClick={() => handleGrade(a.id)}
                             disabled={gradeAssignment.isPending}
                           >
-                            Grade (Mock)
+                            Grade
                           </button>
                         )}
                         <Link href={`/dashboard/assignments/${a.id}`} className={styles.viewBtn}>View</Link>
+                        <div className={styles.actionWrap} ref={openDropdown === a.id ? dropdownRef : null}>
+                          <button
+                            className={styles.moreBtn}
+                            onClick={() => setOpenDropdown(openDropdown === a.id ? null : a.id)}
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          {openDropdown === a.id && (
+                            <div className={styles.dropdown}>
+                              <button
+                                className={styles.dropdownItem}
+                                onClick={() => {
+                                  setOpenDropdown(null);
+                                  setNewTitle(a.title);
+                                  setEditingAssignment({ id: a.id, title: a.title });
+                                }}
+                              >
+                                <Pencil size={13} /> Rename
+                              </button>
+                              <button
+                                className={styles.dropdownItemDanger}
+                                onClick={() => {
+                                  setOpenDropdown(null);
+                                  setDeletingAssignment({ id: a.id, title: a.title });
+                                }}
+                              >
+                                <Trash2 size={13} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -132,6 +221,71 @@ export default function AssignmentsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Rename Assignment Modal */}
+      {editingAssignment && (
+        <div className={styles.modalOverlay} onClick={() => setEditingAssignment(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Rename Assignment</h2>
+              <button className={styles.closeBtn} onClick={() => setEditingAssignment(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleRename}>
+              {editError && (
+                <div style={{
+                  padding: '10px 14px', marginBottom: '16px',
+                  background: 'hsl(0, 80%, 95%)', border: '1px solid hsl(0, 70%, 80%)',
+                  borderRadius: '8px', color: 'hsl(0, 70%, 40%)', fontSize: '0.85rem',
+                }}>
+                  ⚠️ {editError}
+                </div>
+              )}
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Assignment Title</label>
+                <input type="text" required className={styles.input} value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)} />
+              </div>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setEditingAssignment(null)}>Cancel</button>
+                <button type="submit" className={styles.submitBtn} disabled={isRenaming}>
+                  {isRenaming ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingAssignment && (
+        <div className={styles.modalOverlay} onClick={() => setDeletingAssignment(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Delete Assignment</h2>
+              <button className={styles.closeBtn} onClick={() => setDeletingAssignment(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 'var(--space-6)' }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>{deletingAssignment.title}</strong>?
+              All submissions and grades will be permanently lost. This action cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.cancelBtn} onClick={() => setDeletingAssignment(null)}>Cancel</button>
+              <button
+                type="button"
+                className={styles.deleteBtn}
+                onClick={handleDelete}
+                disabled={deleteAssignment.isPending}
+              >
+                {deleteAssignment.isPending ? 'Deleting...' : 'Delete Assignment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

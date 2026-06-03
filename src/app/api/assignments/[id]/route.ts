@@ -78,17 +78,11 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
 
   try {
-    // Only allow deleting draft assignments
-    const existing = await db.query.assignments.findFirst({
-      where: and(eq(assignments.id, id), eq(assignments.teacherId, userId)),
-    });
+    const [deleted] = await db.delete(assignments)
+      .where(and(eq(assignments.id, id), eq(assignments.teacherId, userId)))
+      .returning();
 
-    if (!existing) return errorResponse('Assignment not found', 404);
-    if (existing.status !== 'draft') {
-      return errorResponse('Can only delete draft assignments', 400);
-    }
-
-    await db.delete(assignments).where(eq(assignments.id, id));
+    if (!deleted) return errorResponse('Assignment not found', 404);
     return successResponse({ message: 'Assignment deleted' });
   } catch (error) {
     console.error('DELETE /api/assignments/[id] error:', error);

@@ -28,9 +28,43 @@
 .statusGraded { background:var(--success-bg); color:var(--success); }
 .pulseDot { width:6px; height:6px; border-radius:50%; background:currentColor; animation:pulse 1.5s infinite; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-.actions { display:flex; gap:var(--space-2); }
+.actions { display:flex; align-items:center; gap:var(--space-2); }
 .gradeBtn { padding:4px 12px; background:var(--accent); color:white; border-radius:var(--radius-sm); font-size:0.75rem; font-weight:600; cursor:pointer; transition:all var(--duration-fast); }
 .gradeBtn:hover { background:var(--accent-hover); }
 .viewBtn { padding:4px 12px; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-secondary); border-radius:var(--radius-sm); font-size:0.75rem; font-weight:500; cursor:pointer; transition:all var(--duration-fast); }
 .viewBtn:hover { background:var(--glass-bg-hover); color:var(--text-primary); }
+
+/* 3-dot menu */
+.actionWrap { position:relative; }
+.moreBtn { background:none; border:none; color:var(--text-tertiary); cursor:pointer; padding:4px; border-radius:var(--radius-sm); transition:all var(--duration-fast); display:flex; align-items:center; }
+.moreBtn:hover { color:var(--text-primary); background:var(--glass-bg-hover); }
+
+/* Dropdown */
+.dropdown { position:absolute; right:0; top:calc(100% + 4px); background:var(--bg-secondary); border:1px solid var(--glass-border); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); min-width:140px; z-index:10; overflow:hidden; }
+.dropdownItem { display:flex; align-items:center; gap:8px; width:100%; padding:8px 14px; font-size:0.82rem; text-align:left; background:none; border:none; color:var(--text-secondary); cursor:pointer; transition:all var(--duration-fast); font-family:inherit; }
+.dropdownItem:hover { background:var(--glass-bg-hover); color:var(--text-primary); }
+.dropdownItemDanger { display:flex; align-items:center; gap:8px; width:100%; padding:8px 14px; font-size:0.82rem; text-align:left; background:none; border:none; color:var(--error); cursor:pointer; transition:all var(--duration-fast); font-family:inherit; }
+.dropdownItemDanger:hover { background:hsla(0,70%,50%,0.1); }
+
+/* Modal styles */
+.modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:100; }
+.modal { background:var(--bg-secondary); border:1px solid var(--glass-border); border-radius:var(--radius-lg); width:400px; max-width:90vw; padding:var(--space-6); box-shadow:var(--shadow-xl); }
+.modalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6); }
+.modalTitle { font-size:1.2rem; font-weight:700; color:var(--text-primary); }
+.closeBtn { color:var(--text-tertiary); background:none; border:none; cursor:pointer; }
+.closeBtn:hover { color:var(--text-primary); }
+.formGroup { margin-bottom:var(--space-4); }
+.label { display:block; font-size:0.85rem; font-weight:500; color:var(--text-secondary); margin-bottom:var(--space-2); }
+.input { width:100%; background:var(--bg-primary); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:var(--space-3); color:var(--text-primary); font-family:inherit; }
+.input:focus { outline:none; border-color:var(--accent); }
+.modalActions { display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-6); }
+.cancelBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; color:var(--text-secondary); background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-md); cursor:pointer; }
+.cancelBtn:hover { color:var(--text-primary); background:var(--glass-bg-hover); }
+.submitBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; font-weight:600; color:white; background:var(--accent); border:none; border-radius:var(--radius-md); cursor:pointer; }
+.submitBtn:hover:not(:disabled) { background:var(--accent-hover); box-shadow:var(--accent-glow); }
+.submitBtn:disabled { opacity:0.6; cursor:not-allowed; }
+.deleteBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; font-weight:600; color:white; background:hsl(0,70%,50%); border:none; border-radius:var(--radius-md); cursor:pointer; transition:all var(--duration-fast); }
+.deleteBtn:hover:not(:disabled) { background:hsl(0,70%,45%); }
+.deleteBtn:disabled { opacity:0.6; cursor:not-allowed; }
+
 @media (max-width:768px) { .page { padding:var(--space-4); } .header { flex-direction:column; gap:var(--space-4); } .tableWrap { overflow-x:auto; } }

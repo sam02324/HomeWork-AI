@@ -111,8 +111,16 @@ export const grades = pgTable('grades', {
   improvements: text('improvements').array(),
   aiModel: text('ai_model').notNull(),
   aiTokensUsed: integer('ai_tokens_used'),
+  /** AI detection: probability (0-100) that the submission is AI-generated */
+  aiDetectionScore: integer('ai_detection_score'),
+  /** Flag: true if submission is suspected AI-generated (score > 60) */
+  aiDetectionFlag: boolean('ai_detection_flag').notNull().default(false),
   gradedAt: timestamp('graded_at', { withTimezone: true }).notNull().defaultNow(),
   reviewedByTeacher: boolean('reviewed_by_teacher').notNull().default(false),
+  /** Teacher's manually overridden score, if any */
+  teacherOverrideScore: decimal('teacher_override_score', { precision: 6, scale: 2 }),
+  /** Teacher's manual feedback note */
+  teacherNote: text('teacher_note'),
 });
 
 /** Google OAuth tokens — one per teacher for Google Drive/Sheets access */
