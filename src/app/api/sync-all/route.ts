@@ -214,7 +214,7 @@ export async function GET() {
         }
 
         // Download file if exists
-        let fileUrl: string | null = null;
+        let fileUrl: string | null = row.fileUrl || null;
         let fileType: string | null = null;
         let textContent: string | null = null;
 
