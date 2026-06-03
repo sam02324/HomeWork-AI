@@ -29,6 +29,7 @@ import {
   useSyncSubmissions,
   useUpdateGrade,
   useUpdateAssignment,
+  useCreateGrade,
 } from '@/lib/api-client';
 import type { Grade } from '@/db/schema';
 
@@ -54,6 +55,7 @@ export default function AssignmentDetailsPage() {
   // Review Modal State
   const [reviewGrade, setReviewGrade] = useState<Grade | null>(null);
   const [reviewStudentName, setReviewStudentName] = useState('');
+  const [reviewSubmissionId, setReviewSubmissionId] = useState('');
   const [overrideScore, setOverrideScore] = useState('');
   const [teacherNote, setTeacherNote] = useState('');
   
@@ -63,6 +65,7 @@ export default function AssignmentDetailsPage() {
   const [localRubric, setLocalRubric] = useState<any[]>([]);
 
   const updateGrade = useUpdateGrade(reviewGrade?.id || '');
+  const createGrade = useCreateGrade();
 
   if (assignmentLoading || studentsLoading || submissionsLoading) {
     return <div className={styles.loading}>Loading assignment details...</div>;
@@ -116,23 +119,38 @@ export default function AssignmentDetailsPage() {
     }
   }
 
-  function openReviewModal(grade: Grade, studentName: string) {
+  function openReviewModal(grade: Grade | null, studentName: string, submissionId: string) {
     setReviewGrade(grade);
     setReviewStudentName(studentName);
-    setOverrideScore(grade.teacherOverrideScore ? grade.teacherOverrideScore.toString() : grade.totalScore);
-    setTeacherNote(grade.teacherNote || '');
+    setReviewSubmissionId(submissionId);
+    if (grade) {
+      setOverrideScore(grade.teacherOverrideScore ? grade.teacherOverrideScore.toString() : grade.totalScore);
+      setTeacherNote(grade.teacherNote || '');
+    } else {
+      setOverrideScore('');
+      setTeacherNote('');
+    }
   }
 
   async function handleReviewSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!reviewGrade) return;
     try {
-      await updateGrade.mutateAsync({
-        teacherOverrideScore: parseFloat(overrideScore),
-        teacherNote: teacherNote,
-        reviewedByTeacher: true
-      });
+      if (reviewGrade) {
+        await updateGrade.mutateAsync({
+          teacherOverrideScore: parseFloat(overrideScore),
+          teacherNote: teacherNote,
+          reviewedByTeacher: true
+        });
+      } else {
+        await createGrade.mutateAsync({
+          submissionId: reviewSubmissionId,
+          teacherOverrideScore: parseFloat(overrideScore),
+          teacherNote: teacherNote,
+          maxScore: assignment?.maxScore || 100
+        });
+      }
       setReviewGrade(null);
+      setReviewSubmissionId('');
     } catch (err) {
       console.error('Failed to update grade', err);
       alert('Failed to save review');
@@ -311,13 +329,21 @@ export default function AssignmentDetailsPage() {
                             >
                               <FileText size={14} /> View
                             </button>
-                            {sub.status === 'graded' && grade && (
+                            {sub.status === 'graded' && grade ? (
                               <button
                                 className={`${styles.reviewBtn} ${grade.aiDetectionFlag && !grade.reviewedByTeacher ? styles.reviewBtnWarn : ''}`}
-                                onClick={() => openReviewModal(grade, student.name)}
-                                title="Review Grade"
+                                onClick={() => openReviewModal(grade, student.name, sub.id)}
+                                title="Review AI Grade"
                               >
-                                <Eye size={14} /> Review
+                                <Eye size={14} /> Review Grade
+                              </button>
+                            ) : (
+                              <button
+                                className={styles.reviewBtn}
+                                onClick={() => openReviewModal(null, student.name, sub.id)}
+                                title="Edit Manual Score"
+                              >
+                                <Eye size={14} /> Edit Score
                               </button>
                             )}
                           </>
@@ -351,19 +377,19 @@ export default function AssignmentDetailsPage() {
         </div>
       </div>
 
-      {/* Review Modal */}
-      {reviewGrade && (
-        <div className={styles.modalOverlay} onClick={() => setReviewGrade(null)}>
+      {/* Review / Manual Edit Modal */}
+      {(reviewGrade || reviewSubmissionId) && (
+        <div className={styles.modalOverlay} onClick={() => { setReviewGrade(null); setReviewSubmissionId(''); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Review: {reviewStudentName}</h2>
-              <button className={styles.closeBtn} onClick={() => setReviewGrade(null)}>
+              <h2 className={styles.modalTitle}>{reviewGrade ? 'Review AI Grade' : 'Edit Manual Score'}: {reviewStudentName}</h2>
+              <button className={styles.closeBtn} onClick={() => { setReviewGrade(null); setReviewSubmissionId(''); }}>
                 <X size={20} />
               </button>
             </div>
             
             <div className={styles.modalContent}>
-              {reviewGrade.aiDetectionFlag && !reviewGrade.reviewedByTeacher && (
+              {reviewGrade?.aiDetectionFlag && !reviewGrade?.reviewedByTeacher && (
                 <div className={styles.aiWarningBanner}>
                   <MessageSquareWarning size={18} />
                   <div>
@@ -373,46 +399,51 @@ export default function AssignmentDetailsPage() {
                 </div>
               )}
 
-              <div className={styles.gradeSection}>
-                <h3>AI Feedback</h3>
-                <p className={styles.aiFeedback}>{reviewGrade.feedback}</p>
-                
-                {reviewGrade.strengths && reviewGrade.strengths.length > 0 && (
-                  <div className={styles.strengths}>
-                    <strong>Strengths:</strong>
-                    <ul>
-                      {reviewGrade.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
-                
-                {reviewGrade.improvements && reviewGrade.improvements.length > 0 && (
-                  <div className={styles.improvements}>
-                    <strong>Areas for Improvement:</strong>
-                    <ul>
-                      {reviewGrade.improvements.map((s, i) => <li key={i}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              {reviewGrade && (
+                <div className={styles.gradeSection}>
+                  <h3>AI Feedback</h3>
+                  <p className={styles.aiFeedback}>{reviewGrade.feedback}</p>
+                  
+                  {reviewGrade.strengths && reviewGrade.strengths.length > 0 && (
+                    <div className={styles.strengths}>
+                      <strong>Strengths:</strong>
+                      <ul>
+                        {reviewGrade.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {reviewGrade.improvements && reviewGrade.improvements.length > 0 && (
+                    <div className={styles.improvements}>
+                      <strong>Areas for Improvement:</strong>
+                      <ul>
+                        {reviewGrade.improvements.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <form onSubmit={handleReviewSubmit} className={styles.reviewForm}>
                 <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>AI Suggested Score (Out of {reviewGrade.maxScore})</label>
-                    <div className={styles.readOnlyScore}>{reviewGrade.totalScore}</div>
-                  </div>
+                  {reviewGrade && (
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>AI Suggested Score (Out of {reviewGrade.maxScore})</label>
+                      <div className={styles.readOnlyScore}>{reviewGrade.totalScore}</div>
+                    </div>
+                  )}
                   
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Final Score Override</label>
+                    <label className={styles.label}>Final Score Override (Out of {reviewGrade?.maxScore || assignment?.maxScore})</label>
                     <input 
                       type="number" 
                       step="0.5"
                       min="0"
-                      max={reviewGrade.maxScore}
+                      max={reviewGrade?.maxScore || assignment?.maxScore}
                       className={styles.input} 
                       value={overrideScore}
                       onChange={e => setOverrideScore(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -429,9 +460,9 @@ export default function AssignmentDetailsPage() {
                 </div>
 
                 <div className={styles.modalActions}>
-                  <button type="button" className={styles.cancelBtn} onClick={() => setReviewGrade(null)}>Cancel</button>
-                  <button type="submit" className={styles.submitBtn} disabled={updateGrade.isPending}>
-                    {updateGrade.isPending ? 'Saving...' : <><Save size={14}/> Save Review & Mark Approved</>}
+                  <button type="button" className={styles.cancelBtn} onClick={() => { setReviewGrade(null); setReviewSubmissionId(''); }}>Cancel</button>
+                  <button type="submit" className={styles.submitBtn} disabled={updateGrade.isPending || createGrade.isPending}>
+                    {(updateGrade.isPending || createGrade.isPending) ? 'Saving...' : <><Save size={14}/> Save Review & Mark Approved</>}
                   </button>
                 </div>
               </form>

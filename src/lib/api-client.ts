@@ -193,6 +193,17 @@ export function useUpdateGrade(gradeId: string) {
   });
 }
 
+export function useCreateGrade() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { submissionId: string; teacherOverrideScore: number; teacherNote: string; maxScore: number }) =>
+      apiFetch(`/api/grades`, { method: 'POST', body: JSON.stringify(data) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['assignments'] });
+    },
+  });
+}
+
 /* ═══════════════════════════════════════
    Submissions
    ═══════════════════════════════════════ */
