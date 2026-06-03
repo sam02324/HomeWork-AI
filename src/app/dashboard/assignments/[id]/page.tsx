@@ -16,7 +16,8 @@ import {
   Bot,
   MessageSquareWarning,
   Eye,
-  Save
+  Save,
+  Pencil
 } from 'lucide-react';
 import styles from './page.module.css';
 import { 
@@ -63,6 +64,12 @@ export default function AssignmentDetailsPage() {
   const [showPreGradeModal, setShowPreGradeModal] = useState(false);
   const [localInstructions, setLocalInstructions] = useState('');
   const [localRubric, setLocalRubric] = useState<any[]>([]);
+
+  // Edit Details Modal State
+  const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editMaxScore, setEditMaxScore] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
 
   const updateGrade = useUpdateGrade(reviewGrade?.id || '');
   const createGrade = useCreateGrade();
@@ -119,6 +126,27 @@ export default function AssignmentDetailsPage() {
     }
   }
 
+  function openEditDetailsModal() {
+    setEditTitle(assignment?.title || '');
+    setEditMaxScore(assignment?.maxScore?.toString() || '100');
+    setEditDueDate(assignment?.dueDate ? new Date(assignment.dueDate).toISOString().slice(0, 16) : '');
+    setShowEditDetailsModal(true);
+  }
+
+  async function handleEditDetailsSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await updateAssignment.mutateAsync({
+        title: editTitle,
+        maxScore: parseInt(editMaxScore),
+        dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
+      });
+      setShowEditDetailsModal(false);
+    } catch(err) {
+      alert('Failed to update assignment details');
+    }
+  }
+
   function openReviewModal(grade: Grade | null, studentName: string, submissionId: string) {
     setReviewGrade(grade);
     setReviewStudentName(studentName);
@@ -164,7 +192,12 @@ export default function AssignmentDetailsPage() {
           <button onClick={() => router.back()} className={styles.backBtn}>
             <ArrowLeft size={16} /> Back
           </button>
-          <h1 className={styles.title}>{assignment.title}</h1>
+          <div className={styles.titleWrapper}>
+            <h1 className={styles.title}>{assignment.title}</h1>
+            <button className={styles.editTitleBtn} onClick={openEditDetailsModal} title="Edit Assignment Details">
+              <Pencil size={16} />
+            </button>
+          </div>
           <p className={styles.subtitle}>
             {assignment.classroom?.name} • Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No deadline'}
           </p>
@@ -537,6 +570,61 @@ export default function AssignmentDetailsPage() {
         </div>
       )}
 
+      {/* Edit Details Modal */}
+      {showEditDetailsModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowEditDetailsModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Edit Assignment</h2>
+              <button className={styles.closeBtn} onClick={() => setShowEditDetailsModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              <form onSubmit={handleEditDetailsSubmit} className={styles.reviewForm}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Title</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Max Score</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      className={styles.input} 
+                      value={editMaxScore}
+                      onChange={e => setEditMaxScore(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Due Date (Optional)</label>
+                    <input 
+                      type="datetime-local" 
+                      className={styles.input} 
+                      value={editDueDate}
+                      onChange={e => setEditDueDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className={styles.modalActions}>
+                  <button type="button" className={styles.cancelBtn} onClick={() => setShowEditDetailsModal(false)}>Cancel</button>
+                  <button type="submit" className={styles.submitBtn} disabled={updateAssignment.isPending}>
+                    {updateAssignment.isPending ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

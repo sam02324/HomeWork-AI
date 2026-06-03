@@ -35,12 +35,36 @@
   color: var(--text-primary);
 }
 
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .title {
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.02em;
+}
+
+.editTitleBtn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.editTitleBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .subtitle {
