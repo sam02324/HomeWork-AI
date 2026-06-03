@@ -73,13 +73,23 @@ export async function gradeSubmission(
       // Text submission
       userContent = buildGradingMessage(submission.textContent);
     } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
-      // Image submission — use Claude vision
+      // Fetch image and convert to base64
+      const response = await fetch(submission.fileUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      
+      let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
+      if (submission.fileType === 'image/png') mediaType = 'image/png';
+      else if (submission.fileType === 'image/gif') mediaType = 'image/gif';
+      else if (submission.fileType === 'image/webp') mediaType = 'image/webp';
+
       userContent = [
         {
           type: 'image' as const,
           source: {
-            type: 'url' as const,
-            url: submission.fileUrl,
+            type: 'base64' as const,
+            media_type: mediaType,
+            data: base64,
           },
         },
         {
@@ -89,7 +99,6 @@ export async function gradeSubmission(
       ];
     } else if (submission.fileUrl) {
       // PDF or other file — for now, treat URL as context
-      // In production, extract text from PDF first
       userContent = buildGradingMessage(
         `[Student submitted a ${submission.fileType || 'file'} at: ${submission.fileUrl}]\n\n` +
         (submission.textContent || 'No text content extracted from file.')
@@ -101,56 +110,37 @@ export async function gradeSubmission(
     let result: GradingResult;
     let tokensUsed = 0;
 
-    if (anthropic) {
-      // 4. Call Claude API
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: userContent,
-          },
-        ],
-      });
-
-      // 5. Parse response
-      const responseText = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map((block) => block.text)
-        .join('');
-
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('Claude did not return valid JSON');
-      }
-
-      result = JSON.parse(jsonMatch[0]);
-      tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
-    } else {
-      // 4b. MOCK GRADING (if no key provided)
-      console.log('Mock grading: simulating 2 second delay...');
-      await new Promise(r => setTimeout(r, 2000));
-      
-      const mockScore = Math.floor(Math.random() * (assignment.maxScore - (assignment.maxScore / 2))) + (assignment.maxScore / 2);
-      
-      result = {
-        totalScore: mockScore,
-        gradeLetter: getGradeLetter((mockScore / assignment.maxScore) * 100),
-        feedback: "This is a mocked feedback response. The student demonstrated good understanding of the core concepts but missed some minor details in the calculations.",
-        strengths: ["Clear handwriting", "Correct formula usage", "Logical progression"],
-        improvements: ["Check units on final answer", "Provide more context in step 2"],
-        criteriaScores: rubric.map(c => ({
-          criterionName: c.name,
-          score: Math.floor(Math.random() * c.weight),
-          maxScore: c.weight,
-          feedback: "Mock feedback for this criterion."
-        }))
-      };
-      tokensUsed = 1500;
+    if (!anthropic) {
+      throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
     }
+
+    // 4. Call Claude API
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 4000,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: userContent,
+        },
+      ],
+    });
+
+    // 5. Parse response
+    const responseText = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
+      .join('');
+
+    // Extract JSON from response (handle markdown code blocks)
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Claude did not return valid JSON');
+    }
+
+    result = JSON.parse(jsonMatch[0]);
+    tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
 
     // 6. Calculate tokens used (handled above)
     // 7. Ensure grade letter is correct

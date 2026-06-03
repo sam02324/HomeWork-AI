@@ -30,9 +30,19 @@ export async function GET(_req: Request, { params }: Params) {
           rollNumber: students.rollNumber,
         },
         grade: {
+          id: grades.id,
           totalScore: grades.totalScore,
           maxScore: grades.maxScore,
           gradeLetter: grades.gradeLetter,
+          aiDetectionScore: grades.aiDetectionScore,
+          aiDetectionFlag: grades.aiDetectionFlag,
+          teacherOverrideScore: grades.teacherOverrideScore,
+          teacherNote: grades.teacherNote,
+          reviewedByTeacher: grades.reviewedByTeacher,
+          feedback: grades.feedback,
+          strengths: grades.strengths,
+          improvements: grades.improvements,
+          criteriaScores: grades.criteriaScores,
         }
       })
       .from(submissions)

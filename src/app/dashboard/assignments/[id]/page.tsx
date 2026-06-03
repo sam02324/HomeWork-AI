@@ -28,6 +28,7 @@ import {
   useGradeAssignment,
   useSyncSubmissions,
   useUpdateGrade,
+  useUpdateAssignment,
 } from '@/lib/api-client';
 import type { Grade } from '@/db/schema';
 
@@ -48,12 +49,19 @@ export default function AssignmentDetailsPage() {
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<{ message: string; errors: string[] } | null>(null);
 
+  const updateAssignment = useUpdateAssignment(id);
+
   // Review Modal State
   const [reviewGrade, setReviewGrade] = useState<Grade | null>(null);
   const [reviewStudentName, setReviewStudentName] = useState('');
   const [overrideScore, setOverrideScore] = useState('');
   const [teacherNote, setTeacherNote] = useState('');
   
+  // Pre-Grade Modal State
+  const [showPreGradeModal, setShowPreGradeModal] = useState(false);
+  const [localInstructions, setLocalInstructions] = useState('');
+  const [localRubric, setLocalRubric] = useState<any[]>([]);
+
   const updateGrade = useUpdateGrade(reviewGrade?.id || '');
 
   if (assignmentLoading || studentsLoading || submissionsLoading) {
@@ -86,8 +94,21 @@ export default function AssignmentDetailsPage() {
     }
   }
 
-  async function handleGradeAll() {
+  function openPreGradeModal() {
+    setLocalInstructions(assignment?.gradingInstructions || '');
+    setLocalRubric(Array.isArray(assignment?.rubric) ? [...assignment.rubric] : []);
+    setShowPreGradeModal(true);
+  }
+
+  async function startGrading() {
     try {
+      // Save the rubric first
+      await updateAssignment.mutateAsync({
+        gradingInstructions: localInstructions,
+        rubric: localRubric
+      });
+      setShowPreGradeModal(false);
+      // Then grade
       await gradeAssignment.mutateAsync(id);
     } catch (e) {
       console.error(e);
@@ -133,6 +154,13 @@ export default function AssignmentDetailsPage() {
         <div className={styles.headerRight}>
           <button
             className={styles.syncBtn}
+            onClick={openPreGradeModal}
+            title="Edit the AI Grading Rubric"
+          >
+            <FileText size={16} /> Edit Rubric
+          </button>
+          <button
+            className={styles.syncBtn}
             onClick={async () => {
               setSyncResult(null);
               try {
@@ -156,11 +184,11 @@ export default function AssignmentDetailsPage() {
           </button>
           <button 
             className={styles.gradeBtn} 
-            onClick={handleGradeAll}
+            onClick={openPreGradeModal}
             disabled={gradeAssignment.isPending || assignment.status === 'graded'}
           >
             <Play size={16} />
-            {gradeAssignment.isPending ? 'Grading...' : 'Grade All Pending'}
+            {gradeAssignment.isPending ? 'Grading...' : 'Review Rubric & Grade'}
           </button>
         </div>
       </div>
@@ -407,6 +435,72 @@ export default function AssignmentDetailsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pre-Grade Rubric Editor Modal */}
+      {showPreGradeModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowPreGradeModal(false)}>
+          <div className={styles.modal} style={{ width: '800px', maxWidth: '95vw' }} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Review Grading Instructions</h2>
+              <button className={styles.closeBtn} onClick={() => setShowPreGradeModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className={styles.modalContent}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                Before grading, you can tweak the AI's grading instructions and view the rubric criteria.
+              </p>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Global Grading Instructions (Prompt for AI)</label>
+                <textarea 
+                  className={styles.textarea} 
+                  rows={4}
+                  value={localInstructions}
+                  onChange={e => setLocalInstructions(e.target.value)}
+                  placeholder="e.g., Be strict on unit conversions. Do not penalize for spelling mistakes."
+                />
+              </div>
+
+              <div className={styles.gradeSection} style={{ marginTop: '16px' }}>
+                <h3>Current Rubric ({localRubric.length} Criteria)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                  {localRubric.map((crit, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '12px', background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong>{crit.name}</strong>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', margin: '4px 0 0 0' }}>{crit.description || 'No description'}</p>
+                      </div>
+                      <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent)' }}>
+                        {crit.weight} pts
+                      </div>
+                    </div>
+                  ))}
+                  {localRubric.length === 0 && (
+                    <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>No rubric criteria set. The AI will grade based purely on the instructions above.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowPreGradeModal(false)}>Cancel</button>
+                <button type="button" className={styles.cancelBtn} onClick={async () => {
+                  try {
+                    await updateAssignment.mutateAsync({ gradingInstructions: localInstructions, rubric: localRubric });
+                    setShowPreGradeModal(false);
+                  } catch(e) { alert('Save failed'); }
+                }} disabled={updateAssignment.isPending}>
+                  {updateAssignment.isPending ? 'Saving...' : 'Just Save'}
+                </button>
+                <button type="button" className={styles.submitBtn} onClick={startGrading} disabled={updateAssignment.isPending || gradeAssignment.isPending}>
+                  {updateAssignment.isPending || gradeAssignment.isPending ? 'Preparing...' : <><Play size={14}/> Save & Start Grading</>}
+                </button>
+              </div>
             </div>
           </div>
         </div>
