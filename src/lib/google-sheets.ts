@@ -272,12 +272,7 @@ export async function fetchSheetRows(
       // Generate a unique dedup key from timestamp + email/name
       const responseId = generateResponseId(timestamp || String(Date.now()), studentEmail || studentName || 'unknown');
 
-      let driveFileId = null;
-      if (fileUrl && fileUrl.includes('id=')) {
-        driveFileId = fileUrl.split('id=')[1].split('&')[0];
-      } else if (fileUrl && fileUrl.includes('/d/')) {
-        driveFileId = fileUrl.split('/d/')[1].split('/')[0];
-      }
+      const driveFileId = extractDriveFileId(fileUrl || '');
 
       return {
         responseId,

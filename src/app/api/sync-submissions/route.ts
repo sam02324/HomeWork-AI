@@ -256,7 +256,7 @@ export async function POST(request: Request) {
         }
 
         // Download file from Drive and upload to R2 (if file exists)
-        let fileUrl: string | null = null;
+        let fileUrl: string | null = row.fileUrl || null;
         let fileType: string | null = null;
         let textContent: string | null = null;
 
