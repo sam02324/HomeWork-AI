@@ -63,6 +63,7 @@ export default function AssignmentDetailsPage() {
   // Pre-Grade Modal State
   const [showPreGradeModal, setShowPreGradeModal] = useState(false);
   const [localInstructions, setLocalInstructions] = useState('');
+  const [localReferenceAnswers, setLocalReferenceAnswers] = useState('');
   const [localRubric, setLocalRubric] = useState<any[]>([]);
 
   // Edit Details Modal State
@@ -106,6 +107,7 @@ export default function AssignmentDetailsPage() {
 
   function openPreGradeModal() {
     setLocalInstructions(assignment?.gradingInstructions || '');
+    setLocalReferenceAnswers(assignment?.referenceAnswers || '');
     setLocalRubric(Array.isArray(assignment?.rubric) ? [...assignment.rubric] : []);
     setShowPreGradeModal(true);
   }
@@ -115,6 +117,7 @@ export default function AssignmentDetailsPage() {
       // Save the rubric first
       await updateAssignment.mutateAsync({
         gradingInstructions: localInstructions,
+        referenceAnswers: localReferenceAnswers,
         rubric: localRubric
       });
       setShowPreGradeModal(false);
@@ -528,6 +531,17 @@ export default function AssignmentDetailsPage() {
                   value={localInstructions}
                   onChange={e => setLocalInstructions(e.target.value)}
                   placeholder="e.g., Be strict on unit conversions. Do not penalize for spelling mistakes."
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginTop: '16px' }}>
+                <label className={styles.label}>Questions / Reference Answers (Optional)</label>
+                <textarea 
+                  className={styles.textarea} 
+                  rows={4}
+                  value={localReferenceAnswers}
+                  onChange={e => setLocalReferenceAnswers(e.target.value)}
+                  placeholder="Paste the assignment questions or reference answer key here to improve grading accuracy..."
                 />
               </div>
 
