@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Send, Bot, User, FileText, Loader2, Save } from 'lucide-react';
+import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
 import styles from './page.module.css';
 
 export default function InteractiveReviewPage() {
@@ -16,32 +17,11 @@ export default function InteractiveReviewPage() {
   const [overrideScore, setOverrideScore] = useState('');
   const [teacherNote, setTeacherNote] = useState('');
 
-  const { data: assignmentData, error: assignmentError, isLoading: assignmentLoading } = useQuery({
-    queryKey: ['assignments', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/assignments/${id}`);
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Assignment API Error: ${res.status} - ${text}`);
-      }
-      const data = await res.json();
-      return data.data;
-    }
-  });
+  // 1. Fetch Assignment Details
+  const { data: assignmentData, error: assignmentError, isLoading: assignmentLoading } = useAssignment(id);
 
-  // 2. Fetch Submissions (to find the specific one and its grade)
-  const { data: submissionsData, error: submissionsError, isLoading: submissionsLoading } = useQuery({
-    queryKey: ['submissions', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/assignments/${id}/submissions`);
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Submissions API Error: ${res.status} - ${text}`);
-      }
-      const data = await res.json();
-      return data.data;
-    }
-  });
+  // 2. Fetch Submissions
+  const { data: submissionsData, error: submissionsError, isLoading: submissionsLoading } = useAssignmentSubmissions(id);
 
   const submission = submissionsData?.find((s: any) => s.id === subId);
   const grade = submission?.grade;
