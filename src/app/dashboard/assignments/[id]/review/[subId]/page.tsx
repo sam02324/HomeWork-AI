@@ -16,23 +16,28 @@ export default function InteractiveReviewPage() {
   const [overrideScore, setOverrideScore] = useState('');
   const [teacherNote, setTeacherNote] = useState('');
 
-  // 1. Fetch Assignment Details
-  const { data: assignmentData } = useQuery({
+  const { data: assignmentData, error: assignmentError, isLoading: assignmentLoading } = useQuery({
     queryKey: ['assignments', id],
     queryFn: async () => {
       const res = await fetch(`/api/assignments/${id}`);
-      if (!res.ok) throw new Error('Failed to fetch assignment');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Assignment API Error: ${res.status} - ${text}`);
+      }
       const data = await res.json();
       return data.data;
     }
   });
 
   // 2. Fetch Submissions (to find the specific one and its grade)
-  const { data: submissionsData } = useQuery({
+  const { data: submissionsData, error: submissionsError, isLoading: submissionsLoading } = useQuery({
     queryKey: ['submissions', id],
     queryFn: async () => {
       const res = await fetch(`/api/assignments/${id}/submissions`);
-      if (!res.ok) throw new Error('Failed to fetch submissions');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Submissions API Error: ${res.status} - ${text}`);
+      }
       const data = await res.json();
       return data.data;
     }
@@ -129,8 +134,20 @@ export default function InteractiveReviewPage() {
     }
   };
 
-  if (!assignmentData || !submissionsData) {
+  if (assignmentError) {
+    return <div className={styles.error}>Error loading assignment: {String(assignmentError)}</div>;
+  }
+
+  if (submissionsError) {
+    return <div className={styles.error}>Error loading submissions: {String(submissionsError)}</div>;
+  }
+
+  if (assignmentLoading || submissionsLoading) {
     return <div className={styles.loading}>Loading review...</div>;
+  }
+
+  if (!assignmentData || !submissionsData) {
+    return <div className={styles.loading}>Initializing data...</div>;
   }
 
   if (!submission) {
