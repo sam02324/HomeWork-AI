@@ -67,11 +67,81 @@ export async function gradeSubmission(
     // 3. Build the user message based on submission type
     let userContent: Anthropic.MessageParam['content'];
 
-    if (submission.textContent) {
+    // If we have no textContent but have a googleDriveFileId, try to fetch and extract now
+    let resolvedTextContent = submission.textContent;
+    let resolvedFileType = submission.fileType;
+    let resolvedFileBuffer: Buffer | null = null;
+
+    if (!resolvedTextContent && submission.googleDriveFileId) {
+      try {
+        // Dynamically import to avoid circular deps
+        const { downloadDriveFile } = await import('@/lib/google-sheets');
+        // Find the teacher's userId from the assignment
+        const assignmentRecord = await db.query.assignments.findFirst({
+          where: eq(assignments.id, submission.assignmentId),
+          columns: { teacherId: true },
+        });
+        
+        if (assignmentRecord) {
+          // Check if teacher has OAuth tokens
+          const { googleTokens } = await import('@/db/schema');
+          const tokenRecord = await db.query.googleTokens.findFirst({
+            where: eq(googleTokens.userId, assignmentRecord.teacherId),
+          });
+          const oauthUserId = tokenRecord ? assignmentRecord.teacherId : undefined;
+          
+          const driveFile = await downloadDriveFile(submission.googleDriveFileId, oauthUserId);
+          resolvedFileType = driveFile.mimeType;
+          resolvedFileBuffer = driveFile.buffer;
+
+          if (driveFile.mimeType === 'application/pdf') {
+            try {
+              const { PDFParse } = await import('pdf-parse');
+              const parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
+              const pdfData = await parser.getText();
+              resolvedTextContent = pdfData.text;
+              
+              // Also save the extracted text back to the submission for future use
+              await db.update(submissions)
+                .set({ textContent: resolvedTextContent, fileType: resolvedFileType })
+                .where(eq(submissions.id, submission.id));
+            } catch (pdfErr) {
+              console.error(`PDF parse error during grading for ${submission.googleDriveFileId}:`, pdfErr);
+            }
+          }
+        }
+      } catch (driveErr) {
+        console.error(`Failed to download Drive file during grading for ${submission.googleDriveFileId}:`, driveErr);
+      }
+    }
+
+    if (resolvedTextContent) {
       // Text submission
-      userContent = buildGradingMessage(submission.textContent);
+      userContent = buildGradingMessage(resolvedTextContent);
+    } else if (resolvedFileBuffer && resolvedFileType?.startsWith('image/')) {
+      // Image downloaded from Drive
+      const base64 = resolvedFileBuffer.toString('base64');
+      let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
+      if (resolvedFileType === 'image/png') mediaType = 'image/png';
+      else if (resolvedFileType === 'image/gif') mediaType = 'image/gif';
+      else if (resolvedFileType === 'image/webp') mediaType = 'image/webp';
+
+      userContent = [
+        {
+          type: 'image' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: mediaType,
+            data: base64,
+          },
+        },
+        {
+          type: 'text' as const,
+          text: buildVisionGradingMessage(),
+        },
+      ];
     } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
-      // Fetch image and convert to base64
+      // Fetch image from URL and convert to base64
       const response = await fetch(submission.fileUrl);
       const arrayBuffer = await response.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString('base64');
@@ -95,12 +165,23 @@ export async function gradeSubmission(
           text: buildVisionGradingMessage(),
         },
       ];
-    } else if (submission.fileUrl) {
-      // PDF or other file — for now, treat URL as context
-      userContent = buildGradingMessage(
-        `[Student submitted a ${submission.fileType || 'file'} at: ${submission.fileUrl}]\n\n` +
-        (submission.textContent || 'No text content extracted from file.')
-      );
+    } else if (resolvedFileBuffer && resolvedFileType === 'application/pdf') {
+      // PDF downloaded from Drive but text extraction failed — send as document
+      const base64 = resolvedFileBuffer.toString('base64');
+      userContent = [
+        {
+          type: 'document' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: 'application/pdf' as const,
+            data: base64,
+          },
+        },
+        {
+          type: 'text' as const,
+          text: buildVisionGradingMessage(),
+        },
+      ];
     } else {
       throw new Error('Submission has no content to grade');
     }
@@ -200,7 +281,7 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
     where: eq(submissions.assignmentId, assignmentId),
   });
 
-  const toGrade = pendingSubmissions.filter((s) => s.status === 'pending');
+  const toGrade = pendingSubmissions.filter((s) => s.status === 'pending' || s.status === 'error');
 
   if (toGrade.length === 0) {
     return 0;

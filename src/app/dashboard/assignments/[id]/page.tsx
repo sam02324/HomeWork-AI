@@ -276,7 +276,7 @@ export default function AssignmentDetailsPage() {
                 gradeAssignment.mutate(id);
               }
             }}
-            disabled={gradeAssignment.isPending || !submissions?.some(s => s.status === 'pending')}
+            disabled={gradeAssignment.isPending || !submissions?.some(s => s.status === 'pending' || s.status === 'error')}
             title="Start grading all pending submissions using the saved rubric"
           >
             <Play size={16} />
