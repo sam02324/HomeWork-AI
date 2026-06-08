@@ -150,68 +150,41 @@ export default function InteractiveReviewPage() {
         </div>
       </div>
 
-      <div className={styles.twoPaneContainer}>
-        {/* Left Pane: Document & Score Override */}
-        <div className={styles.leftPane}>
-          <div className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}><FileText size={18} /> Document Viewer</h3>
-              <a href={documentUrl || '#'} target="_blank" rel="noreferrer" className={styles.externalLink}>
-                Open in new tab
-              </a>
-            </div>
-            <div className={styles.documentContainer}>
-              {documentUrl ? (
-                <iframe src={documentUrl} className={styles.iframe} title="Submission Document" />
-              ) : (
-                <div className={styles.emptyDocument}>
-                  <p>No document URL available.</p>
-                  {submission.textContent && (
-                    <div className={styles.textContentViewer}>
-                      <h4>Extracted Text Content:</h4>
-                      <pre>{submission.textContent}</pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+      <div className={styles.contentContainer}>
+        {/* Top: Score Override */}
+        <div className={styles.panelCard}>
+          <div className={styles.panelHeader}>
+            <h3 className={styles.panelTitle}>Manual Override</h3>
           </div>
-
-          <div className={styles.panelCard} style={{ marginTop: '24px' }}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}>Manual Override</h3>
-            </div>
-            <div className={styles.overrideForm}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Final Score (out of {assignmentData.maxScore})</label>
-                  <input 
-                    type="number" 
-                    value={overrideScore} 
-                    onChange={e => setOverrideScore(e.target.value)} 
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Teacher Note (Internal)</label>
-                  <input 
-                    type="text" 
-                    value={teacherNote} 
-                    onChange={e => setTeacherNote(e.target.value)} 
-                    className={styles.input}
-                  />
-                </div>
+          <div className={styles.overrideForm}>
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Final Score (out of {assignmentData.maxScore})</label>
+                <input 
+                  type="number" 
+                  value={overrideScore} 
+                  onChange={e => setOverrideScore(e.target.value)} 
+                  className={styles.input}
+                />
               </div>
-              <button onClick={handleSaveOverride} className={styles.saveBtn}>
-                <Save size={14} /> Save Override
-              </button>
+              <div className={styles.formGroup}>
+                <label>Teacher Note (Internal)</label>
+                <input 
+                  type="text" 
+                  value={teacherNote} 
+                  onChange={e => setTeacherNote(e.target.value)} 
+                  className={styles.input}
+                />
+              </div>
             </div>
+            <button onClick={handleSaveOverride} className={styles.saveBtn}>
+              <Save size={14} /> Save Override
+            </button>
           </div>
         </div>
 
-        {/* Right Pane: AI Chat */}
-        <div className={styles.rightPane}>
-          <div className={styles.panelCard} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Bottom: AI Chat (expanded) */}
+        <div className={styles.panelCard} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
             <div className={styles.panelHeader}>
               <h3 className={styles.panelTitle}><Bot size={18} /> Grading Assistant</h3>
               <div className={styles.scoreBadge}>
@@ -272,7 +245,6 @@ export default function InteractiveReviewPage() {
                 <Send size={16} />
               </button>
             </form>
-          </div>
         </div>
       </div>
     </div>
