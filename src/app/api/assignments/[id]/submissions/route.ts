@@ -22,6 +22,7 @@ export async function GET(_req: Request, { params }: Params) {
         fileUrl: submissions.fileUrl,
         fileType: submissions.fileType,
         textContent: submissions.textContent,
+        googleDriveFileId: submissions.googleDriveFileId,
         status: submissions.status,
         submittedAt: submissions.submittedAt,
         student: {

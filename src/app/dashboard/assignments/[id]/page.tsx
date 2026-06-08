@@ -18,7 +18,8 @@ import {
   Eye,
   Save,
   Pencil,
-  Trash2
+  Trash2,
+  BookOpen
 } from 'lucide-react';
 import styles from './page.module.css';
 import { 
@@ -66,7 +67,6 @@ export default function AssignmentDetailsPage() {
   // Pre-Grade Modal State
   const [showPreGradeModal, setShowPreGradeModal] = useState(false);
   const [localInstructions, setLocalInstructions] = useState('');
-  const [localReferenceAnswers, setLocalReferenceAnswers] = useState('');
   const [localRubric, setLocalRubric] = useState<any[]>([]);
 
   // Edit Details Modal State
@@ -74,6 +74,11 @@ export default function AssignmentDetailsPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editMaxScore, setEditMaxScore] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
+
+  // Reference Answers Modal State
+  const [showReferenceModal, setShowReferenceModal] = useState(false);
+  const [localReferenceText, setLocalReferenceText] = useState('');
+  const [isUploadingReference, setIsUploadingReference] = useState(false);
 
   const updateGrade = useUpdateGrade(reviewGrade?.id || '');
   const createGrade = useCreateGrade();
@@ -110,9 +115,28 @@ export default function AssignmentDetailsPage() {
 
   function openPreGradeModal() {
     setLocalInstructions(assignment?.gradingInstructions || '');
-    setLocalReferenceAnswers(assignment?.referenceAnswers || '');
     setLocalRubric(Array.isArray(assignment?.rubric) ? [...assignment.rubric] : []);
     setShowPreGradeModal(true);
+  }
+
+  function openReferenceModal() {
+    setLocalReferenceText(assignment?.referenceAnswers || '');
+    setShowReferenceModal(true);
+  }
+
+  async function handleReferenceFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    setIsUploadingReference(true);
+    try {
+      const text = await file.text();
+      setLocalReferenceText(prev => prev ? prev + '\n\n--- Uploaded from: ' + file.name + ' ---\n\n' + text : text);
+    } catch {
+      alert('Could not read the file. Please paste the content manually.');
+    } finally {
+      setIsUploadingReference(false);
+      e.target.value = '';
+    }
   }
 
   async function startGrading() {
@@ -120,7 +144,6 @@ export default function AssignmentDetailsPage() {
       // Save the rubric first
       await updateAssignment.mutateAsync({
         gradingInstructions: localInstructions,
-        referenceAnswers: localReferenceAnswers,
         rubric: localRubric
       });
       setShowPreGradeModal(false);
@@ -212,9 +235,16 @@ export default function AssignmentDetailsPage() {
           <button
             className={styles.syncBtn}
             onClick={openPreGradeModal}
-            title="Review and edit the AI Grading Rubric and Reference Answers"
+            title="Review and edit the AI Grading Rubric"
           >
             <FileText size={16} /> Review Rubric
+          </button>
+          <button
+            className={styles.syncBtn}
+            onClick={openReferenceModal}
+            title="Add or edit reference answers / question paper for grading"
+          >
+            <BookOpen size={16} /> Add Reference
           </button>
           <button
             className={styles.syncBtn}
@@ -363,8 +393,10 @@ export default function AssignmentDetailsPage() {
                             <button 
                               className={styles.viewSubBtn}
                               onClick={() => {
-                                if (sub.fileUrl) {
-                                  window.open(sub.fileUrl, '_blank');
+                                const url = sub.fileUrl 
+                                  || (sub.googleDriveFileId ? `https://drive.google.com/file/d/${sub.googleDriveFileId}/view` : null);
+                                if (url) {
+                                  window.open(url, '_blank');
                                 } else {
                                   alert('No file URL available for this submission.');
                                 }
@@ -556,17 +588,6 @@ export default function AssignmentDetailsPage() {
                 />
               </div>
 
-              <div className={styles.formGroup} style={{ marginTop: '16px' }}>
-                <label className={styles.label}>Questions / Reference Answers (Optional)</label>
-                <textarea 
-                  className={styles.textarea} 
-                  rows={4}
-                  value={localReferenceAnswers}
-                  onChange={e => setLocalReferenceAnswers(e.target.value)}
-                  placeholder="Paste the assignment questions or reference answer key here to improve grading accuracy..."
-                />
-              </div>
-
               <div className={styles.gradeSection} style={{ marginTop: '16px' }}>
                 <h3>Current Rubric ({localRubric.length} Criteria)</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
@@ -593,7 +614,6 @@ export default function AssignmentDetailsPage() {
                   try {
                     await updateAssignment.mutateAsync({ 
                       gradingInstructions: localInstructions, 
-                      referenceAnswers: localReferenceAnswers,
                       rubric: localRubric 
                     });
                     setShowPreGradeModal(false);
@@ -658,6 +678,68 @@ export default function AssignmentDetailsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reference Answers Modal */}
+      {showReferenceModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowReferenceModal(false)}>
+          <div className={styles.modal} style={{ width: '800px', maxWidth: '95vw' }} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Reference Answers / Question Paper</h2>
+              <button className={styles.closeBtn} onClick={() => setShowReferenceModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+                Paste or upload the assignment questions and/or reference answer key. The AI grader will use this as a guide when evaluating student submissions.
+              </p>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Upload Question Paper / Answer Key</label>
+                <label className={styles.uploadBtn} style={{ alignSelf: 'flex-start' }}>
+                  <Upload size={14} />
+                  {isUploadingReference ? 'Reading...' : 'Upload .txt / .md file'}
+                  <input 
+                    type="file" 
+                    style={{ display: 'none' }} 
+                    onChange={handleReferenceFileUpload}
+                    accept=".txt,.md,.text,.csv,.json"
+                    disabled={isUploadingReference}
+                  />
+                </label>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', margin: '4px 0 0 0' }}>
+                  Supported: .txt, .md, .csv, .json — contents will be appended below.
+                </p>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Questions / Reference Answers</label>
+                <textarea 
+                  className={styles.textarea} 
+                  rows={10}
+                  value={localReferenceText}
+                  onChange={e => setLocalReferenceText(e.target.value)}
+                  placeholder={"Paste the assignment questions or reference answer key here...\n\nExample:\nQ1. What is the chemical formula of water?\nA1. H₂O\n\nQ2. Explain photosynthesis in 3 sentences.\nA2. Photosynthesis is the process by which..."}
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowReferenceModal(false)}>Cancel</button>
+                <button type="button" className={styles.submitBtn} onClick={async () => {
+                  try {
+                    await updateAssignment.mutateAsync({ 
+                      referenceAnswers: localReferenceText
+                    });
+                    setShowReferenceModal(false);
+                  } catch(e) { alert('Save failed'); }
+                }} disabled={updateAssignment.isPending}>
+                  {updateAssignment.isPending ? 'Saving...' : <><Save size={14}/> Save Reference</>}
+                </button>
+              </div>
             </div>
           </div>
         </div>
