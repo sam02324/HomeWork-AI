@@ -34,7 +34,7 @@ export default function InteractiveReviewPage() {
   // Sync initial messages once grade is loaded
   useEffect(() => {
     if (grade?.chatHistory) {
-      setMessages(grade.chatHistory);
+      setMessages(grade.chatHistory as any[]);
     }
   }, [grade]);
 
