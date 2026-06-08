@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Send, Bot, User, FileText, Loader2, Save } from 'lucide-react';
 import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
+import { useChat } from '@ai-sdk/react';
 import styles from './page.module.css';
 
 export default function InteractiveReviewPage() {
@@ -26,7 +27,6 @@ export default function InteractiveReviewPage() {
   const submission = submissionsData?.find((s: any) => s.id === subId);
   const grade = submission?.grade;
 
-  // 3. Setup AI Chat
   const [messages, setMessages] = useState<any[]>((grade?.chatHistory as any[]) || []);
   const [input, setInput] = useState('');
   const [isLoadingChat, setIsLoadingChat] = useState(false);
@@ -79,8 +79,6 @@ export default function InteractiveReviewPage() {
       setIsLoadingChat(false);
     }
   };
-
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -143,7 +141,7 @@ export default function InteractiveReviewPage() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <button onClick={() => router.push(`/dashboard/assignments/${id}`)} className={styles.backBtn}>
-            <ArrowLeft size={16} /> Back to Assignment
+            <ArrowLeft size={16} /> Back to Assignment Overview
           </button>
           <div className={styles.titleWrapper}>
             <h1 className={styles.title}>{submission.student?.name}'s Submission</h1>
@@ -222,13 +220,29 @@ export default function InteractiveReviewPage() {
             </div>
 
             <div className={styles.chatContainer}>
-              {/* AI Rationale (Initial context) */}
-              {grade?.aiRationale && messages.length === 0 && (
+              {/* AI Feedback (Initial context) */}
+              {grade?.feedback && messages.length === 0 && (
                 <div className={styles.message + ' ' + styles.messageAssistant}>
                   <div className={styles.messageIcon}><Bot size={16} /></div>
                   <div className={styles.messageContent}>
-                    <strong>Grading Rationale:</strong>
-                    <p style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{grade.aiRationale}</p>
+                    <strong>AI Feedback:</strong>
+                    <p style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{grade.feedback}</p>
+                    {grade.strengths && grade.strengths.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <strong>Strengths:</strong>
+                        <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                          {grade.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {grade.improvements && grade.improvements.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <strong>Areas for Improvement:</strong>
+                        <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                          {grade.improvements.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
