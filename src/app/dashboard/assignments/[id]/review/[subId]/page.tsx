@@ -27,7 +27,7 @@ export default function InteractiveReviewPage() {
   const grade = submission?.grade;
 
   // 3. Setup AI Chat
-  const [messages, setMessages] = useState<any[]>(grade?.chatHistory || []);
+  const [messages, setMessages] = useState<any[]>((grade?.chatHistory as any[]) || []);
   const [input, setInput] = useState('');
   const [isLoadingChat, setIsLoadingChat] = useState(false);
 
