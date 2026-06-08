@@ -408,7 +408,7 @@ export default function AssignmentDetailsPage() {
                             {sub.status === 'graded' && grade ? (
                               <button
                                 className={styles.reviewBtn}
-                                onClick={() => openReviewModal(grade, student.name, sub.id)}
+                                onClick={() => router.push(`/dashboard/assignments/${id}/review/${sub.id}`)}
                                 title="Review AI Grade"
                               >
                                 <Eye size={14} /> Review Grade
@@ -416,7 +416,7 @@ export default function AssignmentDetailsPage() {
                             ) : (
                               <button
                                 className={styles.reviewBtn}
-                                onClick={() => openReviewModal(null, student.name, sub.id)}
+                                onClick={() => router.push(`/dashboard/assignments/${id}/review/${sub.id}`)}
                                 title="Edit Manual Score"
                               >
                                 <Eye size={14} /> Edit Score

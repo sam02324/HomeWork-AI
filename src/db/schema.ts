@@ -115,6 +115,8 @@ export const grades = pgTable('grades', {
   aiDetectionScore: integer('ai_detection_score'),
   /** Flag: true if submission is suspected AI-generated (score > 60) */
   aiDetectionFlag: boolean('ai_detection_flag').notNull().default(false),
+  aiRationale: text('ai_rationale'),
+  chatHistory: jsonb('chat_history'),
   gradedAt: timestamp('graded_at', { withTimezone: true }).notNull().defaultNow(),
   reviewedByTeacher: boolean('reviewed_by_teacher').notNull().default(false),
   /** Teacher's manually overridden score, if any */

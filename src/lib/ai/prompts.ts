@@ -58,6 +58,7 @@ ${gradingInstructions}
 You MUST respond with valid JSON matching this exact structure:
 {
   "totalScore": <number between 0 and ${maxScore}>,
+  "aiRationale": "<string, a detailed paragraph explaining your reasoning for the grade, breaking down where points were awarded or lost>",
   "criteriaScores": [
     {
       "criterionName": "<name of criterion>",
