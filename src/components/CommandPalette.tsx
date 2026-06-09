@@ -11,10 +11,12 @@ import {
   PlusCircle, 
   BarChart2, 
   Settings, 
-  BookMarked 
+  BookMarked,
+  Users,
+  CheckCircle,
 } from 'lucide-react';
 import styles from './CommandPalette.module.css';
-import { useClassrooms, useAssignments } from '@/lib/api-client';
+import { useClassrooms, useAssignments, useAllStudents, useAllSubmissions } from '@/lib/api-client';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -25,6 +27,8 @@ export function CommandPalette({ open, setOpen }: CommandPaletteProps) {
   const router = useRouter();
   const { data: classrooms } = useClassrooms();
   const { data: assignments } = useAssignments();
+  const { data: students } = useAllStudents();
+  const { data: submissions } = useAllSubmissions();
 
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
@@ -54,7 +58,7 @@ export function CommandPalette({ open, setOpen }: CommandPaletteProps) {
             <Search className={styles.searchIcon} />
             <Command.Input 
               className={styles.input}
-              placeholder="Search for pages, classrooms, or assignments..." 
+              placeholder="Search pages, classrooms, assignments, students, submissions..." 
               autoFocus
             />
           </div>
@@ -118,6 +122,36 @@ export function CommandPalette({ open, setOpen }: CommandPaletteProps) {
                   >
                     <FileText className={styles.itemIcon} />
                     {a.title}
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {students && students.length > 0 && (
+              <Command.Group heading="Students" className={styles.groupHeading}>
+                {students.map(s => (
+                  <Command.Item 
+                    key={`student-${s.id}`} 
+                    className={styles.item} 
+                    onSelect={() => handleSelect(`/dashboard/students/${s.id}`)}
+                  >
+                    <Users className={styles.itemIcon} />
+                    {s.name} ({s.classroomGrade} {s.classroomSubject})
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {submissions && submissions.length > 0 && (
+              <Command.Group heading="Submissions" className={styles.groupHeading}>
+                {submissions.map(s => (
+                  <Command.Item 
+                    key={`sub-${s.id}`} 
+                    className={styles.item} 
+                    onSelect={() => handleSelect(`/dashboard/assignments/${s.assignmentId}/review/${s.id}`)}
+                  >
+                    <CheckCircle className={styles.itemIcon} />
+                    {s.studentName}&apos;s submission - {s.assignmentTitle}
                   </Command.Item>
                 ))}
               </Command.Group>
