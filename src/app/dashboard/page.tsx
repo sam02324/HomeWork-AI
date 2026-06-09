@@ -67,7 +67,7 @@ function DashboardContent() {
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <h1 className={styles.greeting}>Good evening, {firstName} 👋</h1>
+          <h1 className={styles.greeting}>Welcome back, {firstName}</h1>
           <p className={styles.subGreeting}>
             You have <strong>{stats?.pendingGradings || 0} submissions</strong> waiting to be graded
           </p>
@@ -161,7 +161,7 @@ function DashboardContent() {
             {assignmentsLoading ? (
               <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>Loading assignments...</div>
             ) : recentAssignments.length === 0 ? (
-              <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>No assignments yet. Create one!</div>
+              <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>No assignments found. Get started by creating your first assignment.</div>
             ) : (
               recentAssignments.map((a) => (
                 <div key={a.id} className={styles.assignmentCard}>
