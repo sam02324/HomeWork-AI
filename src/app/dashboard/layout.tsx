@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { useUser, useClerk } from '@clerk/nextjs';
+import { CommandPalette } from '@/components/CommandPalette';
 
 /* ═══ Theme Context ═══ */
 const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
@@ -43,6 +44,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const { user } = useUser();
   const { signOut } = useClerk();
+
+  // Search/Command palette state
+  const [searchOpen, setSearchOpen] = useState(false);
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
@@ -160,7 +164,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <div className={styles.topbarCenter}>
-              <div className={styles.searchBar}>
+              <div className={styles.searchBar} onClick={() => setSearchOpen(true)}>
                 <Search size={16} />
                 <span>Search anything...</span>
                 <kbd>⌘K</kbd>
@@ -183,6 +187,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main className={styles.content}>
             {children}
           </main>
+          
+          <CommandPalette open={searchOpen} setOpen={setSearchOpen} />
         </div>
       </div>
     </ThemeContext.Provider>
