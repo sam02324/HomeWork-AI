@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Send, Bot, User, FileText, Loader2, Save } from 'lucide-react';
+import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
+import { useChat } from '@ai-sdk/react';
 import styles from './page.module.css';
 
 export default function InteractiveReviewPage() {
@@ -17,39 +19,22 @@ export default function InteractiveReviewPage() {
   const [teacherNote, setTeacherNote] = useState('');
 
   // 1. Fetch Assignment Details
-  const { data: assignmentData } = useQuery({
-    queryKey: ['assignments', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/assignments/${id}`);
-      if (!res.ok) throw new Error('Failed to fetch assignment');
-      const data = await res.json();
-      return data.data;
-    }
-  });
+  const { data: assignmentData, error: assignmentError, isLoading: assignmentLoading } = useAssignment(id);
 
-  // 2. Fetch Submissions (to find the specific one and its grade)
-  const { data: submissionsData } = useQuery({
-    queryKey: ['submissions', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/assignments/${id}/submissions`);
-      if (!res.ok) throw new Error('Failed to fetch submissions');
-      const data = await res.json();
-      return data.data;
-    }
-  });
+  // 2. Fetch Submissions
+  const { data: submissionsData, error: submissionsError, isLoading: submissionsLoading } = useAssignmentSubmissions(id);
 
   const submission = submissionsData?.find((s: any) => s.id === subId);
   const grade = submission?.grade;
 
-  // 3. Setup AI Chat
-  const [messages, setMessages] = useState<any[]>(grade?.chatHistory || []);
+  const [messages, setMessages] = useState<any[]>((grade?.chatHistory as any[]) || []);
   const [input, setInput] = useState('');
   const [isLoadingChat, setIsLoadingChat] = useState(false);
 
   // Sync initial messages once grade is loaded
   useEffect(() => {
     if (grade?.chatHistory) {
-      setMessages(grade.chatHistory);
+      setMessages(grade.chatHistory as any[]);
     }
   }, [grade]);
 
@@ -94,8 +79,6 @@ export default function InteractiveReviewPage() {
       setIsLoadingChat(false);
     }
   };
-
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -129,8 +112,20 @@ export default function InteractiveReviewPage() {
     }
   };
 
-  if (!assignmentData || !submissionsData) {
+  if (assignmentError) {
+    return <div className={styles.error}>Error loading assignment: {String(assignmentError)}</div>;
+  }
+
+  if (submissionsError) {
+    return <div className={styles.error}>Error loading submissions: {String(submissionsError)}</div>;
+  }
+
+  if (assignmentLoading || submissionsLoading) {
     return <div className={styles.loading}>Loading review...</div>;
+  }
+
+  if (!assignmentData || !submissionsData) {
+    return <div className={styles.loading}>Initializing data...</div>;
   }
 
   if (!submission) {
@@ -146,7 +141,7 @@ export default function InteractiveReviewPage() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <button onClick={() => router.push(`/dashboard/assignments/${id}`)} className={styles.backBtn}>
-            <ArrowLeft size={16} /> Back to Assignment
+            <ArrowLeft size={16} /> Back to Assignment Overview
           </button>
           <div className={styles.titleWrapper}>
             <h1 className={styles.title}>{submission.student?.name}'s Submission</h1>
@@ -155,68 +150,41 @@ export default function InteractiveReviewPage() {
         </div>
       </div>
 
-      <div className={styles.twoPaneContainer}>
-        {/* Left Pane: Document & Score Override */}
-        <div className={styles.leftPane}>
-          <div className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}><FileText size={18} /> Document Viewer</h3>
-              <a href={documentUrl || '#'} target="_blank" rel="noreferrer" className={styles.externalLink}>
-                Open in new tab
-              </a>
-            </div>
-            <div className={styles.documentContainer}>
-              {documentUrl ? (
-                <iframe src={documentUrl} className={styles.iframe} title="Submission Document" />
-              ) : (
-                <div className={styles.emptyDocument}>
-                  <p>No document URL available.</p>
-                  {submission.textContent && (
-                    <div className={styles.textContentViewer}>
-                      <h4>Extracted Text Content:</h4>
-                      <pre>{submission.textContent}</pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+      <div className={styles.contentContainer}>
+        {/* Top: Score Override */}
+        <div className={styles.panelCard}>
+          <div className={styles.panelHeader}>
+            <h3 className={styles.panelTitle}>Manual Override</h3>
           </div>
-
-          <div className={styles.panelCard} style={{ marginTop: '24px' }}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}>Manual Override</h3>
-            </div>
-            <div className={styles.overrideForm}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Final Score (out of {assignmentData.maxScore})</label>
-                  <input 
-                    type="number" 
-                    value={overrideScore} 
-                    onChange={e => setOverrideScore(e.target.value)} 
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Teacher Note (Internal)</label>
-                  <input 
-                    type="text" 
-                    value={teacherNote} 
-                    onChange={e => setTeacherNote(e.target.value)} 
-                    className={styles.input}
-                  />
-                </div>
+          <div className={styles.overrideForm}>
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Final Score (out of {assignmentData.maxScore})</label>
+                <input 
+                  type="number" 
+                  value={overrideScore} 
+                  onChange={e => setOverrideScore(e.target.value)} 
+                  className={styles.input}
+                />
               </div>
-              <button onClick={handleSaveOverride} className={styles.saveBtn}>
-                <Save size={14} /> Save Override
-              </button>
+              <div className={styles.formGroup}>
+                <label>Teacher Note (Internal)</label>
+                <input 
+                  type="text" 
+                  value={teacherNote} 
+                  onChange={e => setTeacherNote(e.target.value)} 
+                  className={styles.input}
+                />
+              </div>
             </div>
+            <button onClick={handleSaveOverride} className={styles.saveBtn}>
+              <Save size={14} /> Save Override
+            </button>
           </div>
         </div>
 
-        {/* Right Pane: AI Chat */}
-        <div className={styles.rightPane}>
-          <div className={styles.panelCard} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Bottom: AI Chat (expanded) */}
+        <div className={styles.panelCard} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
             <div className={styles.panelHeader}>
               <h3 className={styles.panelTitle}><Bot size={18} /> Grading Assistant</h3>
               <div className={styles.scoreBadge}>
@@ -225,13 +193,29 @@ export default function InteractiveReviewPage() {
             </div>
 
             <div className={styles.chatContainer}>
-              {/* AI Rationale (Initial context) */}
-              {grade?.aiRationale && messages.length === 0 && (
+              {/* AI Feedback (Initial context) */}
+              {grade?.feedback && messages.length === 0 && (
                 <div className={styles.message + ' ' + styles.messageAssistant}>
                   <div className={styles.messageIcon}><Bot size={16} /></div>
                   <div className={styles.messageContent}>
-                    <strong>Grading Rationale:</strong>
-                    <p style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{grade.aiRationale}</p>
+                    <strong>AI Feedback:</strong>
+                    <p style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{grade.feedback}</p>
+                    {grade.strengths && grade.strengths.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <strong>Strengths:</strong>
+                        <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                          {grade.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {grade.improvements && grade.improvements.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <strong>Areas for Improvement:</strong>
+                        <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                          {grade.improvements.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -261,7 +245,6 @@ export default function InteractiveReviewPage() {
                 <Send size={16} />
               </button>
             </form>
-          </div>
         </div>
       </div>
     </div>

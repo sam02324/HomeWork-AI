@@ -246,7 +246,7 @@ export default function AssignmentsPage() {
                   background: 'hsl(0, 80%, 95%)', border: '1px solid hsl(0, 70%, 80%)',
                   borderRadius: '8px', color: 'hsl(0, 70%, 40%)', fontSize: '0.85rem',
                 }}>
-                  ⚠️ {editError}
+                  {editError}
                 </div>
               )}
               <div className={styles.formGroup}>

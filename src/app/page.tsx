@@ -207,7 +207,7 @@ export default function LandingPage() {
             { value: 50000, suffix: '+', label: 'Assignments Graded' },
             { value: 2500, suffix: '+', label: 'Teachers' },
             { value: 95, suffix: '%', label: 'Time Saved' },
-            { value: 4.9, suffix: '★', label: 'Rating', isDecimal: true },
+            { value: 4.9, suffix: '/5', label: 'Rating', isDecimal: true },
           ].map((s, i) => (
             <div key={i} className={styles.statItem}>
               <div className={styles.statValue}>
@@ -358,7 +358,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className={styles.footerBottom}>
-            <p>© 2026 GradeAI. Built with ♥ in India.</p>
+            <p>© 2026 GradeAI. All rights reserved.</p>
           </div>
         </div>
       </footer>

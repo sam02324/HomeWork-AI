@@ -72,7 +72,7 @@ Be helpful, professional, and clear. If the teacher asks you to re-evaluate, pro
 
     // 5. Stream the response
     const result = streamText({
-      model: anthropic('claude-3-5-sonnet-20241022'), // or claude-3-haiku-20240307 depending on speed preference
+      model: anthropic('claude-sonnet-4-6'), // use claude-sonnet-4-6 for better chat quality
       system: systemContext,
       messages: messages as any[],
       async onFinish({ text }) {

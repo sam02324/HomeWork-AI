@@ -114,6 +114,20 @@ export function useAddStudents(classroomId: string) {
   });
 }
 
+export function useAllStudents() {
+  return useQuery<Array<{
+    id: string;
+    name: string;
+    rollNumber: string;
+    classroomId: string;
+    classroomName: string;
+    classroomGrade: string;
+    classroomSubject: string;
+  }>>({
+    queryKey: ['students', 'all'],
+    queryFn: () => apiFetch('/api/students'),
+  });
+}
 /* ═══════════════════════════════════════
    Assignments
    ═══════════════════════════════════════ */
@@ -245,6 +259,20 @@ export function useDeleteSubmission() {
     mutationFn: (id: string) =>
       apiFetch(`/api/submissions/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assignments'] }),
+  });
+}
+
+export function useAllSubmissions() {
+  return useQuery<Array<{
+    id: string;
+    status: string;
+    assignmentId: string;
+    assignmentTitle: string;
+    studentId: string;
+    studentName: string;
+  }>>({
+    queryKey: ['submissions', 'all'],
+    queryFn: () => apiFetch('/api/submissions'),
   });
 }
 
