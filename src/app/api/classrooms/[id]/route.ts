@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { classrooms } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, parseBody, handleApiError, stripHtml } from '@/lib/utils';
 import { updateClassroomSchema } from '@/lib/validations';
 
 type Params = { params: Promise<{ id: string }> };
@@ -23,8 +23,7 @@ export async function GET(_req: Request, { params }: Params) {
     if (!classroom) return errorResponse('Classroom not found', 404);
     return successResponse(classroom);
   } catch (error) {
-    console.error('GET /api/classrooms/[id] error:', error);
-    return errorResponse('Failed to fetch classroom', 500);
+    return handleApiError(error, 'GET /api/classrooms/[id]');
   }
 }
 
@@ -38,16 +37,23 @@ export async function PATCH(request: Request, { params }: Params) {
   if (body instanceof NextResponse) return body;
 
   try {
+    // Sanitize only the text fields that are present in the partial update.
+    const sanitized = {
+      ...body,
+      ...(body.name !== undefined && { name: stripHtml(body.name) }),
+      ...(body.subject !== undefined && { subject: stripHtml(body.subject) }),
+      ...(body.grade !== undefined && { grade: stripHtml(body.grade) }),
+    };
+
     const [updated] = await db.update(classrooms)
-      .set({ ...body, updatedAt: new Date() })
+      .set({ ...sanitized, updatedAt: new Date() })
       .where(and(eq(classrooms.id, id), eq(classrooms.teacherId, userId)))
       .returning();
 
     if (!updated) return errorResponse('Classroom not found', 404);
     return successResponse(updated);
   } catch (error) {
-    console.error('PATCH /api/classrooms/[id] error:', error);
-    return errorResponse('Failed to update classroom', 500);
+    return handleApiError(error, 'PATCH /api/classrooms/[id]');
   }
 }
 
@@ -66,7 +72,6 @@ export async function DELETE(_req: Request, { params }: Params) {
     if (!deleted) return errorResponse('Classroom not found', 404);
     return successResponse({ message: 'Classroom deleted' });
   } catch (error) {
-    console.error('DELETE /api/classrooms/[id] error:', error);
-    return errorResponse('Failed to delete classroom', 500);
+    return handleApiError(error, 'DELETE /api/classrooms/[id]');
   }
 }

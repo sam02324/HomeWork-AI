@@ -20,9 +20,15 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || 'API error');
+    throw new Error(err.error || err.message || 'API error');
   }
-  return res.json();
+  const json = await res.json();
+  // Accept both the standard envelope ({ success, data }) and legacy raw shapes,
+  // so endpoints not yet migrated keep working during the transition.
+  if (json && typeof json === 'object' && 'success' in json) {
+    return (json as { data: T }).data;
+  }
+  return json as T;
 }
 
 /* ═══════════════════════════════════════
@@ -288,8 +294,13 @@ export function useUploadFile() {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json() as Promise<{ url: string; filename: string }>;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(err.error || 'Upload failed');
+      }
+      const json = await res.json();
+      // Unwrap the standard envelope; fall back to raw for safety.
+      return (json?.data ?? json) as { url: string; filename: string };
     },
   });
 }

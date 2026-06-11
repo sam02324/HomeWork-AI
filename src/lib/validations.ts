@@ -77,6 +77,31 @@ export const createSubmissionSchema = z.object({
 });
 
 /* ═══════════════════════════════════════
+   Grade Schemas
+   ═══════════════════════════════════════ */
+
+export const createGradeSchema = z.object({
+  submissionId: z.string().uuid(),
+  teacherOverrideScore: z.number().min(0).max(1000),
+  teacherNote: z.string().max(5000).optional().default(''),
+  maxScore: z.number().int().min(1).max(1000),
+});
+
+export const updateGradeSchema = z.object({
+  teacherOverrideScore: z.number().min(0).max(1000).optional(),
+  teacherNote: z.string().max(5000).optional(),
+  reviewedByTeacher: z.boolean().optional(),
+});
+
+/* ═══════════════════════════════════════
+   Sync Schemas
+   ═══════════════════════════════════════ */
+
+export const syncSubmissionsSchema = z.object({
+  assignmentId: z.string().uuid(),
+});
+
+/* ═══════════════════════════════════════
    Query Params Schemas
    ═══════════════════════════════════════ */
 
@@ -97,3 +122,5 @@ export type CreateStudent = z.infer<typeof createStudentSchema>;
 export type CreateAssignment = z.infer<typeof createAssignmentSchema>;
 export type UpdateAssignment = z.infer<typeof updateAssignmentSchema>;
 export type CreateSubmission = z.infer<typeof createSubmissionSchema>;
+export type CreateGrade = z.infer<typeof createGradeSchema>;
+export type UpdateGrade = z.infer<typeof updateGradeSchema>;

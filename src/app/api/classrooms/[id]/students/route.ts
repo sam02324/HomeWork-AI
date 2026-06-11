@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { students, classrooms, submissions, grades } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, handleApiError, stripHtml } from '@/lib/utils';
 import { createStudentSchema, createStudentsBulkSchema } from '@/lib/validations';
 
 type Params = { params: Promise<{ id: string }> };
@@ -46,8 +46,7 @@ export async function GET(_req: Request, { params }: Params) {
 
     return successResponse(result);
   } catch (error) {
-    console.error('GET /api/classrooms/[id]/students error:', error);
-    return errorResponse('Failed to fetch students', 500);
+    return handleApiError(error, 'GET /api/classrooms/[id]/students');
   }
 }
 
@@ -58,34 +57,34 @@ export async function POST(request: Request, { params }: Params) {
 
   const { id } = await params;
 
+  // Verify ownership before touching the body.
+  const classroom = await db.query.classrooms.findFirst({
+    where: and(eq(classrooms.id, id), eq(classrooms.teacherId, userId)),
+  });
+  if (!classroom) return errorResponse('Classroom not found', 404);
+
+  // Parse + validate (supports { student }, { students: [] }, or a bare object).
+  // Validation failures return 400; only DB failures fall through to 500.
+  let studentList: Array<{ name: string; rollNumber: string; email?: string | null; parentPhone?: string | null }>;
   try {
-    // Verify ownership
-    const classroom = await db.query.classrooms.findFirst({
-      where: and(eq(classrooms.id, id), eq(classrooms.teacherId, userId)),
-    });
-    if (!classroom) return errorResponse('Classroom not found', 404);
-
     const rawBody = await request.json();
-
-    // Support both { student: {...} } and { students: [...] }
-    let studentList: Array<{ name: string; rollNumber: string; email?: string | null; parentPhone?: string | null }>;
-
     if (rawBody.students && Array.isArray(rawBody.students)) {
-      const parsed = createStudentsBulkSchema.parse(rawBody);
-      studentList = parsed.students;
+      studentList = createStudentsBulkSchema.parse(rawBody).students;
     } else if (rawBody.student) {
-      const parsed = createStudentSchema.parse(rawBody.student);
-      studentList = [parsed];
+      studentList = [createStudentSchema.parse(rawBody.student)];
     } else {
-      const parsed = createStudentSchema.parse(rawBody);
-      studentList = [parsed];
+      studentList = [createStudentSchema.parse(rawBody)];
     }
+  } catch {
+    return errorResponse('Invalid student data', 400, 'VALIDATION');
+  }
 
+  try {
     const inserted = await db.insert(students).values(
       studentList.map((s) => ({
         classroomId: id,
-        name: s.name,
-        rollNumber: s.rollNumber,
+        name: stripHtml(s.name),
+        rollNumber: stripHtml(s.rollNumber),
         email: s.email ?? null,
         parentPhone: s.parentPhone ?? null,
       }))
@@ -93,8 +92,6 @@ export async function POST(request: Request, { params }: Params) {
 
     return successResponse(inserted, 201);
   } catch (error) {
-    console.error('POST /api/classrooms/[id]/students error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to add students';
-    return errorResponse(message, 400);
+    return handleApiError(error, 'POST /api/classrooms/[id]/students');
   }
 }

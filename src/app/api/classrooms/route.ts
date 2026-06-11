@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { classrooms, students, grades, submissions } from '@/db/schema';
 import { eq, sql, count } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
+import { getAuthUserId, successResponse, parseBody, handleApiError, stripHtml } from '@/lib/utils';
 import { createClassroomSchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
@@ -40,8 +40,7 @@ export async function GET() {
 
     return successResponse(result);
   } catch (error) {
-    console.error('GET /api/classrooms error:', error);
-    return errorResponse('Failed to fetch classrooms', 500);
+    return handleApiError(error, 'GET /api/classrooms');
   }
 }
 
@@ -56,12 +55,14 @@ export async function POST(request: Request) {
   try {
     const [classroom] = await db.insert(classrooms).values({
       ...body,
+      name: stripHtml(body.name),
+      subject: stripHtml(body.subject),
+      grade: stripHtml(body.grade),
       teacherId: userId,
     }).returning();
 
     return successResponse(classroom, 201);
   } catch (error) {
-    console.error('POST /api/classrooms error:', error);
-    return errorResponse('Failed to create classroom', 500);
+    return handleApiError(error, 'POST /api/classrooms');
   }
 }

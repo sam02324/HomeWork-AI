@@ -8,6 +8,7 @@ import {
   timestamp,
   jsonb,
   pgEnum,
+  index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -46,7 +47,9 @@ export const classrooms = pgTable('classrooms', {
   color: text('color').notNull().default('#4A90D9'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  teacherIdx: index('classrooms_teacher_idx').on(table.teacherId),
+}));
 
 /** Students */
 export const students = pgTable('students', {
@@ -57,7 +60,9 @@ export const students = pgTable('students', {
   email: text('email'),
   parentPhone: text('parent_phone'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  classroomIdx: index('students_classroom_idx').on(table.classroomId),
+}));
 
 /** Assignments */
 export const assignments = pgTable('assignments', {
@@ -80,7 +85,10 @@ export const assignments = pgTable('assignments', {
   spreadsheetId: text('spreadsheet_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  classroomIdx: index('assignments_classroom_idx').on(table.classroomId),
+  teacherIdx: index('assignments_teacher_idx').on(table.teacherId),
+}));
 
 /** Submissions */
 export const submissions = pgTable('submissions', {
@@ -96,7 +104,10 @@ export const submissions = pgTable('submissions', {
   /** Google Drive file ID for the uploaded file from the form */
   googleDriveFileId: text('google_drive_file_id'),
   submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  assignmentIdx: index('submissions_assignment_idx').on(table.assignmentId),
+  studentIdx: index('submissions_student_idx').on(table.studentId),
+}));
 
 /** Grades */
 export const grades = pgTable('grades', {
@@ -115,6 +126,8 @@ export const grades = pgTable('grades', {
   aiDetectionScore: integer('ai_detection_score'),
   /** Flag: true if submission is suspected AI-generated (score > 60) */
   aiDetectionFlag: boolean('ai_detection_flag').notNull().default(false),
+  aiRationale: text('ai_rationale'),
+  chatHistory: jsonb('chat_history'),
   gradedAt: timestamp('graded_at', { withTimezone: true }).notNull().defaultNow(),
   reviewedByTeacher: boolean('reviewed_by_teacher').notNull().default(false),
   /** Teacher's manually overridden score, if any */

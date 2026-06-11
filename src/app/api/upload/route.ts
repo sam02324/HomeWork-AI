@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard } from '@/lib/utils';
 import { randomUUID } from 'crypto';
 
 function getR2Client() {
@@ -18,6 +18,10 @@ function getR2Client() {
 export async function POST(request: Request) {
   const userId = await getAuthUserId();
   if (userId instanceof NextResponse) return userId;
+
+  // Throttle uploads: 30 per minute per user.
+  const limited = rateLimitGuard(`upload:${userId}`, 30, 60_000);
+  if (limited) return limited;
 
   try {
     const formData = await request.formData();
@@ -73,7 +77,6 @@ export async function POST(request: Request) {
       type: file.type,
     }, 201);
   } catch (error) {
-    console.error('POST /api/upload error:', error);
-    return errorResponse('Upload failed', 500);
+    return handleApiError(error, 'POST /api/upload');
   }
 }

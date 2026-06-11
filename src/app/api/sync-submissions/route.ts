@@ -15,7 +15,8 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { db } from '@/db';
 import { assignments, submissions, students, classrooms, googleTokens } from '@/db/schema';
 import { eq, and, or, ilike } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard, parseBody } from '@/lib/utils';
+import { syncSubmissionsSchema } from '@/lib/validations';
 import { fetchSheetRows, downloadDriveFile } from '@/lib/google-sheets';
 import type { FormResponse } from '@/lib/google-sheets';
 import { randomUUID } from 'crypto';
@@ -138,17 +139,12 @@ export async function POST(request: Request) {
   const userId = await getAuthUserId();
   if (userId instanceof NextResponse) return userId;
 
-  // Parse request body
-  let body: { assignmentId: string };
-  try {
-    body = await request.json();
-  } catch {
-    return errorResponse('Invalid JSON body', 400);
-  }
+  // Throttle sync (hits Google APIs + R2): 10 per minute per user.
+  const limited = rateLimitGuard(`sync:${userId}`, 10, 60_000);
+  if (limited) return limited;
 
-  if (!body.assignmentId) {
-    return errorResponse('assignmentId is required', 400);
-  }
+  const body = await parseBody(request, syncSubmissionsSchema);
+  if (body instanceof NextResponse) return body;
 
   try {
     // 1. Verify the assignment exists and belongs to this teacher
@@ -347,7 +343,6 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('POST /api/sync-submissions error:', error);
-    return errorResponse('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'), 500);
+    return handleApiError(error, 'POST /api/sync-submissions');
   }
 }

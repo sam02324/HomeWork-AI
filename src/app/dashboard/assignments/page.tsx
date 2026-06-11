@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, X, FileText } from 'lucide-react';
+import { motion } from 'framer-motion';
 import styles from './page.module.css';
 
 import { useState, useRef, useEffect } from 'react';
 import { useAssignments, useClassrooms, useGradeAssignment, useDeleteAssignment } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   draft: { label: 'Draft', cls: 'statusDraft' },
@@ -28,6 +32,7 @@ export default function AssignmentsPage() {
   const gradeAssignment = useGradeAssignment();
   const deleteAssignment = useDeleteAssignment();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   // Edit/Delete state
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -59,9 +64,10 @@ export default function AssignmentsPage() {
 
   async function handleGrade(id: string) {
     try {
-      await gradeAssignment.mutateAsync(id);
+      const result = await gradeAssignment.mutateAsync(id) as { gradedCount?: number };
+      toast.success(`Grading complete — ${result?.gradedCount ?? 0} submission(s) graded.`);
     } catch (e) {
-      console.error(e);
+      toast.error(e instanceof Error ? e.message : 'Grading failed');
     }
   }
 
@@ -91,9 +97,10 @@ export default function AssignmentsPage() {
     if (!deletingAssignment) return;
     try {
       await deleteAssignment.mutateAsync(deletingAssignment.id);
+      toast.success('Assignment deleted');
       setDeletingAssignment(null);
     } catch (err) {
-      console.error('Failed to delete assignment', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to delete assignment');
     }
   }
 

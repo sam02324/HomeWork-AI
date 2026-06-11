@@ -2,8 +2,10 @@
 
 import { useState, createContext, useContext } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { CommandPalette } from '@/components/ui/CommandPalette';
+import { useKeyboardShortcut } from '@/lib/hooks/useKeyboardShortcut';
 import {
   LayoutDashboard,
   Users,
@@ -39,10 +41,19 @@ const NAV_ITEMS = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const { user } = useUser();
   const { signOut } = useClerk();
+
+  // Global keyboard shortcuts (Section 3f). Disabled while palette is open
+  // except for the palette's own handlers.
+  useKeyboardShortcut('k', () => setPaletteOpen((o) => !o), { meta: true });
+  useKeyboardShortcut('/', () => setPaletteOpen(true), { enabled: !paletteOpen });
+  useKeyboardShortcut('n', () => router.push('/dashboard/assignments/new'), { enabled: !paletteOpen });
+  useKeyboardShortcut('g', () => router.push('/dashboard/assignments'), { enabled: !paletteOpen });
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
@@ -160,11 +171,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <div className={styles.topbarCenter}>
-              <div className={styles.searchBar}>
+              <button
+                type="button"
+                className={styles.searchBar}
+                onClick={() => setPaletteOpen(true)}
+              >
                 <Search size={16} />
                 <span>Search anything...</span>
                 <kbd>⌘K</kbd>
-              </div>
+              </button>
             </div>
 
             <div className={styles.topbarRight}>
@@ -184,6 +199,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {children}
           </main>
         </div>
+
+        {/* ⌘K command palette */}
+        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       </div>
     </ThemeContext.Provider>
   );

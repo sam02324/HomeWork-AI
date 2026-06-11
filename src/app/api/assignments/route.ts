@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { assignments, submissions } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse, parseBody, parseQuery } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, parseBody, parseQuery, handleApiError, stripHtml } from '@/lib/utils';
 import { createAssignmentSchema, assignmentQuerySchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
@@ -57,8 +57,7 @@ export async function GET(request: Request) {
 
     return successResponse(result);
   } catch (error) {
-    console.error('GET /api/assignments error:', error);
-    return errorResponse('Failed to fetch assignments', 500);
+    return handleApiError(error, 'GET /api/assignments');
   }
 }
 
@@ -71,8 +70,14 @@ export async function POST(request: Request) {
   if (body instanceof NextResponse) return body;
 
   try {
+    // Strip HTML from free-text fields to prevent stored XSS.
     const [assignment] = await db.insert(assignments).values({
       ...body,
+      title: stripHtml(body.title),
+      topic: body.topic ? stripHtml(body.topic) : body.topic,
+      description: body.description ? stripHtml(body.description) : body.description,
+      gradingInstructions: body.gradingInstructions ? stripHtml(body.gradingInstructions) : body.gradingInstructions,
+      referenceAnswers: body.referenceAnswers ? stripHtml(body.referenceAnswers) : body.referenceAnswers,
       teacherId: userId,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       status: 'draft',
@@ -80,7 +85,6 @@ export async function POST(request: Request) {
 
     return successResponse(assignment, 201);
   } catch (error) {
-    console.error('POST /api/assignments error:', error);
-    return errorResponse('Failed to create assignment', 500);
+    return handleApiError(error, 'POST /api/assignments');
   }
 }

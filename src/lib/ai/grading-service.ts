@@ -32,6 +32,7 @@ interface GradingResult {
   strengths: string[];
   improvements: string[];
   gradeLetter: string;
+  aiRationale: string;
 }
 
 /* ═══════════════════════════════════════
@@ -244,6 +245,7 @@ export async function gradeSubmission(
       aiTokensUsed: tokensUsed,
       aiDetectionScore,
       aiDetectionFlag,
+      aiRationale: result.aiRationale,
     });
 
     // 9. Update submission status to 'graded'

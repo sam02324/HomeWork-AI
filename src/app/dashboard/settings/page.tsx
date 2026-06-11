@@ -29,6 +29,7 @@ const TABS = [
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
+  { id: 'data', label: 'Data & Privacy', icon: Shield },
 ];
 
 export default function SettingsPage() {
@@ -429,6 +430,57 @@ export default function SettingsPage() {
                   <option>தமிழ் (Tamil)</option>
                   <option>తెలుగు (Telugu)</option>
                 </select>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'data' && (
+            <div className={styles.tabContent}>
+              <div className={styles.section}>
+                <h3 className={styles.sectionTitle}>Data Management</h3>
+                <p className={styles.sectionDesc}>Manage your account data and privacy settings.</p>
+
+                <div className={styles.formGroup} style={{ marginTop: '24px' }}>
+                  <div style={{ padding: '20px', border: '1px solid var(--danger-color, #ef4444)', borderRadius: '8px', background: '#fef2f2' }}>
+                    <h4 style={{ color: 'var(--danger-color, #ef4444)', margin: '0 0 8px 0' }}>Wipe All Data</h4>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#7f1d1d' }}>
+                      This will permanently delete all your classrooms, students, assignments, submissions, and grades. 
+                      This action cannot be undone.
+                    </p>
+                    <button
+                      onClick={async () => {
+                        const confirm1 = window.confirm("Are you ABSOLUTELY sure? This will delete EVERYTHING.");
+                        if (!confirm1) return;
+                        const confirm2 = window.prompt("Type 'DELETE' to confirm wiping all data:");
+                        if (confirm2 === 'DELETE') {
+                          try {
+                            const res = await fetch('/api/settings/wipe-data', { method: 'POST' });
+                            if (res.ok) {
+                              alert('All data has been wiped successfully.');
+                              window.location.reload();
+                            } else {
+                              alert('Failed to wipe data.');
+                            }
+                          } catch (e) {
+                            alert('An error occurred.');
+                          }
+                        }
+                      }}
+                      className={styles.btnDanger}
+                      style={{
+                        background: 'var(--danger-color, #ef4444)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Wipe All Data
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
