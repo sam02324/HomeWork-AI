@@ -67,8 +67,9 @@ export async function GET() {
     response.headers.set('Expires', '0');
     
     return response;
-  } catch (error: any) {
-    console.error('GET /api/google-folders error:', error.message || error);
-    return errorResponse(`Failed to list Google Folders: ${error.message || 'Unknown error'}`, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('GET /api/google-folders error:', message);
+    return errorResponse(`Failed to list Google Folders: ${message}`, 500);
   }
 }

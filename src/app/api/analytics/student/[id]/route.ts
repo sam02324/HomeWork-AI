@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { students, classrooms, submissions, grades, assignments } from '@/db/schema';
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { students, submissions, grades, assignments } from '@/db/schema';
+import { eq, sql, desc } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
@@ -30,6 +30,7 @@ export async function GET(_req: Request, { params }: Params) {
     // Get all grades for this student with assignment info
     const studentGrades = await db
       .select({
+        id: grades.id,
         totalScore: grades.totalScore,
         maxScore: grades.maxScore,
         gradeLetter: grades.gradeLetter,

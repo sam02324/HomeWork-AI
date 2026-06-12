@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   User,
   Building2,
@@ -15,7 +16,6 @@ import {
   Phone,
   MapPin,
   Check,
-  ExternalLink,
   Link2,
 } from 'lucide-react';
 import styles from './page.module.css';
@@ -41,38 +41,34 @@ export default function SettingsPage() {
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
 
-  const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
-  const [selectedFolder, setSelectedFolder] = useState('');
-  const [loadingFolders, setLoadingFolders] = useState(false);
+  const [chosenFolder, setChosenFolder] = useState<string | null>(null);
   const [savingFolder, setSavingFolder] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeTab === 'integrations') {
-      setLoadingFolders(true);
-      setFetchError(null);
-      fetch(`/api/google-folders?t=${Date.now()}`)
-        .then(res => {
-          if (!res.ok) {
-            return res.json().then(err => { throw new Error(err.error || 'Failed to fetch folders'); });
-          }
-          return res.json();
-        })
-        .then(data => {
-          if (data.data && data.data.folders) {
-            setFolders(data.data.folders);
-            if (data.data.currentSyncFolderId) {
-              setSelectedFolder(data.data.currentSyncFolderId);
-            }
-          }
-        })
-        .catch(err => {
-          console.error('Fetch error:', err);
-          setFetchError(err.message);
-        })
-        .finally(() => setLoadingFolders(false));
-    }
-  }, [activeTab]);
+  // Fetch Drive folders only while the Integrations tab is open.
+  const {
+    data: folderData,
+    isLoading: loadingFolders,
+    error: folderError,
+  } = useQuery({
+    queryKey: ['google-folders'],
+    queryFn: async () => {
+      const res = await fetch(`/api/google-folders?t=${Date.now()}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to fetch folders');
+      }
+      const json = await res.json();
+      return (json.data ?? { folders: [] }) as {
+        folders: { id: string; name: string }[];
+        currentSyncFolderId?: string;
+      };
+    },
+    enabled: activeTab === 'integrations',
+  });
+
+  const folders = folderData?.folders ?? [];
+  const selectedFolder = chosenFolder ?? folderData?.currentSyncFolderId ?? '';
+  const fetchError = folderError ? (folderError as Error).message : null;
 
   async function handleSaveFolder() {
     setSavingFolder(true);
@@ -316,7 +312,7 @@ export default function SettingsPage() {
                   <select 
                     className={styles.select} 
                     value={selectedFolder} 
-                    onChange={e => setSelectedFolder(e.target.value)}
+                    onChange={e => setChosenFolder(e.target.value)}
                   >
                     <option value="">-- Scan Entire Drive --</option>
                     {folders.map(f => (
@@ -465,7 +461,7 @@ export default function SettingsPage() {
                             } else {
                               alert('Failed to wipe data.');
                             }
-                          } catch (e) {
+                          } catch {
                             alert('An error occurred.');
                           }
                         }

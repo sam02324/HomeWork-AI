@@ -296,12 +296,27 @@ export function useDashboardStats() {
   });
 }
 
+export interface StudentGrade {
+  id: string;
+  totalScore: string;
+  maxScore: number;
+  gradeLetter: string;
+  gradedAt: string | null;
+  assignmentTitle: string;
+  assignmentSubject: string;
+  feedback: string;
+  strengths: string[] | null;
+  improvements: string[] | null;
+  criteriaScores: Array<{ criterionName: string; score: number; maxScore: number; feedback: string }>;
+  percentage: number;
+}
+
 interface StudentAnalytics {
   student: Student & { classroom: { name: string; subject: string } };
   avgScore: number;
   totalSubmissions: number;
   scoreTrend: Array<{ date: string; score: number; assignmentTitle: string }>;
-  grades: Array<any>;
+  grades: StudentGrade[];
 }
 
 export function useStudentAnalytics(studentId: string) {

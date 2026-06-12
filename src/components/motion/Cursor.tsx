@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 
 /**
  * Custom cursor (accent dot + trailing ring), shared by the landing page and
@@ -11,16 +12,9 @@ import gsap from 'gsap';
 export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    if (
-      window.matchMedia('(pointer: fine)').matches &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      setEnabled(true);
-    }
-  }, []);
+  const finePointer = useMediaQuery('(pointer: fine)');
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const enabled = finePointer && !reducedMotion;
 
   useEffect(() => {
     if (!enabled) return;

@@ -187,9 +187,6 @@ export async function gradeSubmission(
       throw new Error('Submission has no content to grade');
     }
 
-    let result: GradingResult;
-    let tokensUsed = 0;
-
     if (!anthropic) {
       throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
     }
@@ -219,8 +216,8 @@ export async function gradeSubmission(
       throw new Error('Claude did not return valid JSON');
     }
 
-    result = JSON.parse(jsonMatch[0]);
-    tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+    const result: GradingResult = JSON.parse(jsonMatch[0]);
+    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
 
     // 6. Calculate tokens used (handled above)
     // 7. Ensure grade letter is correct

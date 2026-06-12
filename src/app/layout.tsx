@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider telemetry={false}>
       <html lang="en" data-theme="dark" data-scroll-behavior="smooth" suppressHydrationWarning>
         <body>
           <ThemeProvider>

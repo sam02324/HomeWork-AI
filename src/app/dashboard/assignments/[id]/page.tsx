@@ -14,7 +14,6 @@ import {
   AlertCircle,
   X,
   Bot,
-  MessageSquareWarning,
   Eye,
   Save,
   Pencil,
@@ -36,7 +35,7 @@ import {
   useCreateGrade,
   useDeleteSubmission,
 } from '@/lib/api-client';
-import type { Grade } from '@/db/schema';
+import type { Grade, RubricCriteria } from '@/db/schema';
 
 export default function AssignmentDetailsPage() {
   const router = useRouter();
@@ -60,7 +59,7 @@ export default function AssignmentDetailsPage() {
 
   // Review Modal State
   const [reviewGrade, setReviewGrade] = useState<Grade | null>(null);
-  const [reviewStudentName, setReviewStudentName] = useState('');
+  const [reviewStudentName] = useState('');
   const [reviewSubmissionId, setReviewSubmissionId] = useState('');
   const [overrideScore, setOverrideScore] = useState('');
   const [teacherNote, setTeacherNote] = useState('');
@@ -68,7 +67,7 @@ export default function AssignmentDetailsPage() {
   // Pre-Grade Modal State
   const [showPreGradeModal, setShowPreGradeModal] = useState(false);
   const [localInstructions, setLocalInstructions] = useState('');
-  const [localRubric, setLocalRubric] = useState<any[]>([]);
+  const [localRubric, setLocalRubric] = useState<RubricCriteria[]>([]);
 
   // Edit Details Modal State
   const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
@@ -140,22 +139,6 @@ export default function AssignmentDetailsPage() {
     }
   }
 
-  async function startGrading() {
-    try {
-      // Save the rubric first
-      await updateAssignment.mutateAsync({
-        gradingInstructions: localInstructions,
-        rubric: localRubric
-      });
-      setShowPreGradeModal(false);
-      // Then grade
-      await gradeAssignment.mutateAsync(id);
-    } catch (e) {
-      console.error(e);
-      alert('Grading failed');
-    }
-  }
-
   function openEditDetailsModal() {
     setEditTitle(assignment?.title || '');
     setEditMaxScore(assignment?.maxScore?.toString() || '100');
@@ -172,21 +155,8 @@ export default function AssignmentDetailsPage() {
         dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
       });
       setShowEditDetailsModal(false);
-    } catch(err) {
+    } catch {
       alert('Failed to update assignment details');
-    }
-  }
-
-  function openReviewModal(grade: Grade | null, studentName: string, submissionId: string) {
-    setReviewGrade(grade);
-    setReviewStudentName(studentName);
-    setReviewSubmissionId(submissionId);
-    if (grade) {
-      setOverrideScore(grade.teacherOverrideScore ? grade.teacherOverrideScore.toString() : grade.totalScore);
-      setTeacherNote(grade.teacherNote || '');
-    } else {
-      setOverrideScore('');
-      setTeacherNote('');
     }
   }
 
@@ -576,7 +546,7 @@ export default function AssignmentDetailsPage() {
             
             <div className={styles.modalContent}>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                Before grading, you can tweak the AI's grading instructions and view the rubric criteria.
+                Before grading, you can tweak the AI&apos;s grading instructions and view the rubric criteria.
               </p>
 
               <div className={styles.formGroup}>
@@ -619,7 +589,7 @@ export default function AssignmentDetailsPage() {
                       rubric: localRubric 
                     });
                     setShowPreGradeModal(false);
-                  } catch(e) { alert('Save failed'); }
+                  } catch { alert('Save failed'); }
                 }} disabled={updateAssignment.isPending}>
                   {updateAssignment.isPending ? 'Saving...' : <><Save size={14}/> Save Rubric</>}
                 </button>
@@ -737,7 +707,7 @@ export default function AssignmentDetailsPage() {
                       referenceAnswers: localReferenceText
                     });
                     setShowReferenceModal(false);
-                  } catch(e) { alert('Save failed'); }
+                  } catch { alert('Save failed'); }
                 }} disabled={updateAssignment.isPending}>
                   {updateAssignment.isPending ? 'Saving...' : <><Save size={14}/> Save Reference</>}
                 </button>

@@ -12,12 +12,12 @@ import {
   FileText,
   Image as ImageIcon,
   Type,
-  PenTool,
   Info,
   Sparkles,
   ClipboardList,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import styles from './page.module.css';
 import { useClassrooms, useCreateAssignment, useUploadFile, useGoogleSheets } from '@/lib/api-client';
 import { Reveal } from '@/components/motion/Reveal';
@@ -232,10 +232,10 @@ export default function NewAssignmentPage() {
       {/* Header */}
       <div className={styles.header} data-reveal>
         <div className={styles.headerLeft}>
-          <a href="/dashboard/assignments" className={styles.backLink}>
+          <Link href="/dashboard/assignments" className={styles.backLink}>
             <ArrowLeft size={18} />
             <span>Assignments</span>
-          </a>
+          </Link>
           <span className="page-eyebrow">New Assignment</span>
           <h1 className="page-title">
             Create <em className="serif-accent">new assignment</em>
@@ -291,9 +291,9 @@ export default function NewAssignmentPage() {
                 ) : !classrooms || classrooms.length === 0 ? (
                   <div style={{ padding: '12px', background: 'var(--bg-tertiary)', borderRadius: '8px', fontSize: '0.9rem' }}>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>You haven&apos;t created any classrooms yet.</p>
-                    <a href="/dashboard/classrooms" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline' }}>
+                    <Link href="/dashboard/classrooms" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline' }}>
                       → Create a classroom first
-                    </a>
+                    </Link>
                   </div>
                 ) : (
                   <select className={styles.select} value={classId} onChange={(e) => setClassId(e.target.value)}>

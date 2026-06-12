@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { students, classrooms, submissions, grades } from '@/db/schema';
+import { students, classrooms } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, handleApiError, stripHtml } from '@/lib/utils';
 import { createStudentSchema, createStudentsBulkSchema } from '@/lib/validations';

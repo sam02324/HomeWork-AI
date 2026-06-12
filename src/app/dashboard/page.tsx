@@ -32,18 +32,22 @@ function DashboardContent() {
   const searchParams = useSearchParams();
 
   const [googleBannerDismissed, setGoogleBannerDismissed] = useState(false);
-  const [oauthMessage, setOauthMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Handle OAuth callback params
-  useEffect(() => {
+  // Read the OAuth callback result once, on first render.
+  const [oauthMessage, setOauthMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(() => {
     const authResult = searchParams.get('google_auth');
     if (authResult === 'success') {
-      setOauthMessage({ type: 'success', text: 'Google account connected successfully!' });
-      // Clean URL
-      window.history.replaceState({}, '', '/dashboard');
-    } else if (authResult === 'error') {
+      return { type: 'success', text: 'Google account connected successfully!' };
+    }
+    if (authResult === 'error') {
       const reason = searchParams.get('reason') || 'unknown';
-      setOauthMessage({ type: 'error', text: `Failed to connect Google: ${reason}` });
+      return { type: 'error', text: `Failed to connect Google: ${reason}` };
+    }
+    return null;
+  });
+
+  // Strip the OAuth callback params from the URL
+  useEffect(() => {
+    if (searchParams.get('google_auth')) {
       window.history.replaceState({}, '', '/dashboard');
     }
   }, [searchParams]);

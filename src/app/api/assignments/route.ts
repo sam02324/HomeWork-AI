@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { assignments, submissions } from '@/db/schema';
+import { assignments } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse, parseBody, parseQuery, handleApiError, stripHtml } from '@/lib/utils';
+import { getAuthUserId, successResponse, parseBody, parseQuery, handleApiError, stripHtml } from '@/lib/utils';
 import { createAssignmentSchema, assignmentQuerySchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';

@@ -241,7 +241,7 @@ export async function fetchSheetRows(
     // No data rows (only header or empty sheet)
     return [];
   }
-  const headers = rows[0].map((h: any) => String(h).toLowerCase().trim());
+  const headers = rows[0].map((h: unknown) => String(h).toLowerCase().trim());
   const tsIdx = headers.findIndex((h: string) => h.includes('timestamp') || h === 'date');
   const nameIdx = headers.findIndex((h: string) => h.includes('name'));
   const emailIdx = headers.findIndex((h: string) => h.includes('email') || h.includes('e-mail'));

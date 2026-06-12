@@ -1,22 +1,12 @@
 'use client';
 
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Area, AreaChart } from 'recharts';
-import { ArrowLeft, TrendingUp, Award, Target, BarChart3, BookOpen, Sparkles } from 'lucide-react';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Area, AreaChart } from 'recharts';
+import { ArrowLeft, TrendingUp, Award, Target, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from './page.module.css';
 import { Reveal } from '@/components/motion/Reveal';
 import { useStudentAnalytics } from '@/lib/api-client';
-
-// We calculate stats dynamically inside the component
-
-function scoreColor(score: number | null) {
-  if (score === null) return 'var(--bg-tertiary)';
-  if (score >= 90) return 'var(--score-excellent)';
-  if (score >= 70) return 'var(--score-good)';
-  if (score >= 50) return 'var(--score-average)';
-  return 'var(--score-poor)';
-}
 
 export default function StudentAnalyticsPage() {
   const params = useParams();
@@ -32,9 +22,9 @@ export default function StudentAnalyticsPage() {
   // Calculate Radar Data and Weak Topics
   const criteriaMap: Record<string, { totalScore: number, totalMax: number }> = {};
   if (grades && Array.isArray(grades)) {
-    grades.forEach((g: any) => {
+    grades.forEach((g) => {
       if (Array.isArray(g.criteriaScores)) {
-        g.criteriaScores.forEach((c: any) => {
+        g.criteriaScores.forEach((c) => {
           if (!criteriaMap[c.criterionName]) {
             criteriaMap[c.criterionName] = { totalScore: 0, totalMax: 0 };
           }
@@ -50,17 +40,8 @@ export default function StudentAnalyticsPage() {
     score: Math.round((stats.totalScore / stats.totalMax) * 100) || 0
   }));
 
-  const WEAK_TOPICS = Object.entries(criteriaMap)
-    .map(([topic, stats]) => ({
-      topic,
-      avg: Math.round((stats.totalScore / stats.totalMax) * 100) || 0,
-      desc: `Scored ${stats.totalScore} out of ${stats.totalMax} points historically.`
-    }))
-    .sort((a, b) => a.avg - b.avg)
-    .slice(0, 3);
-    
-  const HISTORY = (grades || []).map((g: any) => ({
-    id: g.id || Math.random().toString(),
+  const HISTORY = (grades || []).map((g, i) => ({
+    id: g.id || `grade-${i}`,
     title: g.assignmentTitle || 'Assignment',
     date: g.gradedAt ? new Date(g.gradedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown',
     score: g.totalScore,
@@ -169,7 +150,7 @@ export default function StudentAnalyticsPage() {
             <tbody>
               {HISTORY.length === 0 ? (
                 <tr><td colSpan={5} style={{textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)'}}>No submissions yet.</td></tr>
-              ) : HISTORY.map((h: any) => (
+              ) : HISTORY.map((h) => (
                 <tr key={h.id} className={styles.row}>
                   <td className={styles.titleCell}>{h.title}</td>
                   <td className={styles.dateCell}>{h.date}</td>

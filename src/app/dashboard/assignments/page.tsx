@@ -1,16 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Search, MoreVertical, Pencil, Trash2, X, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Plus, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
 import styles from './page.module.css';
 
 import { useState, useRef, useEffect } from 'react';
 import { useAssignments, useClassrooms, useGradeAssignment, useDeleteAssignment } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/Toast';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { Reveal } from '@/components/motion/Reveal';
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {

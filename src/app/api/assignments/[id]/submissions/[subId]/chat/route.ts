@@ -13,7 +13,9 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (userId instanceof NextResponse) return userId;
 
   const { id, subId } = await params;
-  const { messages } = await req.json();
+  const { messages } = (await req.json()) as {
+    messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  };
 
   if (!messages || !Array.isArray(messages)) {
     return errorResponse('Missing messages array', 400);
@@ -74,7 +76,7 @@ Be helpful, professional, and clear. If the teacher asks you to re-evaluate, pro
     const result = streamText({
       model: anthropic('claude-sonnet-4-6'), // use claude-sonnet-4-6 for better chat quality
       system: systemContext,
-      messages: messages as any[],
+      messages,
       async onFinish({ text }) {
         // Optional: Save chat history to database
         const updatedMessages = [...messages, { role: 'assistant', content: text }];

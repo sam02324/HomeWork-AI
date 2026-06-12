@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { db } from '@/db';
-import { assignments, submissions, students, classrooms, users, googleTokens } from '@/db/schema';
+import { assignments, submissions, students, classrooms, users } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { downloadDriveFile } from '@/lib/google-sheets';
 import { randomUUID } from 'crypto';

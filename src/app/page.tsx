@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
@@ -562,10 +563,10 @@ export default function LandingPage() {
       {/* ── NAV ── */}
       <nav className={styles.nav} ref={navRef}>
         <div className={styles.navInner}>
-          <a href="/" className={styles.logo}>
+          <Link href="/" className={styles.logo}>
             <Zap size={22} className={styles.logoIcon} />
             <span>GradeAI</span>
-          </a>
+          </Link>
 
           <div className={styles.navLinks}>
             <a href="#features">Features</a>
@@ -872,10 +873,10 @@ export default function LandingPage() {
         <div className={styles.footerInner}>
           <div className={styles.footerGrid}>
             <div className={styles.footerBrand}>
-              <a href="/" className={styles.logo}>
+              <Link href="/" className={styles.logo}>
                 <Zap size={20} className={styles.logoIcon} />
                 <span>GradeAI</span>
-              </a>
+              </Link>
               <p>AI-powered grading for the modern educator. Save time, improve outcomes.</p>
             </div>
             <div className={styles.footerCol}>

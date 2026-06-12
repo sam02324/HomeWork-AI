@@ -11,7 +11,6 @@ import {
   BookOpen,
   Settings,
   GraduationCap,
-  ChevronsUpDown,
   Menu,
   X,
   LogOut,

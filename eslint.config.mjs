@@ -12,6 +12,19 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // One-off local debug/maintenance scripts (not part of the app):
+    "scripts/**",
+    "test-db.js",
+    "test-db2.js",
+    "test-db.ts",
+    "test-sql.ts",
+    "test_drive.ts",
+    "check_db2.ts",
+    "check_subs.ts",
+    "fix_and_sync.ts",
+    "fix_db_state.ts",
+    "fix_missing_files.ts",
+    "manual_sync.ts",
   ]),
 ]);
 

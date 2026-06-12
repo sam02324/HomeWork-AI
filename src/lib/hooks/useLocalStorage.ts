@@ -1,27 +1,27 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
- * Persisted state backed by localStorage. SSR-safe: starts from `defaultValue`,
- * hydrates from storage on mount, and writes back on change.
+ * Persisted state backed by localStorage. SSR-safe: returns `defaultValue` on
+ * the server, reads storage on the first client render, and writes back on
+ * change. Avoid rendering the value into SSR-visible markup (hydration may
+ * differ from the server default).
  */
 export function useLocalStorage<T>(
   key: string,
   defaultValue: T
 ): [T, (value: T | ((prev: T) => T)) => void] {
-  const [value, setValue] = useState<T>(defaultValue);
-
-  // Hydrate from storage after mount (avoids SSR/client mismatch).
-  useEffect(() => {
+  const [value, setValue] = useState<T>(() => {
+    if (typeof window === 'undefined') return defaultValue;
     try {
       const raw = window.localStorage.getItem(key);
-      if (raw !== null) setValue(JSON.parse(raw) as T);
+      if (raw !== null) return JSON.parse(raw) as T;
     } catch {
       // ignore malformed storage
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+    return defaultValue;
+  });
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {

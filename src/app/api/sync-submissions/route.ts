@@ -13,8 +13,8 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { db } from '@/db';
-import { assignments, submissions, students, classrooms, googleTokens } from '@/db/schema';
-import { eq, and, or, ilike } from 'drizzle-orm';
+import { assignments, submissions, students, googleTokens } from '@/db/schema';
+import { eq, and, ilike } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard, parseBody } from '@/lib/utils';
 import { syncSubmissionsSchema } from '@/lib/validations';
 import { fetchSheetRows, downloadDriveFile } from '@/lib/google-sheets';

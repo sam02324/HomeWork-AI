@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Users,
   TrendingUp,
-  FileText,
   Plus,
   Search,
   BarChart3,

@@ -1,11 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Bot, Save, Sparkles } from 'lucide-react';
 import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
 import { Reveal } from '@/components/motion/Reveal';
 import styles from './page.module.css';
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export default function InteractiveReviewPage() {
   const params = useParams();
@@ -24,27 +29,31 @@ export default function InteractiveReviewPage() {
   // 2. Fetch Submissions
   const { data: submissionsData, error: submissionsError, isLoading: submissionsLoading } = useAssignmentSubmissions(id);
 
-  const submission = submissionsData?.find((s: any) => s.id === subId);
+  const submission = submissionsData?.find((s) => s.id === subId);
   const grade = submission?.grade;
 
-  const [messages, setMessages] = useState<any[]>((grade?.chatHistory as any[]) || []);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [syncedGradeId, setSyncedGradeId] = useState<string | null>(null);
 
-  // Sync initial messages once grade is loaded
-  useEffect(() => {
-    if (grade?.chatHistory) {
-      setMessages(grade.chatHistory as any[]);
-    }
-  }, [grade]);
+  // Initialize chat + override fields from the fetched grade. Render-time
+  // adjustment (guarded by grade id) instead of an effect — re-syncs only
+  // when a different grade arrives, never clobbers in-flight local state.
+  if (grade && grade.id !== syncedGradeId) {
+    setSyncedGradeId(grade.id);
+    setMessages((grade.chatHistory as ChatMessage[]) || []);
+    setOverrideScore(grade.teacherOverrideScore?.toString() ?? grade.totalScore);
+    setTeacherNote(grade.teacherNote || '');
+  }
 
-  const handleInputChange = (e: any) => setInput(e.target.value);
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || isLoadingChat) return;
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage: ChatMessage = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
@@ -63,7 +72,7 @@ export default function InteractiveReviewPage() {
       const decoder = new TextDecoder();
       if (!reader) return;
 
-      const assistantMessage = { role: 'assistant', content: '' };
+      const assistantMessage: ChatMessage = { role: 'assistant', content: '' };
       setMessages([...newMessages, assistantMessage]);
 
       while (true) {
@@ -83,14 +92,6 @@ export default function InteractiveReviewPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Load override states if present
-  useEffect(() => {
-    if (grade) {
-      setOverrideScore(grade.teacherOverrideScore ? grade.teacherOverrideScore.toString() : grade.totalScore);
-      setTeacherNote(grade.teacherNote || '');
-    }
-  }, [grade]);
 
   // Handle saving manual score override
   const handleSaveOverride = async () => {

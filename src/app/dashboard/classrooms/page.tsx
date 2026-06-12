@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Users, BookOpen, TrendingUp, ChevronRight, X, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
-import { useClassrooms, useCreateClassroom, useDeleteClassroom, useUpdateClassroom } from '@/lib/api-client';
+import { useClassrooms, useCreateClassroom, useDeleteClassroom } from '@/lib/api-client';
 import { Reveal } from '@/components/motion/Reveal';
 
 interface ClassroomData {

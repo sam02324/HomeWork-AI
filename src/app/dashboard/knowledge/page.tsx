@@ -46,7 +46,7 @@ export default function KnowledgeBasePage() {
 
         <button className={styles.notifyBtn}>
           <Sparkles size={14} />
-          Notify me when it's ready
+          Notify me when it&apos;s ready
         </button>
       </div>
     </Reveal>
