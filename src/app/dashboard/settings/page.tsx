@@ -19,6 +19,7 @@ import {
   Link2,
 } from 'lucide-react';
 import styles from './page.module.css';
+import { Reveal } from '@/components/motion/Reveal';
 import { useUser } from '@clerk/nextjs';
 
 const TABS = [
@@ -91,13 +92,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Settings</h1>
+    <Reveal className={styles.page}>
+      <div className={styles.header} data-reveal>
+        <span className="page-eyebrow">Settings</span>
+        <h1 className="page-title">
+          Account <em className="serif-accent">settings</em>
+        </h1>
         <p className={styles.subtitle}>Manage your account, organization, and preferences</p>
       </div>
 
-      <div className={styles.layout}>
+      <div className={styles.layout} data-reveal>
         {/* Sidebar Tabs */}
         <nav className={styles.tabs}>
           {TABS.map((tab) => {
@@ -486,6 +490,6 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
-    </div>
+    </Reveal>
   );
 }

@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import styles from './page.module.css';
+import { Reveal } from '@/components/motion/Reveal';
 import { useClassroom, useStudents, useAddStudents } from '@/lib/api-client';
 
 function getStatus(score: number | null) {
@@ -89,13 +90,13 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className={styles.page}>
+    <Reveal className={styles.page}>
       <Link href="/dashboard/classrooms" className={styles.backLink}>
         <ArrowLeft size={16} /> Back to Classrooms
       </Link>
 
       {/* Hero */}
-      <div className={styles.hero}>
+      <div className={styles.hero} data-reveal>
         <div className={styles.heroColor} style={{ background: classroom.color || '#4A90D9' }} />
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>{classroom.grade} {classroom.subject} — {classroom.name}</h1>
@@ -110,7 +111,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Stats Row */}
-      <div className={styles.statsRow}>
+      <div className={styles.statsRow} data-reveal>
         {[
           { label: 'Excellent (≥85)', count: excellentCount, color: 'var(--score-excellent)' },
           { label: 'Good (70-84)', count: goodCount, color: 'var(--score-good)' },
@@ -126,7 +127,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Search & Actions */}
-      <div className={styles.toolbar}>
+      <div className={styles.toolbar} data-reveal>
         <div className={styles.searchWrap}>
           <Search size={16} />
           <input 
@@ -245,6 +246,6 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
           </div>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }

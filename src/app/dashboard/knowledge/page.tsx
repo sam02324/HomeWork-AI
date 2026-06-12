@@ -2,17 +2,21 @@
 
 import { BookOpen, Sparkles, Upload, FileText, Globe } from 'lucide-react';
 import styles from './page.module.css';
+import { Reveal } from '@/components/motion/Reveal';
 
 export default function KnowledgeBasePage() {
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Knowledge Base</h1>
+    <Reveal className={styles.page}>
+      <div className={styles.header} data-reveal>
+        <span className="page-eyebrow">Knowledge Base</span>
+        <h1 className="page-title">
+          Teach the AI <em className="serif-accent">your way</em>
+        </h1>
         <p className={styles.subtitle}>Upload reference materials to improve AI grading accuracy</p>
       </div>
 
       {/* Coming Soon Banner */}
-      <div className={styles.comingSoon}>
+      <div className={styles.comingSoon} data-reveal>
         <div className={styles.comingSoonIcon}>
           <Sparkles size={32} />
         </div>
@@ -45,6 +49,6 @@ export default function KnowledgeBasePage() {
           Notify me when it's ready
         </button>
       </div>
-    </div>
+    </Reveal>
   );
 }

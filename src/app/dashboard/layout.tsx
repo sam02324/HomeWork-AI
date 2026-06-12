@@ -110,10 +110,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className={styles.userName}>{fullName}</div>
                 <div className={styles.userRole}>Teacher</div>
               </div>
-              <button 
-                onClick={() => signOut({ redirectUrl: '/' })} 
+              <button
+                onClick={() => signOut({ redirectUrl: '/' })}
                 title="Log out"
-                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }}
+                className={styles.logoutBtn}
               >
                 <LogOut size={16} className={styles.logoutIcon} />
               </button>

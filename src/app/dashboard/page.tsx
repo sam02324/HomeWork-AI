@@ -8,8 +8,6 @@ import {
   Clock,
   TrendingUp,
   CheckCircle,
-  ArrowUpRight,
-  ArrowDownRight,
   Plus,
   Upload,
   ChevronRight,
@@ -20,6 +18,7 @@ import {
 import styles from './page.module.css';
 import { useDashboardStats, useAssignments, useGoogleAuthStatus } from '@/lib/api-client';
 import { useUser } from '@clerk/nextjs';
+import { Reveal, CountUp } from '@/components/motion/Reveal';
 
 
 
@@ -52,10 +51,10 @@ function DashboardContent() {
   const showGoogleBanner = googleAuth && !googleAuth.connected && !googleBannerDismissed;
 
   const STATS = [
-    { label: 'Total Students', value: statsLoading ? '...' : (stats?.totalStudents ?? 0), icon: Users, trend: '', trendUp: true, color: 'var(--accent)' },
-    { label: 'Pending Gradings', value: statsLoading ? '...' : (stats?.pendingGradings ?? 0), icon: Clock, trend: '', trendUp: false, color: 'var(--warning)' },
-    { label: 'Avg. Class Score', value: statsLoading ? '...' : `${stats?.avgScore ?? 0}%`, icon: TrendingUp, trend: '', trendUp: true, color: 'var(--score-good)' },
-    { label: 'Graded This Week', value: statsLoading ? '...' : (stats?.gradedThisWeek ?? 0), icon: CheckCircle, trend: '', trendUp: true, color: 'var(--success)' },
+    { label: 'Total Students', value: stats?.totalStudents ?? 0, suffix: '', icon: Users, color: 'var(--accent)' },
+    { label: 'Pending Gradings', value: stats?.pendingGradings ?? 0, suffix: '', icon: Clock, color: 'var(--warning)' },
+    { label: 'Avg. Class Score', value: stats?.avgScore ?? 0, suffix: '%', icon: TrendingUp, color: 'var(--score-good)' },
+    { label: 'Graded This Week', value: stats?.gradedThisWeek ?? 0, suffix: '', icon: CheckCircle, color: 'var(--success)' },
   ];
 
   // Get active grading assignments
@@ -63,11 +62,14 @@ function DashboardContent() {
   const recentAssignments = assignments?.slice(0, 4) || [];
 
   return (
-    <div className={styles.page}>
+    <Reveal className={styles.page}>
       {/* Header */}
-      <div className={styles.header}>
+      <div className={styles.header} data-reveal>
         <div>
-          <h1 className={styles.greeting}>Welcome back, {firstName}</h1>
+          <span className="page-eyebrow">Overview</span>
+          <h1 className="page-title">
+            Welcome back, <em className="serif-accent">{firstName}</em>
+          </h1>
           <p className={styles.subGreeting}>
             You have <strong>{stats?.pendingGradings || 0} submissions</strong> waiting to be graded
           </p>
@@ -85,19 +87,15 @@ function DashboardContent() {
         {STATS.map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <div key={i} className={styles.statCard}>
+            <div key={i} className={styles.statCard} data-reveal>
               <div className={styles.statTop}>
                 <div className={styles.statIconWrap} style={{ background: `${stat.color}15`, color: stat.color }}>
                   <Icon size={18} />
                 </div>
-                {stat.trend && (
-                  <span className={`${styles.statTrend} ${stat.trendUp ? styles.trendUp : styles.trendDown}`}>
-                    {stat.trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                    {stat.trend}
-                  </span>
-                )}
               </div>
-              <div className={styles.statValue}>{stat.value}</div>
+              <div className={styles.statValue}>
+                {statsLoading ? '—' : <CountUp value={Number(stat.value)} suffix={stat.suffix} />}
+              </div>
               <div className={styles.statLabel}>{stat.label}</div>
             </div>
           );
@@ -149,7 +147,7 @@ function DashboardContent() {
       {/* Main Grid */}
       <div className={styles.mainGrid}>
         {/* Left Column */}
-        <div className={styles.leftCol}>
+        <div className={styles.leftCol} data-reveal>
           <div className={styles.sectionHeader}>
             <h2>Recent Assignments</h2>
             <Link href="/dashboard/assignments" className={styles.viewAll}>
@@ -157,7 +155,7 @@ function DashboardContent() {
             </Link>
           </div>
 
-          <div className={styles.assignmentList}>
+          <div className={`${styles.assignmentList} stagger-children`}>
             {assignmentsLoading ? (
               <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>Loading assignments...</div>
             ) : recentAssignments.length === 0 ? (
@@ -209,7 +207,7 @@ function DashboardContent() {
         </div>
 
         {/* Right Column */}
-        <div className={styles.rightCol}>
+        <div className={styles.rightCol} data-reveal>
           {/* Grading Queue */}
           <div className={styles.rightSection}>
             <div className={styles.sectionHeader}>
@@ -272,7 +270,7 @@ function DashboardContent() {
           </div>
         </div>
       </div>
-    </div>
+    </Reveal>
   );
 }
 

@@ -3,6 +3,7 @@
 import { Users, FileText, TrendingUp, Clock } from 'lucide-react';
 import styles from './page.module.css';
 import { useDashboardStats, useAssignments, useClassrooms } from '@/lib/api-client';
+import { Reveal } from '@/components/motion/Reveal';
 
 export default function AnalyticsPage() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
@@ -25,9 +26,12 @@ export default function AnalyticsPage() {
   const hasData = totalStudents > 0 || totalAssignments > 0;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Analytics Overview</h1>
+    <Reveal className={styles.page}>
+      <div className={styles.header} data-reveal>
+        <span className="page-eyebrow">Analytics</span>
+        <h1 className="page-title">
+          Performance <em className="serif-accent">insights</em>
+        </h1>
         <p className={styles.subtitle}>Performance insights across all your classes</p>
       </div>
 
@@ -36,7 +40,7 @@ export default function AnalyticsPage() {
         {STATS.map((s, i) => {
           const Icon = s.icon;
           return (
-            <div key={i} className={styles.statCard}>
+            <div key={i} className={styles.statCard} data-reveal>
               <div className={styles.statIcon} style={{ background: `${s.color}15`, color: s.color }}><Icon size={18} /></div>
               <div className={styles.statValue}>{s.value}</div>
               <div className={styles.statLabel}>{s.label}</div>
@@ -64,7 +68,7 @@ export default function AnalyticsPage() {
       ) : (
         <div className={styles.chartsGrid}>
           {/* Assignment Overview */}
-          <div className={styles.chartCard}>
+          <div className={styles.chartCard} data-reveal>
             <h3 className={styles.chartTitle}>Assignments by Status</h3>
             <div style={{ padding: '20px' }}>
               {['draft', 'published', 'grading', 'graded'].map(status => {
@@ -94,7 +98,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Classrooms Summary */}
-          <div className={styles.chartCard}>
+          <div className={styles.chartCard} data-reveal>
             <h3 className={styles.chartTitle}>Classrooms Summary</h3>
             <div style={{ padding: '20px' }}>
               {classrooms && classrooms.length > 0 ? (
@@ -125,6 +129,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }

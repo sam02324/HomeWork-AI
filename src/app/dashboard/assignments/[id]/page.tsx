@@ -22,6 +22,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import styles from './page.module.css';
+import { Reveal } from '@/components/motion/Reveal';
 import { 
   useAssignment, 
   useStudents, 
@@ -215,14 +216,15 @@ export default function AssignmentDetailsPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
+    <Reveal className={styles.page}>
+      <div className={styles.header} data-reveal>
         <div className={styles.headerLeft}>
           <button onClick={() => router.back()} className={styles.backBtn}>
             <ArrowLeft size={16} /> Back
           </button>
+          <span className="page-eyebrow">Assignment</span>
           <div className={styles.titleWrapper}>
-            <h1 className={styles.title}>{assignment.title}</h1>
+            <h1 className="page-title">{assignment.title}</h1>
             <button className={styles.editTitleBtn} onClick={openEditDetailsModal} title="Edit Assignment Details">
               <Pencil size={16} />
             </button>
@@ -306,25 +308,25 @@ export default function AssignmentDetailsPage() {
       )}
 
       <div className={styles.statsRow}>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} data-reveal>
           <span className={styles.statLabel}>Total Students</span>
           <span className={styles.statValue}>{students?.length || 0}</span>
         </div>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} data-reveal>
           <span className={styles.statLabel}>Submissions</span>
           <span className={styles.statValue}>{assignment.submissionCount}</span>
         </div>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} data-reveal>
           <span className={styles.statLabel}>Graded</span>
           <span className={styles.statValue}>{assignment.gradedCount}</span>
         </div>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} data-reveal>
           <span className={styles.statLabel}>Max Score</span>
           <span className={styles.statValue}>{assignment.maxScore}</span>
         </div>
       </div>
 
-      <div className={styles.submissionsSection}>
+      <div className={styles.submissionsSection} data-reveal>
         <h2 className={styles.sectionTitle}>Student Submissions</h2>
         
         <div className={styles.tableWrap}>
@@ -744,6 +746,6 @@ export default function AssignmentDetailsPage() {
           </div>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }

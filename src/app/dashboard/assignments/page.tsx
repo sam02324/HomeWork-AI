@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Reveal } from '@/components/motion/Reveal';
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   draft: { label: 'Draft', cls: 'statusDraft' },
@@ -105,10 +106,13 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
+    <Reveal className={styles.page}>
+      <div className={styles.header} data-reveal>
         <div>
-          <h1 className={styles.title}>All Assignments</h1>
+          <span className="page-eyebrow">Assignments</span>
+          <h1 className="page-title">
+            All <em className="serif-accent">assignments</em>
+          </h1>
           <p className={styles.subtitle}>Manage and grade all your assignments</p>
         </div>
         <Link href="/dashboard/assignments/new" className={styles.createBtn}>
@@ -116,7 +120,7 @@ export default function AssignmentsPage() {
         </Link>
       </div>
 
-      <div className={styles.filters}>
+      <div className={styles.filters} data-reveal>
         <div className={styles.searchWrap}>
           <Search size={16} />
           <input 
@@ -141,7 +145,7 @@ export default function AssignmentsPage() {
         </select>
       </div>
 
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} data-reveal>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -240,15 +244,7 @@ export default function AssignmentsPage() {
               </button>
             </div>
             <form onSubmit={handleRename}>
-              {editError && (
-                <div style={{
-                  padding: '10px 14px', marginBottom: '16px',
-                  background: 'hsl(0, 80%, 95%)', border: '1px solid hsl(0, 70%, 80%)',
-                  borderRadius: '8px', color: 'hsl(0, 70%, 40%)', fontSize: '0.85rem',
-                }}>
-                  {editError}
-                </div>
-              )}
+              {editError && <div className={styles.errorNote}>{editError}</div>}
               <div className={styles.formGroup}>
                 <label className={styles.label}>Assignment Title</label>
                 <input type="text" required className={styles.input} value={newTitle}
@@ -293,6 +289,6 @@ export default function AssignmentsPage() {
           </div>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }

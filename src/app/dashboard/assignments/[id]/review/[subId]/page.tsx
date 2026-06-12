@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Send, Bot, User, FileText, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Send, Bot, Save, Sparkles } from 'lucide-react';
 import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
-import { useChat } from '@ai-sdk/react';
+import { Reveal } from '@/components/motion/Reveal';
 import styles from './page.module.css';
 
 export default function InteractiveReviewPage() {
@@ -17,6 +16,7 @@ export default function InteractiveReviewPage() {
 
   const [overrideScore, setOverrideScore] = useState('');
   const [teacherNote, setTeacherNote] = useState('');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // 1. Fetch Assignment Details
   const { data: assignmentData, error: assignmentError, isLoading: assignmentLoading } = useAssignment(id);
@@ -56,14 +56,14 @@ export default function InteractiveReviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages })
       });
-      
+
       if (!res.ok) throw new Error('Chat failed');
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       if (!reader) return;
 
-      let assistantMessage = { role: 'assistant', content: '' };
+      const assistantMessage = { role: 'assistant', content: '' };
       setMessages([...newMessages, assistantMessage]);
 
       while (true) {
@@ -79,6 +79,7 @@ export default function InteractiveReviewPage() {
       setIsLoadingChat(false);
     }
   };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -94,6 +95,7 @@ export default function InteractiveReviewPage() {
   // Handle saving manual score override
   const handleSaveOverride = async () => {
     if (!grade) return;
+    setSaveState('saving');
     try {
       const res = await fetch(`/api/grades/${grade.id}`, {
         method: 'PATCH',
@@ -104,11 +106,12 @@ export default function InteractiveReviewPage() {
           reviewedByTeacher: true
         })
       });
-      if (res.ok) alert('Score updated successfully');
-      else alert('Failed to update score');
+      setSaveState(res.ok ? 'saved' : 'error');
     } catch (e) {
       console.error(e);
-      alert('Error saving score');
+      setSaveState('error');
+    } finally {
+      setTimeout(() => setSaveState('idle'), 2500);
     }
   };
 
@@ -121,132 +124,178 @@ export default function InteractiveReviewPage() {
   }
 
   if (assignmentLoading || submissionsLoading) {
-    return <div className={styles.loading}>Loading review...</div>;
+    return (
+      <div className={styles.loading}>
+        <span className={styles.loadingOrb} />
+        Loading review
+      </div>
+    );
   }
 
   if (!assignmentData || !submissionsData) {
-    return <div className={styles.loading}>Initializing data...</div>;
+    return (
+      <div className={styles.loading}>
+        <span className={styles.loadingOrb} />
+        Initializing data
+      </div>
+    );
   }
 
   if (!submission) {
     return <div className={styles.error}>Submission not found</div>;
   }
 
-  const documentUrl = submission.fileUrl 
-    || (submission.googleDriveFileId ? `https://drive.google.com/file/d/${submission.googleDriveFileId}/view` : null);
+  const maxScore = Number(assignmentData.maxScore) || 100;
+  const displayScore = Number(grade?.teacherOverrideScore ?? grade?.totalScore ?? 0);
+  const scorePct = Math.max(0, Math.min(100, (displayScore / maxScore) * 100));
+  const showTyping =
+    isLoadingChat && (messages.length === 0 || messages[messages.length - 1]?.role !== 'assistant' || !messages[messages.length - 1]?.content);
 
   return (
-    <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.header}>
+    <Reveal className={styles.page}>
+      {/* ── Header ── */}
+      <div className={styles.header} data-reveal>
         <div className={styles.headerLeft}>
           <button onClick={() => router.push(`/dashboard/assignments/${id}`)} className={styles.backBtn}>
-            <ArrowLeft size={16} /> Back to Assignment Overview
+            <ArrowLeft size={15} /> Assignment Overview
           </button>
-          <div className={styles.titleWrapper}>
-            <h1 className={styles.title}>{submission.student?.name}'s Submission</h1>
+          <span className="page-eyebrow">Submission Review</span>
+          <h1 className="page-title">
+            <em className="serif-accent">{submission.student?.name || 'Student'}</em>
+          </h1>
+          <p className="page-sub">
+            {assignmentData.title} · Roll No: {submission.student?.rollNumber || 'N/A'}
+          </p>
+        </div>
+
+        <div className={styles.scoreCard}>
+          <div className={styles.scoreRing}>
+            <svg viewBox="0 0 36 36">
+              <path
+                d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831"
+                fill="none" stroke="var(--bg-tertiary)" strokeWidth="3"
+              />
+              <path
+                d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831"
+                fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round"
+                strokeDasharray={`${scorePct}, 100`}
+              />
+            </svg>
+            <div className={styles.scoreRingText}>
+              <span className={styles.scoreValue}>{displayScore}</span>
+              <span className={styles.scoreMax}>/ {maxScore}</span>
+            </div>
           </div>
-          <p className={styles.subtitle}>Roll No: {submission.student?.rollNumber || 'N/A'}</p>
+          <span className={styles.scoreCaption}>
+            {grade?.teacherOverrideScore != null ? 'Teacher override' : 'AI score'}
+          </span>
         </div>
       </div>
 
-      <div className={styles.contentContainer}>
-        {/* Top: Score Override */}
-        <div className={styles.panelCard}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Manual Override</h3>
+      {/* ── Manual Override ── */}
+      <div className={styles.overridePanel} data-reveal>
+        <div className={styles.overrideFields}>
+          <div className={styles.formGroup}>
+            <label>Final Score <span className={styles.labelHint}>out of {maxScore}</span></label>
+            <input
+              type="number"
+              value={overrideScore}
+              onChange={e => setOverrideScore(e.target.value)}
+              className={styles.input}
+            />
           </div>
-          <div className={styles.overrideForm}>
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Final Score (out of {assignmentData.maxScore})</label>
-                <input 
-                  type="number" 
-                  value={overrideScore} 
-                  onChange={e => setOverrideScore(e.target.value)} 
-                  className={styles.input}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Teacher Note (Internal)</label>
-                <input 
-                  type="text" 
-                  value={teacherNote} 
-                  onChange={e => setTeacherNote(e.target.value)} 
-                  className={styles.input}
-                />
-              </div>
+          <div className={`${styles.formGroup} ${styles.formGroupWide}`}>
+            <label>Teacher Note <span className={styles.labelHint}>internal</span></label>
+            <input
+              type="text"
+              value={teacherNote}
+              onChange={e => setTeacherNote(e.target.value)}
+              className={styles.input}
+              placeholder="Visible only to you"
+            />
+          </div>
+          <button onClick={handleSaveOverride} className={styles.saveBtn} disabled={saveState === 'saving'}>
+            <Save size={14} />
+            {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Retry' : 'Save Override'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Grading Assistant ── */}
+      <div className={styles.chatPanel} data-reveal>
+        <div className={styles.chatHeader}>
+          <div className={styles.chatHeaderTitle}>
+            <span className={styles.botChip}><Bot size={15} /></span>
+            <div>
+              <h3>Grading Assistant</h3>
+              <span className={styles.chatHeaderSub}>Ask why points were deducted, or request a re-evaluation</span>
             </div>
-            <button onClick={handleSaveOverride} className={styles.saveBtn}>
-              <Save size={14} /> Save Override
-            </button>
+          </div>
+          <div className={styles.scoreBadge}>
+            <Sparkles size={12} />
+            AI {grade?.totalScore} / {maxScore}
           </div>
         </div>
 
-        {/* Bottom: AI Chat (expanded) */}
-        <div className={styles.panelCard} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}><Bot size={18} /> Grading Assistant</h3>
-              <div className={styles.scoreBadge}>
-                AI Score: {grade?.totalScore} / {assignmentData.maxScore}
-              </div>
-            </div>
-
-            <div className={styles.chatContainer}>
-              {/* AI Feedback (Initial context) */}
-              {grade?.feedback && messages.length === 0 && (
-                <div className={styles.message + ' ' + styles.messageAssistant}>
-                  <div className={styles.messageIcon}><Bot size={16} /></div>
-                  <div className={styles.messageContent}>
-                    <strong>AI Feedback:</strong>
-                    <p style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{grade.feedback}</p>
-                    {grade.strengths && grade.strengths.length > 0 && (
-                      <div style={{ marginTop: '12px' }}>
-                        <strong>Strengths:</strong>
-                        <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
-                          {grade.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                        </ul>
-                      </div>
-                    )}
-                    {grade.improvements && grade.improvements.length > 0 && (
-                      <div style={{ marginTop: '12px' }}>
-                        <strong>Areas for Improvement:</strong>
-                        <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
-                          {grade.improvements.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
+        <div className={styles.chatContainer}>
+          {/* AI Feedback (initial context) */}
+          {grade?.feedback && messages.length === 0 && (
+            <div className={styles.feedbackCard}>
+              <span className={styles.feedbackTag}>AI Feedback</span>
+              <p className={styles.feedbackBody}>{grade.feedback}</p>
+              {grade.strengths && grade.strengths.length > 0 && (
+                <div className={styles.feedbackSection}>
+                  <span className={`${styles.feedbackLabel} ${styles.feedbackLabelGood}`}>Strengths</span>
+                  <ul>
+                    {grade.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                  </ul>
                 </div>
               )}
-
-              {/* Chat Messages */}
-              {messages.map((m, idx) => (
-                <div key={idx} className={`${styles.message} ${m.role === 'user' ? styles.messageUser : styles.messageAssistant}`}>
-                  <div className={styles.messageIcon}>
-                    {m.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                  </div>
-                  <div className={styles.messageContent}>
-                    <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{m.content}</p>
-                  </div>
+              {grade.improvements && grade.improvements.length > 0 && (
+                <div className={styles.feedbackSection}>
+                  <span className={`${styles.feedbackLabel} ${styles.feedbackLabelWarn}`}>Areas for Improvement</span>
+                  <ul>
+                    {grade.improvements.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                  </ul>
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
+              )}
             </div>
+          )}
 
-            <form onSubmit={handleSubmit} className={styles.chatInputForm}>
-              <input
-                className={styles.chatInput}
-                value={input}
-                placeholder="Ask about the grade, e.g. 'Why did you deduct points for X?'"
-                onChange={handleInputChange}
-              />
-              <button type="submit" className={styles.chatSubmitBtn} disabled={!input.trim()}>
-                <Send size={16} />
-              </button>
-            </form>
+          {/* Chat messages */}
+          {messages.map((m, idx) => (
+            <div key={idx} className={`${styles.message} ${m.role === 'user' ? styles.messageUser : styles.messageAssistant}`}>
+              {m.role !== 'user' && <span className={styles.botChip}><Bot size={14} /></span>}
+              <div className={styles.messageContent}>
+                <p>{m.content}</p>
+              </div>
+            </div>
+          ))}
+
+          {/* Typing indicator while waiting for the stream */}
+          {showTyping && (
+            <div className={`${styles.message} ${styles.messageAssistant}`}>
+              <span className={styles.botChip}><Bot size={14} /></span>
+              <div className={`${styles.messageContent} ${styles.typing}`}>
+                <span /><span /><span />
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
+
+        <form onSubmit={handleSubmit} className={styles.chatInputForm}>
+          <input
+            className={styles.chatInput}
+            value={input}
+            placeholder="Ask about this grade — e.g. 'Why did you deduct points for Q3?'"
+            onChange={handleInputChange}
+          />
+          <button type="submit" className={styles.chatSubmitBtn} disabled={!input.trim() || isLoadingChat} aria-label="Send">
+            <Send size={16} />
+          </button>
+        </form>
       </div>
-    </div>
+    </Reveal>
   );
 }

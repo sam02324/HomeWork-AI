@@ -20,6 +20,7 @@ import {
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { useClassrooms, useCreateAssignment, useUploadFile, useGoogleSheets } from '@/lib/api-client';
+import { Reveal } from '@/components/motion/Reveal';
 
 /* ───── types ───── */
 interface RubricCriterion {
@@ -227,21 +228,24 @@ export default function NewAssignmentPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <Reveal className={styles.page}>
       {/* Header */}
-      <div className={styles.header}>
+      <div className={styles.header} data-reveal>
         <div className={styles.headerLeft}>
           <a href="/dashboard/assignments" className={styles.backLink}>
             <ArrowLeft size={18} />
             <span>Assignments</span>
           </a>
-          <h1 className={styles.title}>Create New Assignment</h1>
+          <span className="page-eyebrow">New Assignment</span>
+          <h1 className="page-title">
+            Create <em className="serif-accent">new assignment</em>
+          </h1>
           <p className={styles.subtitle}>Set up the assignment, build your rubric, and let AI handle the grading</p>
         </div>
       </div>
 
       {/* Stepper */}
-      <div className={styles.stepper}>
+      <div className={styles.stepper} data-reveal>
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const isActive = i === step;
@@ -739,6 +743,6 @@ export default function NewAssignmentPage() {
           )}
         </div>
       </div>
-    </div>
+    </Reveal>
   );
 }

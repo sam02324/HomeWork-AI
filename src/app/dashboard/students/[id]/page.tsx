@@ -5,6 +5,7 @@ import { ArrowLeft, TrendingUp, Award, Target, BarChart3, BookOpen, Sparkles } f
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from './page.module.css';
+import { Reveal } from '@/components/motion/Reveal';
 import { useStudentAnalytics } from '@/lib/api-client';
 
 // We calculate stats dynamically inside the component
@@ -69,24 +70,26 @@ export default function StudentAnalyticsPage() {
   }));
 
   return (
-    <div className={styles.page}>
+    <Reveal className={styles.page}>
       {/* Header */}
       <div className={styles.backRow}>
         <Link href="/dashboard" className={styles.backLink}><ArrowLeft size={16} /> Back to Dashboard</Link>
       </div>
 
       {/* Hero */}
-      <div className={styles.hero}>
+      <div className={styles.hero} data-reveal>
         <div className={styles.avatarLg}>{initials}</div>
         <div className={styles.heroInfo}>
-          <h1 className={styles.heroName}>{student.name}</h1>
+          <h1 className="page-title">
+            <em className="serif-accent">{student.name}</em>
+          </h1>
           <p className={styles.heroClass}>{student.classroom?.subject} — {student.classroom?.name} · Roll No: {student.rollNumber}</p>
           <span className={styles.riskBadge} style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>Low Risk</span>
         </div>
       </div>
 
       {/* Stats */}
-      <div className={styles.statsRow}>
+      <div className={styles.statsRow} data-reveal>
         {[
           { icon: TrendingUp, label: 'Average Score', value: `${avgScore}%` },
           { icon: Target, label: 'Completed', value: `${totalSubmissions}` },
@@ -105,7 +108,7 @@ export default function StudentAnalyticsPage() {
       </div>
 
       {/* Charts Grid */}
-      <div className={styles.chartsGrid}>
+      <div className={styles.chartsGrid} data-reveal>
         {/* Score Trend */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Performance Trend</h3>
@@ -194,6 +197,6 @@ export default function StudentAnalyticsPage() {
           </table>
         </div>
       </div>
-    </div>
+    </Reveal>
   );
 }

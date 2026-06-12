@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus, Users, BookOpen, TrendingUp, ChevronRight, X, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
 import { useClassrooms, useCreateClassroom, useDeleteClassroom, useUpdateClassroom } from '@/lib/api-client';
+import { Reveal } from '@/components/motion/Reveal';
 
 interface ClassroomData {
   id: string;
@@ -90,10 +91,13 @@ export default function ClassroomsPage() {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
+    <Reveal className={styles.page}>
+      <div className={styles.header} data-reveal>
         <div>
-          <h1 className={styles.title}>My Classrooms</h1>
+          <span className="page-eyebrow">Classrooms</span>
+          <h1 className="page-title">
+            My <em className="serif-accent">classrooms</em>
+          </h1>
           <p className={styles.subtitle}>Manage your classes, students, and assignments</p>
         </div>
         <button className={styles.createBtn} onClick={() => setIsModalOpen(true)}>
@@ -112,7 +116,7 @@ export default function ClassroomsPage() {
           No classrooms yet. Click &quot;Create Classroom&quot; to get started.
         </div>
       ) : (
-        <div className={styles.grid}>
+        <div className={`${styles.grid} stagger-children`}>
           {classrooms.map((c) => (
             <Link key={c.id} href={`/dashboard/classrooms/${c.id}`} className={styles.card}>
               <div className={styles.cardBorder} style={{ background: c.color || 'var(--accent)' }} />
@@ -337,6 +341,6 @@ export default function ClassroomsPage() {
           </div>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }
