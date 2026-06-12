@@ -1,15 +1,7 @@
-import { SignUp } from '@clerk/nextjs';
+import { redirect } from 'next/navigation';
 
+// Public sign-up is disabled — this app is invite-only (Clerk waitlist mode).
+// Any visit to /sign-up is funnelled to the request-access waitlist.
 export default function SignUpPage() {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'hsl(225, 25%, 5%)',
-    }}>
-      <SignUp />
-    </div>
-  );
+  redirect('/waitlist');
 }

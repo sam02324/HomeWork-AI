@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server';
 const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
-  '/sign-up(.*)',
+  '/sign-up(.*)', // redirects to /waitlist; kept public so the redirect resolves
+  '/waitlist',
   '/api/webhooks(.*)',
 ]);
 
