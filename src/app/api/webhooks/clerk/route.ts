@@ -1,30 +1,29 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-interface ClerkWebhookEvent {
-  type: string;
-  data: {
-    id: string;
-    email_addresses?: Array<{ email_address: string }>;
-    first_name?: string;
-    last_name?: string;
-    image_url?: string;
-    [key: string]: unknown;
-  };
-}
-
 /** POST /api/webhooks/clerk — Sync Clerk user events to database */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // This endpoint is public — verify the Svix signature so forged events
+  // can't create or delete users. Secret comes from the Clerk Dashboard
+  // webhook config (CLERK_WEBHOOK_SECRET, whsec_…).
+  let event;
   try {
-    const event: ClerkWebhookEvent = await request.json();
+    event = await verifyWebhook(request, {
+      signingSecret: process.env.CLERK_WEBHOOK_SECRET,
+    });
+  } catch (error) {
+    console.error('Clerk webhook signature verification failed:', error);
+    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
+  }
 
-    const { type, data } = event;
-
-    switch (type) {
+  try {
+    switch (event.type) {
       case 'user.created':
       case 'user.updated': {
+        const data = event.data;
         const email = data.email_addresses?.[0]?.email_address || '';
         const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || 'User';
 
@@ -51,8 +50,8 @@ export async function POST(request: Request) {
       }
 
       case 'user.deleted': {
-        if (data.id) {
-          await db.delete(users).where(eq(users.id, data.id));
+        if (event.data.id) {
+          await db.delete(users).where(eq(users.id, event.data.id));
         }
         break;
       }

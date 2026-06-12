@@ -26,7 +26,7 @@ async function uploadBufferToR2(
   originalName: string,
   teacherId: string
 ): Promise<string> {
-  const ext = originalName.split('.').pop() || 'bin';
+  const ext = (originalName.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'bin';
   const filename = `submissions/${teacherId}/${randomUUID()}.${ext}`;
 
   const s3 = getR2Client();

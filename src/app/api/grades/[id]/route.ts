@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { grades } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, stripHtml } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -35,14 +35,23 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     const updateData: Record<string, unknown> = {};
-    if (teacherOverrideScore !== undefined) {
-      updateData.teacherOverrideScore = teacherOverrideScore.toString();
+    if (teacherOverrideScore !== undefined && teacherOverrideScore !== null) {
+      // NaN serializes to null in JSON; reject anything that isn't a real score.
+      const score = Number(teacherOverrideScore);
+      if (!Number.isFinite(score) || score < 0 || score > grade.maxScore) {
+        return errorResponse(`Score must be a number between 0 and ${grade.maxScore}`, 400);
+      }
+      updateData.teacherOverrideScore = score.toString();
     }
-    if (teacherNote !== undefined) {
-      updateData.teacherNote = teacherNote;
+    if (typeof teacherNote === 'string') {
+      updateData.teacherNote = stripHtml(teacherNote);
     }
-    if (reviewedByTeacher !== undefined) {
+    if (typeof reviewedByTeacher === 'boolean') {
       updateData.reviewedByTeacher = reviewedByTeacher;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return errorResponse('No valid fields to update', 400);
     }
 
     const [updated] = await db.update(grades)

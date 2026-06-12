@@ -55,6 +55,15 @@ export async function POST(request: Request) {
       return errorResponse('Assignment is still in draft', 400);
     }
 
+    // The student must belong to the assignment's classroom
+    const student = await db.query.students.findFirst({
+      where: and(
+        eq(students.id, body.studentId),
+        eq(students.classroomId, assignment.classroomId)
+      ),
+    });
+    if (!student) return errorResponse('Student not found in this classroom', 404);
+
     const [submission] = await db.insert(submissions).values({
       assignmentId: body.assignmentId,
       studentId: body.studentId,

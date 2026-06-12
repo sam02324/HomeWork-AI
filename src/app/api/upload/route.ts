@@ -49,8 +49,8 @@ export async function POST(request: Request) {
       return errorResponse(`File type ${file.type} not allowed`, 400);
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'bin';
+    // Generate unique filename (extension sanitized — it comes from the client)
+    const ext = (file.name.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'bin';
     const filename = `submissions/${userId}/${randomUUID()}.${ext}`;
 
     // Read file as buffer

@@ -3,6 +3,7 @@
  * Handles the OAuth callback, exchanges code for tokens, stores in DB.
  */
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { db } from '@/db';
 import { googleTokens } from '@/db/schema';
@@ -11,7 +12,7 @@ import { eq } from 'drizzle-orm';
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state'); // userId
+  const state = url.searchParams.get('state'); // userId set when the flow started
   const error = url.searchParams.get('error');
 
   const host = request.headers.get('host');
@@ -24,6 +25,13 @@ export async function GET(request: Request) {
 
   if (!code || !state) {
     return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=missing_params`);
+  }
+
+  // Bind the OAuth result to the signed-in session — `state` is attacker-
+  // controllable, so tokens are only stored if it matches the session user.
+  const { userId } = await auth();
+  if (!userId || userId !== state) {
+    return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=session_mismatch`);
   }
 
   try {

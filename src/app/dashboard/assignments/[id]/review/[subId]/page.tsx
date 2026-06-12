@@ -96,13 +96,20 @@ export default function InteractiveReviewPage() {
   // Handle saving manual score override
   const handleSaveOverride = async () => {
     if (!grade) return;
+    const score = parseFloat(overrideScore);
+    if (!Number.isFinite(score)) {
+      // Empty/invalid score field — surface the error state instead of a 400.
+      setSaveState('error');
+      setTimeout(() => setSaveState('idle'), 2500);
+      return;
+    }
     setSaveState('saving');
     try {
       const res = await fetch(`/api/grades/${grade.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          teacherOverrideScore: parseFloat(overrideScore),
+          teacherOverrideScore: score,
           teacherNote,
           reviewedByTeacher: true
         })

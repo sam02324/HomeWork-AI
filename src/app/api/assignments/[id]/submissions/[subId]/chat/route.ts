@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // 2. Get Submission and Grade
     const submission = await db.query.submissions.findFirst({
-      where: eq(submissions.id, subId),
+      where: and(eq(submissions.id, subId), eq(submissions.assignmentId, id)),
     });
 
     if (!submission) return errorResponse('Submission not found', 404);
