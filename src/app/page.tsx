@@ -48,7 +48,7 @@ const PRICING = [
     period: '/month',
     desc: 'For individual tutors trying it out',
     features: ['50 gradings/month', '1 classroom', '20 students', 'Basic analytics', 'PDF & text submissions'],
-    cta: 'Request Access',
+    cta: 'Start Free',
     popular: false,
   },
   {
@@ -57,7 +57,7 @@ const PRICING = [
     period: '/month',
     desc: 'For teachers & small coaching centres',
     features: ['2,000 gradings/month', '20 classrooms', '500 students', 'Full analytics & heatmaps', 'RAG-aware grading', 'Rubric templates', 'Handwriting recognition', 'Priority support'],
-    cta: 'Request Access',
+    cta: 'Start 14-Day Trial',
     popular: true,
   },
   {
@@ -575,10 +575,10 @@ export default function LandingPage() {
           </div>
 
           <div className={styles.navActions}>
-            <a href="/sign-in" className={styles.signInBtn}>Sign In</a>
+            <a href="/dashboard" className={styles.signInBtn}>Sign In</a>
             <Magnetic strength={0.3}>
-              <a href="/waitlist" className={styles.ctaPrimary}>
-                Request Access <ArrowRight size={14} />
+              <a href="/dashboard" className={styles.ctaPrimary}>
+                Start Free <ArrowRight size={14} />
               </a>
             </Magnetic>
           </div>
@@ -598,9 +598,8 @@ export default function LandingPage() {
           <a href="#how-it-works" onClick={() => setMobileMenu(false)}>How it works</a>
           <a href="#pricing" onClick={() => setMobileMenu(false)}>Pricing</a>
           <a href="#testimonials" onClick={() => setMobileMenu(false)}>Testimonials</a>
-          <a href="/sign-in" onClick={() => setMobileMenu(false)}>Sign In</a>
-          <a href="/waitlist" className={styles.ctaPrimary}>
-            Request Access <ArrowRight size={14} />
+          <a href="/dashboard" className={styles.ctaPrimary}>
+            Start Free <ArrowRight size={14} />
           </a>
         </div>
       </nav>
@@ -639,8 +638,8 @@ export default function LandingPage() {
           <div className={styles.heroCtas}>
             <div data-hero-cta>
               <Magnetic>
-                <a href="/waitlist" className={styles.heroCtaPrimary}>
-                  <span>Request Access</span>
+                <a href="/dashboard" className={styles.heroCtaPrimary}>
+                  <span>Start Grading Free</span>
                   <ArrowRight size={16} />
                 </a>
               </Magnetic>
@@ -810,7 +809,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a href="/waitlist" className={`${styles.planCta} ${plan.popular ? styles.planCtaPrimary : ''}`}>
+                <a href="/dashboard" className={`${styles.planCta} ${plan.popular ? styles.planCtaPrimary : ''}`}>
                   {plan.cta}
                 </a>
               </div>
@@ -860,8 +859,8 @@ export default function LandingPage() {
           </p>
           <div data-reveal>
             <Magnetic>
-              <a href="/waitlist" className={styles.finalCtaBtn}>
-                Request Access <ArrowRight size={16} />
+              <a href="/dashboard" className={styles.finalCtaBtn}>
+                Start Grading Free <ArrowRight size={16} />
               </a>
             </Magnetic>
           </div>
