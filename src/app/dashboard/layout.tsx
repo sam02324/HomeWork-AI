@@ -24,6 +24,7 @@ import {
 import styles from './layout.module.css';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CommandPalette } from '@/components/CommandPalette';
+import { Cursor } from '@/components/motion/Cursor';
 
 /* ═══ Theme Context ═══ */
 const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
@@ -68,9 +69,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return pathname.startsWith(href);
   }
 
+  const SEARCH_HINTS = [
+    'Search anything…',
+    'Find a student…',
+    'Jump to an assignment…',
+    'Open a classroom…',
+  ];
+
   return (
     <ThemeContext.Provider value={{ theme, toggle: toggleTheme }}>
       <div className={styles.layout}>
+        <Cursor />
         {/* ── Sidebar ── */}
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
           <div className={styles.sidebarHeader}>
@@ -166,7 +175,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className={styles.topbarCenter}>
               <div className={styles.searchBar} onClick={() => setSearchOpen(true)}>
                 <Search size={16} />
-                <span>Search anything...</span>
+                <div className={styles.searchCycle} aria-label="Search">
+                  <div className={styles.searchCycleTrack}>
+                    {[...SEARCH_HINTS, SEARCH_HINTS[0]].map((hint, i) => (
+                      <span key={i}>{hint}</span>
+                    ))}
+                  </div>
+                </div>
                 <kbd>⌘K</kbd>
               </div>
             </div>

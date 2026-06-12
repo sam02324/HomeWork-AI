@@ -11,15 +11,6 @@
   overflow-x: clip;
 }
 
-/* hide native cursor only when the custom one is guaranteed to render */
-@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .page,
-  .page a,
-  .page button {
-    cursor: none;
-  }
-}
-
 /* ── Film grain ── */
 .grain {
   position: fixed;
@@ -29,31 +20,6 @@
   opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-size: 256px 256px;
-}
-
-/* ── Custom cursor ── */
-.cursorDot {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  z-index: 2001;
-  pointer-events: none;
-}
-
-.cursorRing {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  z-index: 2000;
-  pointer-events: none;
 }
 
 .magnetic {

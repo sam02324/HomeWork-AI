@@ -306,6 +306,41 @@
   border-color: var(--glass-border-hover);
   box-shadow: var(--shadow-glow);
 }
+/* vertically cycling search hints */
+.searchCycle {
+  flex: 1;
+  height: 1.5em;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.searchCycleTrack {
+  display: flex;
+  flex-direction: column;
+}
+
+.searchCycleTrack span {
+  height: 1.5em;
+  line-height: 1.5em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .searchCycleTrack {
+    animation: searchCycle 12s var(--ease-in-out) infinite;
+  }
+}
+
+@keyframes searchCycle {
+  0%, 21% { transform: translateY(0); }
+  25%, 46% { transform: translateY(-1.5em); }
+  50%, 71% { transform: translateY(-3em); }
+  75%, 96% { transform: translateY(-4.5em); }
+  100% { transform: translateY(-6em); }
+}
+
 .searchBar kbd {
   margin-left: auto;
   font-size: 0.7rem;
