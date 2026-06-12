@@ -306,39 +306,61 @@
   border-color: var(--glass-border-hover);
   box-shadow: var(--shadow-glow);
 }
-/* vertically cycling search hints */
+/* 3D rotating drum of search hints */
+.searchTilt {
+  width: 100%;
+  will-change: transform;
+}
+
 .searchCycle {
+  position: relative;
   flex: 1;
   height: 1.5em;
-  overflow: hidden;
   min-width: 0;
+  overflow: hidden;
+  perspective: 220px;
+  transform-style: preserve-3d;
 }
 
-.searchCycleTrack {
-  display: flex;
-  flex-direction: column;
-}
-
-.searchCycleTrack span {
-  height: 1.5em;
+.searchHint {
+  position: absolute;
+  inset: 0;
   line-height: 1.5em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  opacity: 0;
+  backface-visibility: hidden;
+  /* rotate around an axis behind the text → slot-machine drum roll */
+  transform-origin: 50% 50% -0.9em;
+}
+
+/* static fallback: just show the first hint */
+.searchHint:first-child {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .searchCycleTrack {
-    animation: searchCycle 12s var(--ease-in-out) infinite;
+  .searchHint,
+  .searchHint:first-child {
+    opacity: 0;
+    animation: hintDrum 12s linear infinite;
   }
 }
 
-@keyframes searchCycle {
-  0%, 21% { transform: translateY(0); }
-  25%, 46% { transform: translateY(-1.5em); }
-  50%, 71% { transform: translateY(-3em); }
-  75%, 96% { transform: translateY(-4.5em); }
-  100% { transform: translateY(-6em); }
+@keyframes hintDrum {
+  0% {
+    transform: rotateX(100deg);
+    opacity: 0;
+  }
+  3.5%, 21.5% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+  25%, 100% {
+    transform: rotateX(-100deg);
+    opacity: 0;
+  }
 }
 
 .searchBar kbd {

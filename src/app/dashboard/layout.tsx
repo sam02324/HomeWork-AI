@@ -25,6 +25,7 @@ import styles from './layout.module.css';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CommandPalette } from '@/components/CommandPalette';
 import { Cursor } from '@/components/motion/Cursor';
+import { Tilt } from '@/components/motion/Tilt';
 
 /* ═══ Theme Context ═══ */
 const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
@@ -173,17 +174,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <div className={styles.topbarCenter}>
-              <div className={styles.searchBar} onClick={() => setSearchOpen(true)}>
-                <Search size={16} />
-                <div className={styles.searchCycle} aria-label="Search">
-                  <div className={styles.searchCycleTrack}>
-                    {[...SEARCH_HINTS, SEARCH_HINTS[0]].map((hint, i) => (
-                      <span key={i}>{hint}</span>
+              <Tilt className={styles.searchTilt} max={6}>
+                <div className={styles.searchBar} onClick={() => setSearchOpen(true)}>
+                  <Search size={16} />
+                  <div className={styles.searchCycle} aria-label="Search">
+                    {SEARCH_HINTS.map((hint, i) => (
+                      <span
+                        key={i}
+                        className={styles.searchHint}
+                        style={{ animationDelay: `${i * 3}s` }}
+                      >
+                        {hint}
+                      </span>
                     ))}
                   </div>
+                  <kbd>⌘K</kbd>
                 </div>
-                <kbd>⌘K</kbd>
-              </div>
+              </Tilt>
             </div>
 
             <div className={styles.topbarRight}>
