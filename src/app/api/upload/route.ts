@@ -3,6 +3,42 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard } from '@/lib/utils';
 import { randomUUID } from 'crypto';
 
+/**
+ * Sniff the real MIME type from a file's magic bytes (SEC-14). Returns null
+ * for formats we don't recognize so the caller can decide how to handle them.
+ * Covers the binary types we accept; text/plain has no reliable signature.
+ */
+function detectMimeType(buf: Buffer): string | null {
+  if (buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) {
+    return 'application/pdf'; // %PDF
+  }
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  if (
+    buf.length >= 8 &&
+    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 &&
+    buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a
+  ) {
+    return 'image/png';
+  }
+  if (
+    buf.length >= 12 &&
+    buf.toString('ascii', 0, 4) === 'RIFF' &&
+    buf.toString('ascii', 8, 12) === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+  // HEIC/HEIF: ISO-BMFF 'ftyp' box with a heic/heif/mif1 brand.
+  if (buf.length >= 12 && buf.toString('ascii', 4, 8) === 'ftyp') {
+    const brand = buf.toString('ascii', 8, 12);
+    if (['heic', 'heix', 'heif', 'mif1', 'hevc', 'msf1'].includes(brand)) {
+      return 'image/heic';
+    }
+  }
+  return null;
+}
+
 function getR2Client() {
   return new S3Client({
     region: 'auto',
@@ -36,7 +72,7 @@ export async function POST(request: Request) {
       return errorResponse('File too large. Maximum 10MB.', 400);
     }
 
-    // Validate file type
+    // Validate the client-declared type against our allowlist.
     const allowedTypes = [
       'application/pdf',
       'image/jpeg',
@@ -49,12 +85,19 @@ export async function POST(request: Request) {
       return errorResponse(`File type ${file.type} not allowed`, 400);
     }
 
+    // Read file as buffer up front so we can sniff its real type.
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // SEC-14: don't trust the client-declared MIME. If the magic bytes resolve
+    // to a known type and it disagrees with what was claimed, reject the upload.
+    const detected = detectMimeType(buffer);
+    if (detected !== null && detected !== file.type) {
+      return errorResponse('File content does not match its declared type', 400);
+    }
+
     // Generate unique filename (extension sanitized — it comes from the client)
     const ext = (file.name.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'bin';
     const filename = `submissions/${userId}/${randomUUID()}.${ext}`;
-
-    // Read file as buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     // Upload to R2
     const s3 = getR2Client();

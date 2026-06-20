@@ -15,6 +15,12 @@ export async function POST(request: Request) {
       return errorResponse('folderId is required', 400);
     }
 
+    // SEC-12: a non-empty folderId is interpolated into Drive query strings —
+    // restrict it to the safe Drive ID charset. Empty/null means "scan all".
+    if (folderId && !/^[a-zA-Z0-9_-]+$/.test(folderId)) {
+      return errorResponse('Invalid folderId', 400);
+    }
+
     const tokenRecord = await db.query.googleTokens.findFirst({
       where: eq(googleTokens.userId, userId),
     });

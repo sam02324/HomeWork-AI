@@ -39,6 +39,11 @@ export async function POST(request: Request) {
     const cleanNote = stripHtml(body.teacherNote);
 
     // Transaction: grade write + submission status flip must stay consistent.
+    // NOTE (SEC-20): on the neon-http driver, db.transaction() is sent as Neon's
+    // batch API — one atomic HTTP round-trip. It commits or rolls back as a unit,
+    // but does NOT support interactive read-then-rollback (no conditional logic
+    // between statements based on intermediate reads). Keep the body a straight
+    // sequence of writes.
     const result = await db.transaction(async (tx) => {
       const [newGrade] = await tx
         .insert(grades)

@@ -1,10 +1,57 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
 import { db } from '@/db';
 import { grades, submissions, assignments } from '@/db/schema';
-import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
+import type { Assignment, Submission, RubricCriteria } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter } from '@/lib/utils';
+
+/* ═══════════════════════════════════════
+   AI output validation (SEC-7a / BUG-5)
+   ═══════════════════════════════════════ */
+
+const criterionScoreSchema = z.object({
+  criterionName: z.string(),
+  score: z.number(),
+  maxScore: z.number(),
+  feedback: z.string().default(''),
+});
+
+/** Validates the shape/types of the model's JSON before we trust it. */
+const gradingResultSchema = z.object({
+  totalScore: z.number(),
+  criteriaScores: z.array(criterionScoreSchema).default([]),
+  feedback: z.string().default(''),
+  strengths: z.array(z.string()).default([]),
+  improvements: z.array(z.string()).default([]),
+  gradeLetter: z.string().default(''),
+  aiRationale: z.string().default(''),
+});
+
+const clamp = (n: number, lo: number, hi: number): number => Math.min(Math.max(n, lo), hi);
+
+/**
+ * SSRF guard (SEC-7b): only fetch submission files from our own R2 bucket.
+ * A crafted fileUrl could otherwise make the server hit internal/metadata URLs.
+ */
+function assertAllowedFileUrl(fileUrl: string): void {
+  const publicUrl = process.env.R2_PUBLIC_URL;
+  if (!publicUrl) {
+    throw new Error('R2_PUBLIC_URL is not configured; refusing to fetch submission file.');
+  }
+  let target: URL;
+  let allowed: URL;
+  try {
+    target = new URL(fileUrl);
+    allowed = new URL(publicUrl);
+  } catch {
+    throw new Error('Invalid submission file URL.');
+  }
+  if (target.origin !== allowed.origin) {
+    throw new Error(`Refusing to fetch submission file from untrusted origin: ${target.origin}`);
+  }
+}
 
 /* ═══════════════════════════════════════
    Claude Client (singleton)
@@ -19,20 +66,6 @@ function getClient(): Anthropic | null {
     }
   }
   return client;
-}
-
-/* ═══════════════════════════════════════
-   Types
-   ═══════════════════════════════════════ */
-
-interface GradingResult {
-  totalScore: number;
-  criteriaScores: CriterionScore[];
-  feedback: string;
-  strengths: string[];
-  improvements: string[];
-  gradeLetter: string;
-  aiRationale: string;
 }
 
 /* ═══════════════════════════════════════
@@ -142,7 +175,8 @@ export async function gradeSubmission(
         },
       ];
     } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
-      // Fetch image from URL and convert to base64
+      // Fetch image from URL and convert to base64 (origin-restricted — SEC-7b)
+      assertAllowedFileUrl(submission.fileUrl);
       const response = await fetch(submission.fileUrl);
       const arrayBuffer = await response.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString('base64');
@@ -216,26 +250,35 @@ export async function gradeSubmission(
       throw new Error('Claude did not return valid JSON');
     }
 
-    const result: GradingResult = JSON.parse(jsonMatch[0]);
+    // Validate shape/types before trusting the model output (throws on mismatch
+    // → caught below and marks the submission 'error' rather than saving garbage).
+    const result = gradingResultSchema.parse(JSON.parse(jsonMatch[0]));
     const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
 
-    // 6. Calculate tokens used (handled above)
-    // 7. Ensure grade letter is correct
-    const percentage = (result.totalScore / assignment.maxScore) * 100;
+    // Clamp scores to valid ranges — the model can hallucinate out-of-range numbers.
+    const totalScore = clamp(result.totalScore, 0, assignment.maxScore);
+    const criteriaScores = result.criteriaScores.map((c) => ({
+      ...c,
+      score: clamp(c.score, 0, c.maxScore > 0 ? c.maxScore : assignment.maxScore),
+    }));
+
+    const percentage = (totalScore / assignment.maxScore) * 100;
     const gradeLetter = result.gradeLetter || getGradeLetter(percentage);
 
-    // 8. Save grade to database
     // AI detection is disabled, hardcode default safe values
     const aiDetectionScore = 0;
     const aiDetectionFlag = false;
 
+    // Upsert (SEC-8 / BUG-3): re-grading an errored submission overwrites the
+    // existing row instead of crashing on the submissionId UNIQUE constraint.
+    // Teacher override fields are intentionally left untouched.
     await db.insert(grades).values({
       submissionId: submission.id,
-      totalScore: result.totalScore.toString(),
+      totalScore: totalScore.toString(),
       maxScore: assignment.maxScore,
       gradeLetter,
       feedback: result.feedback,
-      criteriaScores: result.criteriaScores,
+      criteriaScores,
       strengths: result.strengths,
       improvements: result.improvements,
       aiModel: 'claude-sonnet-4-6',
@@ -243,6 +286,23 @@ export async function gradeSubmission(
       aiDetectionScore,
       aiDetectionFlag,
       aiRationale: result.aiRationale,
+    }).onConflictDoUpdate({
+      target: grades.submissionId,
+      set: {
+        totalScore: totalScore.toString(),
+        maxScore: assignment.maxScore,
+        gradeLetter,
+        feedback: result.feedback,
+        criteriaScores,
+        strengths: result.strengths,
+        improvements: result.improvements,
+        aiModel: 'claude-sonnet-4-6',
+        aiTokensUsed: tokensUsed,
+        aiDetectionScore,
+        aiDetectionFlag,
+        aiRationale: result.aiRationale,
+        gradedAt: new Date(),
+      },
     });
 
     // 9. Update submission status to 'graded'
@@ -283,6 +343,9 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
   const toGrade = pendingSubmissions.filter((s) => s.status === 'pending' || s.status === 'error');
 
   if (toGrade.length === 0) {
+    // Nothing to grade. The caller has already flipped status to 'grading', so
+    // we MUST release that lock here (BUG-2) — pick the correct terminal state.
+    await finalizeAssignmentStatus(assignmentId);
     return 0;
   }
 
@@ -304,18 +367,27 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
     }
   }
 
-  // Update assignment status to 'graded' if all done
-  const remainingPending = await db.query.submissions.findMany({
+  // Always release the 'grading' lock based on the *current* DB state (BUG-9):
+  // submissions may have been added during the run, so re-query fresh.
+  await finalizeAssignmentStatus(assignmentId);
+
+  return gradedCount;
+}
+
+/**
+ * Move an assignment off the transient 'grading' status to a terminal state,
+ * derived from the live submission rows. Guarantees the lock is released even
+ * when new submissions arrived mid-run or nothing was pending to begin with.
+ */
+async function finalizeAssignmentStatus(assignmentId: string): Promise<void> {
+  const current = await db.query.submissions.findMany({
     where: eq(submissions.assignmentId, assignmentId),
   });
 
-  const allGraded = remainingPending.every((s) => s.status === 'graded' || s.status === 'error');
+  const fullyGraded =
+    current.length > 0 && current.every((s) => s.status === 'graded' || s.status === 'error');
 
-  if (allGraded) {
-    await db.update(assignments)
-      .set({ status: 'graded', updatedAt: new Date() })
-      .where(eq(assignments.id, assignmentId));
-  }
-
-  return gradedCount;
+  await db.update(assignments)
+    .set({ status: fullyGraded ? 'graded' : 'published', updatedAt: new Date() })
+    .where(eq(assignments.id, assignmentId));
 }

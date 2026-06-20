@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { submissions, students, grades } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { submissions, students, grades, assignments } from '@/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
@@ -14,6 +14,14 @@ export async function GET(_req: Request, { params }: Params) {
   const { id } = await params;
 
   try {
+    // Ownership check (SEC-1): 404 for assignments the teacher doesn't own,
+    // which also hides their existence.
+    const owned = await db.query.assignments.findFirst({
+      where: and(eq(assignments.id, id), eq(assignments.teacherId, userId)),
+      columns: { id: true },
+    });
+    if (!owned) return errorResponse('Assignment not found', 404);
+
     const result = await db
       .select({
         id: submissions.id,
@@ -50,7 +58,8 @@ export async function GET(_req: Request, { params }: Params) {
       .innerJoin(students, eq(submissions.studentId, students.id))
       .leftJoin(grades, eq(submissions.id, grades.submissionId))
       .where(eq(submissions.assignmentId, id))
-      .orderBy(desc(submissions.submittedAt));
+      .orderBy(desc(submissions.submittedAt))
+      .limit(200); // BUG-8: cap response size for large classes
 
     return successResponse(result);
   } catch (error) {

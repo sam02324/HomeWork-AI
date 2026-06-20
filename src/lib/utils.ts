@@ -189,12 +189,16 @@ export function rateLimitGuard(
 export function stripHtml(input: string | null | undefined): string {
   if (!input) return '';
   return input
-    .replace(/<[^>]*>/g, '') // remove tags
+    // Decode entities FIRST, so encoded tags like &lt;script&gt; turn into
+    // real tags that the stripper below then removes. (&amp; first to avoid
+    // leaving a dangling entity, e.g. &amp;lt; -> &lt; -> <.)
+    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    // Then strip tags.
+    .replace(/<[^>]*>/g, '')
     .trim();
 }
 

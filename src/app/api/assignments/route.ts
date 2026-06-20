@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { assignments } from '@/db/schema';
+import { assignments, classrooms } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { getAuthUserId, successResponse, parseBody, parseQuery, handleApiError, stripHtml } from '@/lib/utils';
+import { getAuthUserId, errorResponse, successResponse, parseBody, parseQuery, handleApiError, stripHtml } from '@/lib/utils';
 import { createAssignmentSchema, assignmentQuerySchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +70,13 @@ export async function POST(request: Request) {
   if (body instanceof NextResponse) return body;
 
   try {
+    // Ownership check (SEC-2): the supplied classroom must belong to this teacher.
+    const classroom = await db.query.classrooms.findFirst({
+      where: and(eq(classrooms.id, body.classroomId), eq(classrooms.teacherId, userId)),
+      columns: { id: true },
+    });
+    if (!classroom) return errorResponse('Classroom not found', 404);
+
     // Strip HTML from free-text fields to prevent stored XSS.
     const [assignment] = await db.insert(assignments).values({
       ...body,

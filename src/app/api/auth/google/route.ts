@@ -3,16 +3,28 @@
  * Redirects the teacher to Google's OAuth consent screen.
  */
 import { NextResponse } from 'next/server';
+import { randomBytes } from 'node:crypto';
 import { getAuthUserId } from '@/lib/utils';
 import { google } from 'googleapis';
 
-export async function GET(request: Request) {
+export async function GET() {
   const userId = await getAuthUserId();
   if (userId instanceof NextResponse) return userId;
 
-  const host = request.headers.get('host');
-  const protocol = request.headers.get('x-forwarded-proto') || 'http';
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000');
+  // SEC-17: the redirect URI must come only from configured app URL, never from
+  // request headers (Host-header injection → open redirect / token leak).
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: 'Server misconfigured: NEXT_PUBLIC_APP_URL is not set.' },
+      { status: 500 }
+    );
+  }
+
+  // SEC-5: CSRF protection. The `state` is a random nonce mirrored in an
+  // httpOnly cookie; the callback rejects the flow unless they match. The
+  // signed-in user is resolved from the Clerk session, not from `state`.
+  const nonce = randomBytes(32).toString('hex');
 
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_OAUTH_CLIENT_ID,
@@ -28,8 +40,16 @@ export async function GET(request: Request) {
       'https://www.googleapis.com/auth/drive.readonly',
       'https://www.googleapis.com/auth/userinfo.email',
     ],
-    state: userId, // Pass userId to identify the teacher in the callback
+    state: nonce,
   });
 
-  return NextResponse.redirect(authUrl);
+  const res = NextResponse.redirect(authUrl);
+  res.cookies.set('google_oauth_state', nonce, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 300, // 5 minutes
+  });
+  return res;
 }
