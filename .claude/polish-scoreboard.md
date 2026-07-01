@@ -21,10 +21,16 @@ scored from code inspection + prior verified screenshots of this session's work.
 | students | 5.5 | baseline — charts render without draw-on |
 | analytics | 5.5 | baseline — charts render without draw-on |
 | settings | 5.0 | baseline — tab switches are instant cuts |
-| knowledge | 4.5 | baseline — placeholder page, minimal motion |
+| knowledge | 6.5 | iter 2 — bespoke orbiting-book SVG (idle float + counter-rotating nodes), per-card reveal cascade, hover sheen, button press physics |
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 2: knowledge 4.5 → 6.5 — replaced flat gradient icon with bespoke SVG illustration
+  (open book, glow, two counter-rotating orbit node groups, 6s idle float), feature cards now
+  data-reveal staggered via existing Reveal primitive, one-shot diagonal sheen on card hover,
+  notify button :active spring. Reduced-motion disables all of it. Auth-walled page: verified
+  via lint/tsc/prod build (screenshots unavailable behind Clerk). Remaining for ≥9: page
+  transition, richer empty-state states, save-state morph on notify.
 - iter 1: sign-in 3.5 → 7.0 — aurora blobs (26s/32s transform-only drift), film-grain overlay,
   choreographed rise entrance (brand 0ms → card 120ms → tagline 220ms, signature cubic-bezier),
   Clerk colorPrimary matched to accent. Verified: screenshots desktop+mobile clean, no overflow,

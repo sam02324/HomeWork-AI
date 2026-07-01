@@ -15,22 +15,35 @@
   border-radius: var(--radius-xl);
 }
 
-.comingSoonIcon {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent), hsl(25, 95%, 55%));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  margin-bottom: var(--space-6);
-  animation: float 3s ease-in-out infinite;
+.illustration {
+  margin-bottom: var(--space-4);
+  animation: float 6s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-9px); }
+}
+
+/* orbiting knowledge nodes — transform-only spins around the book */
+.orbitA,
+.orbitB {
+  transform-origin: 90px 75px;
+  transform-box: view-box;
+}
+
+.orbitA { animation: spin 16s linear infinite; }
+.orbitB { animation: spinReverse 24s linear infinite; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
 }
 
 .comingSoon h2 {
@@ -59,6 +72,8 @@
 }
 
 .featureCard {
+  position: relative;
+  overflow: hidden;
   padding: var(--space-5);
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--glass-border);
@@ -70,6 +85,20 @@
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
   transform: translateY(-2px);
+}
+
+/* one-shot diagonal sheen sweep on hover (not a loop) */
+.featureCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 42%, hsla(0, 0%, 100%, 0.07) 50%, transparent 58%);
+  transform: translateX(-130%);
+  transition: transform 0.7s var(--ease-out);
+  pointer-events: none;
+}
+.featureCard:hover::after {
+  transform: translateX(130%);
 }
 
 .featureIcon {
@@ -114,6 +143,21 @@
   background: var(--accent-hover);
   box-shadow: var(--accent-glow);
   transform: translateY(-1px);
+}
+.notifyBtn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illustration,
+  .orbitA,
+  .orbitB {
+    animation: none;
+  }
+
+  .featureCard::after {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
