@@ -83,8 +83,10 @@ Grade Letter: ${grade.gradeLetter}
 Your Rationale: ${grade.aiRationale || 'No rationale available.'}
 Feedback: ${grade.feedback}
 
-The user (the teacher) is now chatting with you to understand your grading, ask for specific breakdowns, or request you to re-evaluate specific parts. 
+The user (the teacher) is now chatting with you to understand your grading, ask for specific breakdowns, or request you to re-evaluate specific parts.
 Be helpful, professional, and clear. If the teacher asks you to re-evaluate, provide your thoughts, but let them know they can manually override the score using the "Edit Score" option in the UI.
+
+Formatting: reply in short plain-text paragraphs. Use simple hyphen bullets for lists. Do not use markdown headings, tables, or horizontal rules — this renders in a compact chat bubble.
 `;
 
     // 5. Stream the response

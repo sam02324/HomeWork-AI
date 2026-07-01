@@ -346,14 +346,50 @@
 }
 
 .messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  min-width: 0;
   padding: var(--space-3) var(--space-4);
   font-size: 0.9rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .messageContent p {
   white-space: pre-wrap;
   margin: 0;
+}
+
+.messageContent ul,
+.messageContent ol {
+  margin: 0;
+  padding-left: 1.25em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+.messageContent li {
+  margin: 0;
+}
+
+.messageContent code {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 0.85em;
+  background: hsla(0, 0%, 100%, 0.1);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+.messageContent strong {
+  font-weight: 650;
+}
+
+.msgHeading {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-top: 0.25em;
 }
 
 .messageAssistant .messageContent {
