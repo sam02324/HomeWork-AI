@@ -1,0 +1,120 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: hsl(225, 25%, 5%);
+  overflow: hidden;
+  padding: 24px;
+}
+
+/* ── ambient aurora blobs (transform/opacity only, barely perceptible) ── */
+.aurora {
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.16;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.auroraA {
+  background: radial-gradient(circle, hsl(350, 80%, 45%) 0%, transparent 65%);
+  top: -18vmax;
+  left: -12vmax;
+  animation: driftA 26s ease-in-out infinite alternate;
+}
+
+.auroraB {
+  background: radial-gradient(circle, hsl(255, 70%, 45%) 0%, transparent 65%);
+  bottom: -20vmax;
+  right: -14vmax;
+  animation: driftB 32s ease-in-out infinite alternate;
+}
+
+@keyframes driftA {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(8vmax, 6vmax, 0) scale(1.15); }
+}
+
+@keyframes driftB {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-7vmax, -5vmax, 0) scale(0.95); }
+}
+
+/* ── film grain ── */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── choreographed entrance ── */
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.brandIcon {
+  color: hsl(350, 80%, 55%);
+}
+
+.brandAccent {
+  font-family: var(--font-serif, Georgia), serif;
+  font-style: italic;
+  font-weight: 400;
+  color: hsl(350, 80%, 62%);
+}
+
+.card {
+  position: relative;
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.tagline {
+  position: relative;
+  color: hsla(0, 0%, 100%, 0.45);
+  font-size: 0.85rem;
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* ── reduced motion: everything lands instantly, aurora holds still ── */
+@media (prefers-reduced-motion: reduce) {
+  .auroraA,
+  .auroraB {
+    animation: none;
+  }
+
+  .brand,
+  .card,
+  .tagline {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
