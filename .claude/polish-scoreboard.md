@@ -11,7 +11,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | Surface | Score | Last change |
 |---|---|---|
 | landing | 7.5 | baseline — preloader, particle hero, pinned scroll, cursor, magnetic CTAs; missing film grain, velocity skew |
-| dashboard home | 6.0 | baseline — Reveal/CountUp entrances; no odometer, no card sheen, charts don't draw on |
+| dashboard home | 6.5 | iter 11 — stat-card hover sheen, assignment-card hover slide + accent edge (list cascade already present) |
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
 | assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
@@ -25,6 +25,11 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 11: dashboard home 6.0 → 6.5 — stat cards get the one-shot hover sheen (had
+  glass highlight but no motion), recent-assignment cards slide right 4px with the
+  inset accent edge on hover. assignmentList cascade already existed. Reduced-motion
+  guard for the sheen. Auth-walled: verified via lint/tsc/prod build. Remaining for
+  ≥9: odometer digits on stats, grading-progress shimmer, quick-action micro-motion.
 - iter 10: analytics 5.5 → 6.5 — Total Students / Total Assignments / Overall Average
   now CountUp (Time Saved stays text: fractional hrs), status + classroom list rows
   cascade via stagger-children, stat cards get hover sheen + lift + border highlight.
