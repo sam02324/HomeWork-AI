@@ -14,7 +14,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | dashboard home | 6.5 | iter 11 — stat-card hover sheen, assignment-card hover slide + accent edge (list cascade already present) |
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
-| assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
+| assignment detail | 6.5 | iter 12 — all 3 modals spring in with overlay fade (adds to iter 4's row cascade + hover edge + press physics) |
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
 | classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
@@ -25,6 +25,11 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 12: assignment detail 6.0 → 6.5 — the PreGrade/EditDetails/Reference modals
+  now spring in via modalPop with a 0.2s overlay fade (previously appeared instantly);
+  sync banner keeps its slideDown. Reduced-motion guard covers overlay/modal/banner.
+  Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: alert() → toast
+  flows, upload progress motion, score cell count-up on grade arrival.
 - iter 11: dashboard home 6.0 → 6.5 — stat cards get the one-shot hover sheen (had
   glass highlight but no motion), recent-assignment cards slide right 4px with the
   inset accent edge on hover. assignmentList cascade already existed. Reduced-motion

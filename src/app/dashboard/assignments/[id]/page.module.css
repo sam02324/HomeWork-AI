@@ -491,6 +491,12 @@
   justify-content: center;
   z-index: 100;
   padding: 20px;
+  animation: overlayFade 0.2s ease both;
+}
+
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
@@ -503,6 +509,20 @@
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-xl);
+  animation: modalPop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modalOverlay,
+  .modal,
+  .syncBanner {
+    animation: none;
+  }
 }
 
 .modalHeader {
