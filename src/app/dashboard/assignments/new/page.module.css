@@ -385,6 +385,13 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: all var(--duration-fast) var(--ease-out);
+  /* newly added criteria pop in instead of appearing instantly */
+  animation: criterionIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes criterionIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .criterionCard:hover {
   border-color: var(--glass-border-hover);
@@ -727,10 +734,25 @@
   transform: scale(0.96);
 }
 
+.publishBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.publishBtn:disabled svg {
+  animation: spinPulse 1s linear infinite;
+}
+
+@keyframes spinPulse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stepContent > *,
   .stepCircle.stepActive,
-  .stepCircle.stepComplete {
+  .stepCircle.stepComplete,
+  .criterionCard,
+  .publishBtn:disabled svg {
     animation: none;
   }
 }

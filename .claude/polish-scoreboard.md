@@ -13,7 +13,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | landing | 8.0 | iter 15 — marquee scroll-velocity skew + hover slow-down (grain already shipped); verified clean screenshots both viewports |
 | dashboard home | 7.0 | iter 19 — quick-action hover lift + press physics, grading shimmer reduced-motion guard (on iter 11's sheens/slides) |
 | assignments list | 7.0 | iter 20 — dropdown pop, overlay fade, modal spring (on iter 6's cascade/skeletons/edges) |
-| assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
+| assignments new | 7.0 | iter 23 — criterion cards pop in on add, publish sparkle spins while pending (on iter 9's step choreography) |
 | assignment detail | 7.0 | iter 18 — all 6 alert()s replaced with animated toasts + success toasts on rubric/reference saves |
 | review chat | 7.5 | iter 13 — directional bubble springs (back-ease), streaming caret at stream head, score-ring sweep on load |
 | classrooms list | 7.0 | iter 22 — bespoke floating empty-state board illustration (on iter 8's sheen/dropdown/modal/CountUp) |
@@ -25,6 +25,11 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 23: assignments new 6.5 → 7.0 — newly added rubric criterion cards pop in
+  (translateY + scale on the signature bezier) instead of appearing instantly, and
+  the publish button's sparkle icon spins while createAssignment is pending.
+  Reduced-motion guards both. Auth-walled: verified via lint/tsc/prod build.
+  Remaining for ≥9: remove-criterion FLIP, drag-reorder affordance.
 - iter 22: classrooms list 6.5 → 7.0 — bespoke empty state (floating classroom board
   SVG with glow, orbit dots, 6s idle float) replaces the bare text. Reduced-motion
   stills it. Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: error
