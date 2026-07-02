@@ -17,7 +17,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
 | classrooms list | 5.5 | baseline — Reveal entrance only |
-| classroom detail | 5.0 | baseline — static tables, plain modals |
+| classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
 | students | 5.5 | baseline — charts render without draw-on |
 | analytics | 5.5 | baseline — charts render without draw-on |
 | settings | 6.5 | iter 3 — tab-switch child cascade (nth-child 50ms steps), accent pill grows on active tab, hover nudge, save button press spring |
@@ -25,6 +25,13 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 5: classroom detail 5.0 → 6.5 — hero student count + avg and the four status
+  counts now use the CountUp primitive, student tbody cascades via stagger-children,
+  row hover gets the inset accent edge (matching assignment detail), add-student modal
+  springs in (modalPop 0.35s signature bezier), :active press physics on
+  addStudentBtn/viewBtn. Reduced-motion guard for modal + overlay. Auth-walled:
+  verified via lint/tsc/prod build. Remaining for ≥9: empty-state illustration,
+  search-filter row cascade re-trigger, save-state morph on modal submit.
 - iter 4: assignment detail 5.0 → 6.0 — submissions tbody uses the global stagger-children
   utility (async rows cascade on data arrival), rows get hover tint + inset accent edge,
   :active scale(0.96) on syncBtn/gradeBtn/uploadBtn/viewSubBtn/reviewBtn. Added the missing

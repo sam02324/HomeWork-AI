@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import styles from './page.module.css';
-import { Reveal } from '@/components/motion/Reveal';
+import { Reveal, CountUp } from '@/components/motion/Reveal';
 import { useClassroom, useStudents, useAddStudents } from '@/lib/api-client';
 
 function getStatus(score: number | null) {
@@ -100,8 +100,8 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>{classroom.grade} {classroom.subject} — {classroom.name}</h1>
           <div className={styles.heroStats}>
-            <span><Users size={14} /> {studentCount} students</span>
-            <span><TrendingUp size={14} /> Avg: {avgScore}%</span>
+            <span><Users size={14} /> <CountUp value={studentCount} /> students</span>
+            <span><TrendingUp size={14} /> Avg: <CountUp value={avgScore} suffix="%" /></span>
           </div>
         </div>
         <Link href="/dashboard/assignments/new" className={styles.addBtn}>
@@ -119,7 +119,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
         ].map((s, i) => (
           <div key={i} className={styles.statMini}>
             <div className={styles.statDot} style={{ background: s.color }} />
-            <span className={styles.statCount}>{s.count}</span>
+            <span className={styles.statCount}><CountUp value={s.count} /></span>
             <span className={styles.statMiniLabel}>{s.label}</span>
           </div>
         ))}
@@ -154,7 +154,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="stagger-children">
             {filteredStudents.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-tertiary)' }}>
