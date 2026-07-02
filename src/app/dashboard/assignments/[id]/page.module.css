@@ -277,8 +277,26 @@
   color: var(--text-primary);
 }
 
+.row {
+  transition: background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
 .row:last-child td {
   border-bottom: none;
+}
+
+/* press physics for all row/header actions */
+.syncBtn:active:not(:disabled),
+.gradeBtn:active:not(:disabled),
+.uploadBtn:active:not(:disabled),
+.viewSubBtn:active,
+.reviewBtn:active {
+  transform: scale(0.96);
 }
 
 .badge {

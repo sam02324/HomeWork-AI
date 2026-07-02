@@ -14,7 +14,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | dashboard home | 6.0 | baseline — Reveal/CountUp entrances; no odometer, no card sheen, charts don't draw on |
 | assignments list | 5.5 | baseline — Reveal entrance; no row cascade on filter, no card sheen |
 | assignments new | 5.5 | baseline — stepper works; step content switches without transition |
-| assignment detail | 5.0 | baseline — restyled but plain modals, alert() flows, static table |
+| assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
 | classrooms list | 5.5 | baseline — Reveal entrance only |
 | classroom detail | 5.0 | baseline — static tables, plain modals |
@@ -25,6 +25,12 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 4: assignment detail 5.0 → 6.0 — submissions tbody uses the global stagger-children
+  utility (async rows cascade on data arrival), rows get hover tint + inset accent edge,
+  :active scale(0.96) on syncBtn/gradeBtn/uploadBtn/viewSubBtn/reviewBtn. Added the missing
+  prefers-reduced-motion guard to .stagger-children in globals.css (benefits all pages).
+  Verified: lint/tsc/build clean + landing regression screenshot (zero console problems,
+  zero overflow). Remaining for ≥9: modal entrances, alert() → toast flows, sync banner motion.
 - iter 3: settings 5.0 → 6.5 — section children cascade on tab switch (fadeInUp with
   50ms nth-child steps), ::before accent pill scaleY-grows on the active tab, non-active
   tabs nudge right on hover, saveBtn :active scale(0.97). Reduced-motion kills all of it.

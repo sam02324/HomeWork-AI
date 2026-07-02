@@ -273,7 +273,7 @@ export default function AssignmentDetailsPage() {
                 <th>Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-children">
               {students?.map(student => {
                 const sub = submissions?.find(s => s.studentId === student.id);
                 const isUploading = uploadingFor === student.id;
