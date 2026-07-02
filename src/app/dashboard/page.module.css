@@ -110,6 +110,10 @@
   .statCard::after {
     display: none;
   }
+
+  .gradingFill::after {
+    animation: none;
+  }
 }
 .statTop {
   display: flex;
@@ -514,6 +518,11 @@
 .quickBtn:hover {
   background: var(--accent-hover);
   box-shadow: var(--accent-glow);
+  transform: translateY(-1px);
+}
+.quickBtn:active,
+.quickBtnGhost:active {
+  transform: scale(0.96);
 }
 .quickBtnGhost {
   display: flex;

@@ -11,7 +11,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | Surface | Score | Last change |
 |---|---|---|
 | landing | 8.0 | iter 15 — marquee scroll-velocity skew + hover slow-down (grain already shipped); verified clean screenshots both viewports |
-| dashboard home | 6.5 | iter 11 — stat-card hover sheen, assignment-card hover slide + accent edge (list cascade already present) |
+| dashboard home | 7.0 | iter 19 — quick-action hover lift + press physics, grading shimmer reduced-motion guard (on iter 11's sheens/slides) |
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
 | assignment detail | 7.0 | iter 18 — all 6 alert()s replaced with animated toasts + success toasts on rubric/reference saves |
@@ -25,6 +25,10 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 19: dashboard home 6.5 → 7.0 — quick-action buttons get hover lift + :active
+  press physics (last interactive elements without motion), grading-fill shimmer now
+  respects reduced-motion. Auth-walled: verified via lint/tsc/prod build. Remaining
+  for ≥9: odometer digits, chart draw-on for the trend module, page transition.
 - iter 18: assignment detail 6.5 → 7.0 — replaced all 6 browser alert()s with the
   app's animated Toast system (slide + overshoot) and added success toasts when the
   rubric or reference answers save (previously closed silently). Feedback now matches
