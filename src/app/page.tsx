@@ -460,11 +460,39 @@ export default function LandingPage() {
         /* ── Marquee drift accelerates slightly with scroll velocity ── */
         const marqueeTrack = q('[data-marquee-track]')[0];
         if (marqueeTrack) {
-          gsap.to(marqueeTrack, {
+          const drift = gsap.to(marqueeTrack, {
             xPercent: -50,
             ease: 'none',
             duration: 28,
             repeat: -1,
+          });
+
+          // Ease the drift almost to a stop while hovered, resume on leave.
+          const marquee = marqueeTrack.parentElement;
+          const slow = () => gsap.to(drift, { timeScale: 0.12, duration: 0.5, ease: 'power2.out', overwrite: 'auto' });
+          const resume = () => gsap.to(drift, { timeScale: 1, duration: 0.6, ease: 'power2.out', overwrite: 'auto' });
+          marquee?.addEventListener('mouseenter', slow);
+          marquee?.addEventListener('mouseleave', resume);
+
+          // Scroll-velocity skew: the track shears with fast scrolls, then
+          // eases back to rest (classic GSAP velocity recipe).
+          const skewSetter = gsap.quickSetter(marqueeTrack, 'skewX', 'deg');
+          const clampSkew = gsap.utils.clamp(-6, 6);
+          const proxy = { skew: 0 };
+          ScrollTrigger.create({
+            onUpdate: (self) => {
+              const skew = clampSkew(self.getVelocity() / -350);
+              if (Math.abs(skew) > Math.abs(proxy.skew)) {
+                proxy.skew = skew;
+                gsap.to(proxy, {
+                  skew: 0,
+                  duration: 0.8,
+                  ease: 'power3',
+                  overwrite: true,
+                  onUpdate: () => skewSetter(proxy.skew),
+                });
+              }
+            },
           });
         }
       });

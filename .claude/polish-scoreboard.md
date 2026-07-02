@@ -10,7 +10,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 
 | Surface | Score | Last change |
 |---|---|---|
-| landing | 7.5 | baseline — preloader, particle hero, pinned scroll, cursor, magnetic CTAs; missing film grain, velocity skew |
+| landing | 8.0 | iter 15 — marquee scroll-velocity skew + hover slow-down (grain already shipped); verified clean screenshots both viewports |
 | dashboard home | 6.5 | iter 11 — stat-card hover sheen, assignment-card hover slide + accent edge (list cascade already present) |
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
@@ -25,6 +25,11 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 15: landing 7.5 → 8.0 — marquee track now shears with scroll velocity (clamped
+  ±6°, eases back via power3) and slows to 12% speed on hover, resuming on leave.
+  Film grain was already present. Verified: zero console problems, zero overflow at
+  1440px + 390px. Remaining for ≥9: scroll-story section depth pass, hero flow-field
+  upgrade, footer link micro-motion.
 - iter 14 (shell): sidebar active pill — GSAP pill slides + stretches between nav items
   on route change (scaleY 1.2 during travel, power3 settle), gsap.set on first paint
   (no entrance flicker), reduced-motion snaps instead of sliding. Active item's static
