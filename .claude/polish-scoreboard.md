@@ -16,7 +16,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
 | assignment detail | 7.0 | iter 18 — all 6 alert()s replaced with animated toasts + success toasts on rubric/reference saves |
 | review chat | 7.5 | iter 13 — directional bubble springs (back-ease), streaming caret at stream head, score-ring sweep on load |
-| classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
+| classrooms list | 7.0 | iter 22 — bespoke floating empty-state board illustration (on iter 8's sheen/dropdown/modal/CountUp) |
 | classroom detail | 7.0 | iter 21 — bespoke floating empty-state illustration + full press physics (on iter 5's CountUp/cascade/modal pop) |
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
 | analytics | 6.5 | iter 10 — CountUp on 3 stats, list-row cascade in both cards, stat-card hover sheen + lift |
@@ -25,6 +25,10 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 22: classrooms list 6.5 → 7.0 — bespoke empty state (floating classroom board
+  SVG with glow, orbit dots, 6s idle float) replaces the bare text. Reduced-motion
+  stills it. Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: error
+  state art, avg-score CountUp, card entrance depth pass.
 - iter 21: classroom detail 6.5 → 7.0 — empty student table now shows a bespoke
   floating graduation-cap SVG (glow + accent stroke, 6s idle float) instead of bare
   text, and press physics extended to addBtn/submitBtn. Reduced-motion stills the

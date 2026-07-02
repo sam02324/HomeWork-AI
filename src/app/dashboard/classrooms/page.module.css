@@ -55,9 +55,15 @@
 .modalActions { display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-6); }
 .cancelBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; color:var(--text-secondary); background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-md); cursor:pointer; }
 
+/* Empty state */
+.emptyState { padding:48px 20px; text-align:center; color:var(--text-tertiary); }
+.emptyState p { margin:10px 0 0; font-size:0.9rem; }
+.emptyArt { animation:emptyFloat 6s ease-in-out infinite; }
+@keyframes emptyFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-7px); } }
+
 @media (prefers-reduced-motion: reduce) {
   .card::after { display:none; }
-  .dropdown, .modal { animation:none; }
+  .dropdown, .modal, .emptyArt { animation:none; }
 }
 .cancelBtn:hover { color:var(--text-primary); background:var(--glass-bg-hover); }
 .submitBtn { padding:var(--space-2) var(--space-4); font-size:0.85rem; font-weight:600; color:white; background:var(--accent); border:none; border-radius:var(--radius-md); cursor:pointer; }
