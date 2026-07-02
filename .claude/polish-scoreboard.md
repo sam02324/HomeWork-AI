@@ -15,7 +15,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
 | assignment detail | 6.5 | iter 12 — all 3 modals spring in with overlay fade (adds to iter 4's row cascade + hover edge + press physics) |
-| review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
+| review chat | 7.5 | iter 13 — directional bubble springs (back-ease), streaming caret at stream head, score-ring sweep on load |
 | classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
@@ -25,6 +25,12 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 13: review chat 6.5 → 7.5 — user bubbles spring in from the right, assistant
+  from the left (0.45s back-ease overshoot), a blinking accent caret rides the stream
+  head while the reply streams, and the score ring sweeps from 0 to the score on load
+  (from-only keyframe animating to the inline dasharray). Reduced-motion kills all
+  three. Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: save-state
+  morph on the override button, grade-letter rotateX flip, composer focus glow.
 - iter 12: assignment detail 6.0 → 6.5 — the PreGrade/EditDetails/Reference modals
   now spring in via modalPop with a 0.2s overlay fade (previously appeared instantly);
   sync banner keeps its slideDown. Reduced-motion guard covers overlay/modal/banner.

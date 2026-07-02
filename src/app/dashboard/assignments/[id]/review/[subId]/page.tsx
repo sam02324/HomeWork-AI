@@ -245,6 +245,7 @@ export default function InteractiveReviewPage() {
                 fill="none" stroke="var(--bg-tertiary)" strokeWidth="3"
               />
               <path
+                className={styles.ringProgress}
                 d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831"
                 fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round"
                 strokeDasharray={`${scorePct}, 100`}
@@ -337,6 +338,9 @@ export default function InteractiveReviewPage() {
               {m.role !== 'user' && <span className={styles.botChip}><Bot size={14} /></span>}
               <div className={styles.messageContent}>
                 <MessageBody content={m.content} />
+                {isLoadingChat && m.role === 'assistant' && idx === messages.length - 1 && m.content && (
+                  <span className={styles.caret} aria-hidden="true" />
+                )}
               </div>
             </div>
           ))}
