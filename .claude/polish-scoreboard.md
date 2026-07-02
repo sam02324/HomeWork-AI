@@ -20,11 +20,16 @@ scored from code inspection + prior verified screenshots of this session's work.
 | classroom detail | 5.0 | baseline — static tables, plain modals |
 | students | 5.5 | baseline — charts render without draw-on |
 | analytics | 5.5 | baseline — charts render without draw-on |
-| settings | 5.0 | baseline — tab switches are instant cuts |
+| settings | 6.5 | iter 3 — tab-switch child cascade (nth-child 50ms steps), accent pill grows on active tab, hover nudge, save button press spring |
 | knowledge | 6.5 | iter 2 — bespoke orbiting-book SVG (idle float + counter-rotating nodes), per-card reveal cascade, hover sheen, button press physics |
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 3: settings 5.0 → 6.5 — section children cascade on tab switch (fadeInUp with
+  50ms nth-child steps), ::before accent pill scaleY-grows on the active tab, non-active
+  tabs nudge right on hover, saveBtn :active scale(0.97). Reduced-motion kills all of it.
+  Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: save-state morph
+  (spinner→checkmark draw-on), toggle/switch micro-motion, sliding pill BETWEEN tabs.
 - iter 2: knowledge 4.5 → 6.5 — replaced flat gradient icon with bespoke SVG illustration
   (open book, glow, two counter-rotating orbit node groups, 6s idle float), feature cards now
   data-reveal staggered via existing Reveal primitive, one-shot diagonal sheen on card hover,
