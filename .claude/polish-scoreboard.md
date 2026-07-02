@@ -19,12 +19,17 @@ scored from code inspection + prior verified screenshots of this session's work.
 | classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
-| analytics | 5.5 | baseline — charts render without draw-on |
+| analytics | 6.5 | iter 10 — CountUp on 3 stats, list-row cascade in both cards, stat-card hover sheen + lift |
 | settings | 6.5 | iter 3 — tab-switch child cascade (nth-child 50ms steps), accent pill grows on active tab, hover nudge, save button press spring |
 | knowledge | 6.5 | iter 2 — bespoke orbiting-book SVG (idle float + counter-rotating nodes), per-card reveal cascade, hover sheen, button press physics |
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 10: analytics 5.5 → 6.5 — Total Students / Total Assignments / Overall Average
+  now CountUp (Time Saved stays text: fractional hrs), status + classroom list rows
+  cascade via stagger-children, stat cards get hover sheen + lift + border highlight.
+  Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: real charts with
+  draw-on (page is list-based today), animated status bars, empty-state illustration.
 - iter 9: assignments new 5.5 → 6.5 — step content now cascades its children on step
   switch (60ms steps, keyed remount already existed), step circles pop (0.85→1.12→1
   overshoot) when becoming active or complete, back/next/publish get :active press
