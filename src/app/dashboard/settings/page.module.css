@@ -260,9 +260,25 @@
   transform: scale(0.97);
 }
 
+/* saved state: morph to success green, checkmark draws itself on */
+.saveBtnSaved {
+  background: var(--success) !important;
+  box-shadow: 0 0 18px hsla(160, 70%, 45%, 0.35);
+}
+.saveBtnSaved svg {
+  stroke-dasharray: 24;
+  animation: checkDraw 0.45s var(--ease-out) both;
+}
+
+@keyframes checkDraw {
+  from { stroke-dashoffset: 24; opacity: 0.3; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page,
-  .section > * {
+  .section > *,
+  .saveBtnSaved svg {
     animation: none;
   }
 

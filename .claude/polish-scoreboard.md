@@ -20,11 +20,16 @@ scored from code inspection + prior verified screenshots of this session's work.
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
 | analytics | 6.5 | iter 10 — CountUp on 3 stats, list-row cascade in both cards, stat-card hover sheen + lift |
-| settings | 6.5 | iter 3 — tab-switch child cascade (nth-child 50ms steps), accent pill grows on active tab, hover nudge, save button press spring |
+| settings | 7.0 | iter 16 — save buttons morph to success green with checkmark draw-on (adds to iter 3's tab cascade + pill + press physics) |
 | knowledge | 6.5 | iter 2 — bespoke orbiting-book SVG (idle float + counter-rotating nodes), per-card reveal cascade, hover sheen, button press physics |
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 16: settings 6.5 → 7.0 — all three save buttons get the save-state morph:
+  background morphs to success green with glow and the lucide checkmark draws itself
+  on via stroke-dashoffset (0.45s). Reduced-motion skips the draw. Auth-walled:
+  verified via lint/tsc/prod build. Remaining for ≥9: real saving spinner phase,
+  toggle micro-motion, billing/notification section polish.
 - iter 15: landing 7.5 → 8.0 — marquee track now shears with scroll velocity (clamped
   ±6°, eases back via power3) and slows to 12% speed on hover, resuming on leave.
   Film grain was already present. Verified: zero console problems, zero overflow at

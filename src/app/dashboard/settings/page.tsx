@@ -180,7 +180,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <button className={styles.saveBtn} onClick={handleSave}>
+              <button className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`} onClick={handleSave}>
                 {saved ? <><Check size={16} /> Saved!</> : 'Save Changes'}
               </button>
             </div>
@@ -232,7 +232,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <button className={styles.saveBtn} onClick={handleSave}>
+              <button className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`} onClick={handleSave}>
                 {saved ? <><Check size={16} /> Saved!</> : 'Save Changes'}
               </button>
             </div>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
               </div>
 
               <button 
-                className={styles.saveBtn} 
+                className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`}
                 onClick={handleSaveFolder} 
                 disabled={savingFolder || loadingFolders}
               >
