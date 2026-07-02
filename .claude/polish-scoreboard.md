@@ -12,7 +12,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 |---|---|---|
 | landing | 7.5 | baseline — preloader, particle hero, pinned scroll, cursor, magnetic CTAs; missing film grain, velocity skew |
 | dashboard home | 6.0 | baseline — Reveal/CountUp entrances; no odometer, no card sheen, charts don't draw on |
-| assignments list | 5.5 | baseline — Reveal entrance; no row cascade on filter, no card sheen |
+| assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 5.5 | baseline — stepper works; step content switches without transition |
 | assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
@@ -25,6 +25,13 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 6: assignments list 5.5 → 6.5 — tbody keyed on class/status filters so rows
+  re-cascade on filter change (search excluded to avoid per-keystroke strobing),
+  "Loading..." text replaced with 4 shimmer skeleton rows (global animate-shimmer +
+  new reduced-motion guard for it), row hover accent edge, :active press physics on
+  createBtn/gradeBtn/viewBtn. Verified: lint/tsc/build clean + landing regression
+  screenshot on a fresh server (earlier 404s were a stale pre-rebuild server, not code).
+  Remaining for ≥9: dropdown menu entrance, modal springs, card sheen on tableWrap.
 - iter 5: classroom detail 5.0 → 6.5 — hero student count + avg and the four status
   counts now use the CountUp primitive, student tbody cascades via stagger-children,
   row hover gets the inset accent edge (matching assignment detail), add-student modal

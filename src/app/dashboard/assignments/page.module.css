@@ -7,6 +7,7 @@
 .errorNote { padding:10px 14px; margin-bottom:var(--space-4); background:var(--error-bg); border:1px solid var(--error); border-radius:var(--radius-sm); color:var(--error); font-size:0.85rem; }
 .createBtn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-3) var(--space-5); background:var(--accent); color:white; font-size:0.85rem; font-weight:600; border-radius:var(--radius-md); transition:all var(--duration-fast) var(--ease-out); }
 .createBtn:hover { background:var(--accent-hover); box-shadow:var(--accent-glow); transform:translateY(-1px); }
+.createBtn:active, .gradeBtn:active, .viewBtn:active { transform:scale(0.96); }
 .filters { display:flex; gap:var(--space-3); margin-bottom:var(--space-5); flex-wrap:wrap; }
 .searchWrap { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-md); color:var(--text-tertiary); flex:1; min-width:200px; }
 .searchInput { background:transparent; border:none; outline:none; color:var(--text-primary); font-size:0.85rem; width:100%; }
@@ -18,9 +19,10 @@
 .table { width:100%; border-collapse:collapse; }
 .table th { text-align:left; padding:var(--space-3) var(--space-4); font-size:0.75rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--glass-border); background:rgba(255,255,255,0.02); }
 .table td { padding:var(--space-4); font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--glass-border); }
-.row { transition:background var(--duration-fast); }
-.row:hover { background:var(--glass-bg-hover); }
+.row { transition:background var(--duration-fast), box-shadow var(--duration-fast); }
+.row:hover { background:var(--glass-bg-hover); box-shadow:inset 3px 0 0 var(--accent); }
 .row:last-child td { border-bottom:none; }
+.skel { height:12px; border-radius:6px; background:var(--glass-bg); min-width:60%; }
 .titleCell { font-weight:600; color:var(--text-primary) !important; }
 .classCell { font-size:0.78rem !important; }
 .mono { font-family:var(--font-mono); font-size:0.82rem; }

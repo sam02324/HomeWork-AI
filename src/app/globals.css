@@ -439,6 +439,10 @@ ul, ol {
   .stagger-children > * {
     animation: none;
   }
+
+  .animate-shimmer {
+    animation: none;
+  }
 }
 
 /* ===== CUSTOM CURSOR (shared by landing + dashboard) ===== */

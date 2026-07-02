@@ -155,9 +155,17 @@ export default function AssignmentsPage() {
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          {/* key on the filters so rows re-cascade when they change (search
+              excluded — re-animating per keystroke would strobe) */}
+          <tbody className="stagger-children" key={`${classFilter}|${statusFilter}`}>
             {isLoading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)' }}>Loading...</td></tr>
+              Array.from({ length: 4 }).map((_, i) => (
+                <tr key={`skel-${i}`} className={styles.row}>
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <td key={j}><div className={`${styles.skel} animate-shimmer`} /></td>
+                  ))}
+                </tr>
+              ))
             ) : !filteredAssignments || filteredAssignments.length === 0 ? (
               <tr><td colSpan={7} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)' }}>No assignments found</td></tr>
             ) : (
