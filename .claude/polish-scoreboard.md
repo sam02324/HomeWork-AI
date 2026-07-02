@@ -13,7 +13,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | landing | 7.5 | baseline — preloader, particle hero, pinned scroll, cursor, magnetic CTAs; missing film grain, velocity skew |
 | dashboard home | 6.0 | baseline — Reveal/CountUp entrances; no odometer, no card sheen, charts don't draw on |
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
-| assignments new | 5.5 | baseline — stepper works; step content switches without transition |
+| assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
 | assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
 | classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
@@ -25,6 +25,12 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 9: assignments new 5.5 → 6.5 — step content now cascades its children on step
+  switch (60ms steps, keyed remount already existed), step circles pop (0.85→1.12→1
+  overshoot) when becoming active or complete, back/next/publish get :active press
+  physics. Reduced-motion guard added. Auth-walled: verified via lint/tsc/prod build.
+  Remaining for ≥9: rubric criterion add/remove FLIP motion, drag handle affordance,
+  publish success morph.
 - iter 8: classrooms list 5.5 → 6.5 — one-shot diagonal sheen on card hover, 3-dot
   dropdown pops from top-right (0.18s), create modal springs in (modalPop signature
   bezier), student counts CountUp, createBtn press physics. Grid cascade already
