@@ -147,11 +147,35 @@
 .notifyBtn:active {
   transform: translateY(0) scale(0.97);
 }
+.notifyBtn:disabled {
+  cursor: default;
+}
+
+/* subscribed: morph to success green, checkmark draws itself on */
+.notifyBtnDone {
+  background: var(--success);
+  box-shadow: 0 0 18px hsla(160, 70%, 45%, 0.35);
+}
+.notifyBtnDone:hover {
+  background: var(--success);
+  box-shadow: 0 0 18px hsla(160, 70%, 45%, 0.35);
+  transform: none;
+}
+.notifyBtnDone svg {
+  stroke-dasharray: 24;
+  animation: checkDraw 0.45s var(--ease-out) both;
+}
+
+@keyframes checkDraw {
+  from { stroke-dashoffset: 24; opacity: 0.3; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .illustration,
   .orbitA,
-  .orbitB {
+  .orbitB,
+  .notifyBtnDone svg {
     animation: none;
   }
 

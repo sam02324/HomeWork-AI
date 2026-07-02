@@ -21,10 +21,15 @@ scored from code inspection + prior verified screenshots of this session's work.
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
 | analytics | 6.5 | iter 10 — CountUp on 3 stats, list-row cascade in both cards, stat-card hover sheen + lift |
 | settings | 7.0 | iter 16 — save buttons morph to success green with checkmark draw-on (adds to iter 3's tab cascade + pill + press physics) |
-| knowledge | 6.5 | iter 2 — bespoke orbiting-book SVG (idle float + counter-rotating nodes), per-card reveal cascade, hover sheen, button press physics |
+| knowledge | 7.0 | iter 17 — notify button save-state morph (success green + checkmark draw-on, disabled after) on top of iter 2's illustration/cascade/sheen |
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 17: knowledge 6.5 → 7.0 — notify CTA now has real feedback: click morphs it to
+  success green ("You're on the list") with the checkmark drawing itself on, then
+  disables. Reduced-motion skips the draw. Auth-walled: verified via lint/tsc/prod
+  build. Remaining for ≥9: page transition, upload-zone preview interactions when the
+  feature ships.
 - iter 16: settings 6.5 → 7.0 — all three save buttons get the save-state morph:
   background morphs to success green with glow and the lucide checkmark draws itself
   on via stroke-dashoffset (0.45s). Reduced-motion skips the draw. Auth-walled:

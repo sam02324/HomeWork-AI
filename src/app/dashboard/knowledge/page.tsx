@@ -1,10 +1,13 @@
 'use client';
 
-import { BookOpen, Sparkles, Upload, FileText, Globe } from 'lucide-react';
+import { useState } from 'react';
+import { BookOpen, Sparkles, Upload, FileText, Globe, Check } from 'lucide-react';
 import styles from './page.module.css';
 import { Reveal } from '@/components/motion/Reveal';
 
 export default function KnowledgeBasePage() {
+  const [notified, setNotified] = useState(false);
+
   return (
     <Reveal className={styles.page}>
       <div className={styles.header} data-reveal>
@@ -84,9 +87,23 @@ export default function KnowledgeBasePage() {
           })}
         </div>
 
-        <button className={styles.notifyBtn} data-reveal>
-          <Sparkles size={14} />
-          Notify me when it&apos;s ready
+        <button
+          className={`${styles.notifyBtn} ${notified ? styles.notifyBtnDone : ''}`}
+          onClick={() => setNotified(true)}
+          disabled={notified}
+          data-reveal
+        >
+          {notified ? (
+            <>
+              <Check size={14} />
+              You&apos;re on the list
+            </>
+          ) : (
+            <>
+              <Sparkles size={14} />
+              Notify me when it&apos;s ready
+            </>
+          )}
         </button>
       </div>
     </Reveal>
