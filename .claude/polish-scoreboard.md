@@ -25,6 +25,11 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 14 (shell): sidebar active pill — GSAP pill slides + stretches between nav items
+  on route change (scaleY 1.2 during travel, power3 settle), gsap.set on first paint
+  (no entrance flicker), reduced-motion snaps instead of sliding. Active item's static
+  background moved to the pill so travel is visible. Lifts every dashboard surface;
+  no individual rescore (shell-level).
 - iter 13: review chat 6.5 → 7.5 — user bubbles spring in from the right, assistant
   from the left (0.45s back-ease overshoot), a blinking accent caret rides the stream
   head while the reply streams, and the score ring sweeps from 0 to the score on load

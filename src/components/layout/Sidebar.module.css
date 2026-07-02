@@ -74,6 +74,22 @@
   flex-direction: column;
   gap: var(--space-1);
   overflow-y: auto;
+  position: relative;
+}
+
+/* GSAP-driven pill that slides behind the active nav item */
+.navPill {
+  position: absolute;
+  top: 0;
+  left: var(--space-3);
+  right: var(--space-3);
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: var(--accent-muted);
+  border: 1px solid hsla(217, 91%, 60%, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
 }
 
 .navLabel {
@@ -112,9 +128,11 @@
 }
 
 .navItemActive {
+  /* background/border live on the sliding .navPill; keep only the colors here
+     so the pill's travel between items stays visible */
   color: var(--accent-text) !important;
-  background: var(--accent-muted) !important;
-  border-color: hsla(217, 91%, 60%, 0.15) !important;
+  background: transparent !important;
+  border-color: transparent !important;
 }
 
 .navItemActive .navIcon {
