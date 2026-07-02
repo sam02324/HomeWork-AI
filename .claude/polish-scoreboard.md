@@ -18,13 +18,18 @@ scored from code inspection + prior verified screenshots of this session's work.
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
 | classrooms list | 5.5 | baseline — Reveal entrance only |
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
-| students | 5.5 | baseline — charts render without draw-on |
+| students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
 | analytics | 5.5 | baseline — charts render without draw-on |
 | settings | 6.5 | iter 3 — tab-switch child cascade (nth-child 50ms steps), accent pill grows on active tab, hover nudge, save button press spring |
 | knowledge | 6.5 | iter 2 — bespoke orbiting-book SVG (idle float + counter-rotating nodes), per-card reveal cascade, hover sheen, button press physics |
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 7: students 5.5 → 6.5 — Average Score + Completed stats use CountUp, area chart
+  draws on over 900ms ease-out, radar sweeps in 200ms later (staggered timing hierarchy),
+  submission-history tbody cascades via stagger-children, rows get hover accent edge.
+  Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: rank/consistency real
+  data + odometer, risk badge motion, chart gradient reveal mask.
 - iter 6: assignments list 5.5 → 6.5 — tbody keyed on class/status filters so rows
   re-cascade on filter change (search excluded to avoid per-keystroke strobing),
   "Loading..." text replaced with 4 shimmer skeleton rows (global animate-shimmer +
