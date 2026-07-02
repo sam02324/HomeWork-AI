@@ -14,7 +14,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | dashboard home | 6.5 | iter 11 — stat-card hover sheen, assignment-card hover slide + accent edge (list cascade already present) |
 | assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
-| assignment detail | 6.5 | iter 12 — all 3 modals spring in with overlay fade (adds to iter 4's row cascade + hover edge + press physics) |
+| assignment detail | 7.0 | iter 18 — all 6 alert()s replaced with animated toasts + success toasts on rubric/reference saves |
 | review chat | 7.5 | iter 13 — directional bubble springs (back-ease), streaming caret at stream head, score-ring sweep on load |
 | classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
@@ -25,6 +25,12 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 18: assignment detail 6.5 → 7.0 — replaced all 6 browser alert()s with the
+  app's animated Toast system (slide + overshoot) and added success toasts when the
+  rubric or reference answers save (previously closed silently). Feedback now matches
+  the design language instead of breaking immersion with native dialogs. Auth-walled:
+  verified via lint/tsc/prod build. Remaining for ≥9: score cell count-up on grade
+  arrival, upload progress motion.
 - iter 17: knowledge 6.5 → 7.0 — notify CTA now has real feedback: click morphs it to
   success green ("You're on the list") with the checkmark drawing itself on, then
   disables. Reduced-motion skips the draw. Auth-walled: verified via lint/tsc/prod
