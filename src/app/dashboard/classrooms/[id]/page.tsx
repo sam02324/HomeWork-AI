@@ -157,8 +157,22 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
           <tbody className="stagger-children">
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-tertiary)' }}>
-                  No students found. Add a student to get started!
+                <td colSpan={6} className={styles.emptyCell}>
+                  {/* bespoke empty state: floating graduation cap */}
+                  <svg className={styles.emptyArt} viewBox="0 0 120 90" width="120" height="90" aria-hidden="true">
+                    <defs>
+                      <radialGradient id="cdGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="hsl(350, 80%, 55%)" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="hsl(350, 80%, 55%)" stopOpacity="0" />
+                      </radialGradient>
+                    </defs>
+                    <circle cx="60" cy="45" r="42" fill="url(#cdGlow)" />
+                    <path d="M60 26 26 40l34 14 34-14z" fill="hsl(225, 22%, 12%)" stroke="hsl(350, 80%, 58%)" strokeWidth="2.5" strokeLinejoin="round" />
+                    <path d="M42 47v12c0 5 8 9 18 9s18-4 18-9V47" fill="none" stroke="hsl(350, 80%, 58%)" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M94 40v16" stroke="hsla(0, 0%, 100%, 0.5)" strokeWidth="2" strokeLinecap="round" />
+                    <circle cx="94" cy="60" r="3" fill="hsl(25, 95%, 60%)" />
+                  </svg>
+                  <p>No students found. Add a student to get started!</p>
                 </td>
               </tr>
             ) : filteredStudents.map((s) => {

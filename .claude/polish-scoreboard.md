@@ -17,7 +17,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | assignment detail | 7.0 | iter 18 — all 6 alert()s replaced with animated toasts + success toasts on rubric/reference saves |
 | review chat | 7.5 | iter 13 — directional bubble springs (back-ease), streaming caret at stream head, score-ring sweep on load |
 | classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
-| classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
+| classroom detail | 7.0 | iter 21 — bespoke floating empty-state illustration + full press physics (on iter 5's CountUp/cascade/modal pop) |
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
 | analytics | 6.5 | iter 10 — CountUp on 3 stats, list-row cascade in both cards, stat-card hover sheen + lift |
 | settings | 7.0 | iter 16 — save buttons morph to success green with checkmark draw-on (adds to iter 3's tab cascade + pill + press physics) |
@@ -25,6 +25,11 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 21: classroom detail 6.5 → 7.0 — empty student table now shows a bespoke
+  floating graduation-cap SVG (glow + accent stroke, 6s idle float) instead of bare
+  text, and press physics extended to addBtn/submitBtn. Reduced-motion stills the
+  float. Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: per-student
+  row score mini-bars, header stat odometer.
 - iter 20: assignments list 6.5 → 7.0 — 3-dot dropdown pops from top-right, rename/
   delete modals spring in behind a 0.2s overlay fade (same signature patterns as
   classrooms). Reduced-motion guard appended. Auth-walled: verified via lint/tsc/prod

@@ -46,10 +46,16 @@
 
 .addStudentBtn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--bg-secondary); border:1px solid var(--glass-border); color:var(--text-primary); font-size:0.85rem; font-weight:600; border-radius:var(--radius-md); cursor:pointer; transition:all var(--duration-fast); }
 .addStudentBtn:hover { border-color:var(--accent); color:var(--accent); }
-.addStudentBtn:active, .viewBtn:active { transform:scale(0.96); }
+.addStudentBtn:active, .viewBtn:active, .addBtn:active, .submitBtn:active:not(:disabled) { transform:scale(0.96); }
+
+/* Empty state */
+.emptyCell { text-align:center; padding:40px !important; color:var(--text-tertiary); }
+.emptyCell p { margin:10px 0 0; font-size:0.9rem; }
+.emptyArt { animation:emptyFloat 6s ease-in-out infinite; }
+@keyframes emptyFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-7px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .modalOverlay, .modal { animation:none; }
+  .modalOverlay, .modal, .emptyArt { animation:none; }
 }
 
 /* Modal */
