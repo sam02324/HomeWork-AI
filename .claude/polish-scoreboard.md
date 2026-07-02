@@ -12,7 +12,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 |---|---|---|
 | landing | 8.0 | iter 15 — marquee scroll-velocity skew + hover slow-down (grain already shipped); verified clean screenshots both viewports |
 | dashboard home | 7.0 | iter 19 — quick-action hover lift + press physics, grading shimmer reduced-motion guard (on iter 11's sheens/slides) |
-| assignments list | 6.5 | iter 6 — filter-change row cascade (tbody key remount), shimmer skeleton rows, hover accent edge, press physics |
+| assignments list | 7.0 | iter 20 — dropdown pop, overlay fade, modal spring (on iter 6's cascade/skeletons/edges) |
 | assignments new | 6.5 | iter 9 — step-switch child cascade, step circle pop on active/complete, press physics on back/next/publish |
 | assignment detail | 7.0 | iter 18 — all 6 alert()s replaced with animated toasts + success toasts on rubric/reference saves |
 | review chat | 7.5 | iter 13 — directional bubble springs (back-ease), streaming caret at stream head, score-ring sweep on load |
@@ -25,6 +25,10 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 20: assignments list 6.5 → 7.0 — 3-dot dropdown pops from top-right, rename/
+  delete modals spring in behind a 0.2s overlay fade (same signature patterns as
+  classrooms). Reduced-motion guard appended. Auth-walled: verified via lint/tsc/prod
+  build. Remaining for ≥9: tableWrap card sheen, sort transitions, bulk-action motion.
 - iter 19: dashboard home 6.5 → 7.0 — quick-action buttons get hover lift + :active
   press physics (last interactive elements without motion), grading-fill shimmer now
   respects reduced-motion. Auth-walled: verified via lint/tsc/prod build. Remaining
