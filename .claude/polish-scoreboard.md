@@ -16,7 +16,7 @@ scored from code inspection + prior verified screenshots of this session's work.
 | assignments new | 5.5 | baseline — stepper works; step content switches without transition |
 | assignment detail | 6.0 | iter 4 — tbody row cascade via stagger-children, row hover tint + accent edge, press physics on all 5 action buttons |
 | review chat | 6.5 | baseline — glass bubbles, typing dots, clean markdown; no bubble spring, no ring sweep, no streaming caret |
-| classrooms list | 5.5 | baseline — Reveal entrance only |
+| classrooms list | 6.5 | iter 8 — card hover sheen, dropdown pop, modal spring, CountUp student counts, press physics |
 | classroom detail | 6.5 | iter 5 — CountUp on all 5 stats, tbody row cascade, row hover accent edge, modal spring pop, press physics |
 | students | 6.5 | iter 7 — CountUp stats, tuned chart draw-on (area 900ms, radar +200ms stagger), history row cascade + hover accent edge |
 | analytics | 5.5 | baseline — charts render without draw-on |
@@ -25,6 +25,12 @@ scored from code inspection + prior verified screenshots of this session's work.
 | sign-in | 7.0 | iter 1 — aurora backdrop + grain, staggered brand→card→tagline entrance, brand-matched Clerk accent, reduced-motion safe |
 
 ## Iteration log
+- iter 8: classrooms list 5.5 → 6.5 — one-shot diagonal sheen on card hover, 3-dot
+  dropdown pops from top-right (0.18s), create modal springs in (modalPop signature
+  bezier), student counts CountUp, createBtn press physics. Grid cascade already
+  existed via stagger-children. Reduced-motion guard covers sheen/dropdown/modal.
+  Auth-walled: verified via lint/tsc/prod build. Remaining for ≥9: empty/error state
+  illustrations, avg-score CountUp (skipped: nullable), delete-confirm modal motion.
 - iter 7: students 5.5 → 6.5 — Average Score + Completed stats use CountUp, area chart
   draws on over 900ms ease-out, radar sweeps in 200ms later (staggered timing hierarchy),
   submission-history tbody cascades via stagger-children, rows get hover accent edge.

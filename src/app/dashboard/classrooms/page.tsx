@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, Users, BookOpen, TrendingUp, ChevronRight, X, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
 import { useClassrooms, useCreateClassroom, useDeleteClassroom } from '@/lib/api-client';
-import { Reveal } from '@/components/motion/Reveal';
+import { Reveal, CountUp } from '@/components/motion/Reveal';
 
 interface ClassroomData {
   id: string;
@@ -173,7 +173,7 @@ export default function ClassroomsPage() {
                 <div className={styles.cardStats}>
                   <div className={styles.cardStat}>
                     <Users size={13} />
-                    <span>{c.studentCount} students</span>
+                    <span><CountUp value={c.studentCount} /> students</span>
                   </div>
                   <div className={styles.cardStat}>
                     <TrendingUp size={13} />
