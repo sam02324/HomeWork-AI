@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { db } from '@/db';
 import { grades, submissions, assignments } from '@/db/schema';
-import type { Assignment, Submission, RubricCriteria } from '@/db/schema';
+import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter, assertAllowedFileUrl } from '@/lib/utils';
@@ -21,6 +21,20 @@ function getClient(): Anthropic | null {
     }
   }
   return client;
+}
+
+/* ═══════════════════════════════════════
+   Types
+   ═══════════════════════════════════════ */
+
+interface GradingResult {
+  totalScore: number;
+  criteriaScores: CriterionScore[];
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+  gradeLetter: string;
+  aiRationale: string;
 }
 
 /* ═══════════════════════════════════════
@@ -254,11 +268,11 @@ export async function gradeSubmission(
     // Teacher override fields are intentionally left untouched.
     await db.insert(grades).values({
       submissionId: submission.id,
-      totalScore: totalScore.toString(),
+      totalScore: result.totalScore.toString(),
       maxScore: assignment.maxScore,
       gradeLetter,
       feedback: result.feedback,
-      criteriaScores,
+      criteriaScores: result.criteriaScores,
       strengths: result.strengths,
       improvements: result.improvements,
       aiModel: model,
@@ -269,14 +283,14 @@ export async function gradeSubmission(
     }).onConflictDoUpdate({
       target: grades.submissionId,
       set: {
-        totalScore: totalScore.toString(),
+        totalScore: result.totalScore.toString(),
         maxScore: assignment.maxScore,
         gradeLetter,
         feedback: result.feedback,
-        criteriaScores,
+        criteriaScores: result.criteriaScores,
         strengths: result.strengths,
         improvements: result.improvements,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: model,
         aiTokensUsed: tokensUsed,
         aiDetectionScore,
         aiDetectionFlag,
