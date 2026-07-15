@@ -221,3 +221,34 @@ export function getGradeLetter(percentage: number): string {
   if (percentage >= 40) return 'D';
   return 'F';
 }
+
+/** 
+ * Ensure the fileUrl is safe to fetch (SSRF protection).
+ * Must be HTTPS and not point to internal/local IP addresses.
+ */
+export function assertAllowedFileUrl(urlString: string): void {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol !== 'https:') {
+      throw new Error('Only HTTPS URLs are allowed');
+    }
+    const hostname = url.hostname;
+    // Reject local and private IP ranges
+    if (
+      hostname === 'localhost' ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal') ||
+      /^127\.\d+\.\d+\.\d+$/.test(hostname) ||
+      /^10\.\d+\.\d+\.\d+$/.test(hostname) ||
+      /^192\.168\.\d+\.\d+$/.test(hostname) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+$/.test(hostname)
+    ) {
+      throw new Error('Local or internal URLs are not allowed');
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message !== 'Invalid URL') {
+      throw e;
+    }
+    throw new Error('Invalid file URL');
+  }
+}

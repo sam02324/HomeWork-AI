@@ -5,7 +5,7 @@ import { grades, submissions, assignments } from '@/db/schema';
 import type { Assignment, Submission, RubricCriteria } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
-import { getGradeLetter } from '@/lib/utils';
+import { getGradeLetter, assertAllowedFileUrl } from '@/lib/utils';
 import { createMimoCompletion, getAiModel, getAiProvider, type MimoMessage } from './mimo-client';
 
 /* ═══════════════════════════════════════
