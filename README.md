@@ -16,6 +16,20 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Google OAuth Deployment
+
+Google Drive and Sheets integration requires a stable public callback URL.
+
+1. Set `NEXT_PUBLIC_APP_URL` in the deployed service, for example:
+   `https://your-service.up.railway.app`
+2. Set `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` for the same service.
+3. In Google Cloud Console, add this exact **Authorized redirect URI** to the Web OAuth client:
+   `https://your-service.up.railway.app/api/auth/google/callback`
+4. Redeploy after changing Railway variables.
+
+For local development, use `http://localhost:3000` and add
+`http://localhost:3000/api/auth/google/callback` to the same OAuth client.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 ## Learn More

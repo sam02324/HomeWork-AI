@@ -5,6 +5,7 @@ import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/d
 import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter } from '@/lib/utils';
+import { createMimoCompletion, getAiModel, getAiProvider, type MimoMessage } from './mimo-client';
 
 /* ═══════════════════════════════════════
    Claude Client (singleton)
@@ -48,7 +49,8 @@ export async function gradeSubmission(
   assignment: Assignment
 ): Promise<void> {
   const rubric = (assignment.rubric || []) as RubricCriteria[];
-  const anthropic = getClient();
+  const aiProvider = getAiProvider();
+  const anthropic = aiProvider === 'anthropic' ? getClient() : null;
 
   // 1. Update submission status to 'grading'
   await db.update(submissions)
@@ -67,6 +69,7 @@ export async function gradeSubmission(
 
     // 3. Build the user message based on submission type
     let userContent: Anthropic.MessageParam['content'];
+    let mimoContent: MimoMessage['content'] | null = null;
 
     // If we have no textContent but have a googleDriveFileId, try to fetch and extract now
     let resolvedTextContent = submission.textContent;
@@ -119,6 +122,7 @@ export async function gradeSubmission(
     if (resolvedTextContent) {
       // Text submission
       userContent = buildGradingMessage(resolvedTextContent);
+      mimoContent = userContent;
     } else if (resolvedFileBuffer && resolvedFileType?.startsWith('image/')) {
       // Image downloaded from Drive
       const base64 = resolvedFileBuffer.toString('base64');
@@ -140,6 +144,13 @@ export async function gradeSubmission(
           type: 'text' as const,
           text: buildVisionGradingMessage(),
         },
+      ];
+      mimoContent = [
+        {
+          type: 'image_url',
+          image_url: { url: `data:${mediaType};base64,${base64}` },
+        },
+        { type: 'text', text: buildVisionGradingMessage() },
       ];
     } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
       // Fetch image from URL and convert to base64
@@ -166,7 +177,18 @@ export async function gradeSubmission(
           text: buildVisionGradingMessage(),
         },
       ];
+      mimoContent = [
+        {
+          type: 'image_url',
+          image_url: { url: `data:${mediaType};base64,${base64}` },
+        },
+        { type: 'text', text: buildVisionGradingMessage() },
+      ];
     } else if (resolvedFileBuffer && resolvedFileType === 'application/pdf') {
+      if (aiProvider === 'mimo') {
+        throw new Error('MiMo requires extracted text for PDF submissions');
+      }
+
       // PDF downloaded from Drive but text extraction failed — send as document
       const base64 = resolvedFileBuffer.toString('base64');
       userContent = [
@@ -187,28 +209,41 @@ export async function gradeSubmission(
       throw new Error('Submission has no content to grade');
     }
 
-    if (!anthropic) {
-      throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
+    let responseText: string;
+    let tokensUsed: number;
+    const model = getAiModel();
+
+    if (aiProvider === 'mimo') {
+      if (!mimoContent) throw new Error('MiMo received unsupported submission content');
+      const response = await createMimoCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: mimoContent },
+      ]);
+      responseText = response.text;
+      tokensUsed = response.tokensUsed;
+    } else {
+      if (!anthropic) {
+        throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
+      }
+
+      const response = await anthropic.messages.create({
+        model,
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userContent,
+          },
+        ],
+      });
+
+      responseText = response.content
+        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+        .map((block) => block.text)
+        .join('');
+      tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
     }
-
-    // 4. Call Claude API
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userContent,
-        },
-      ],
-    });
-
-    // 5. Parse response
-    const responseText = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('');
 
     // Extract JSON from response (handle markdown code blocks)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -217,8 +252,6 @@ export async function gradeSubmission(
     }
 
     const result: GradingResult = JSON.parse(jsonMatch[0]);
-    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
-
     // 6. Calculate tokens used (handled above)
     // 7. Ensure grade letter is correct
     const percentage = (result.totalScore / assignment.maxScore) * 100;
@@ -238,7 +271,7 @@ export async function gradeSubmission(
       criteriaScores: result.criteriaScores,
       strengths: result.strengths,
       improvements: result.improvements,
-      aiModel: 'claude-sonnet-4-6',
+      aiModel: model,
       aiTokensUsed: tokensUsed,
       aiDetectionScore,
       aiDetectionFlag,

@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { getAuthUserId, errorResponse } from '@/lib/utils';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
+import { getAiModel, getAiProvider, streamMimoCompletion, type MimoMessage } from '@/lib/ai/mimo-client';
 
 type Params = { params: Promise<{ id: string; subId: string }> };
 
@@ -42,14 +43,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     if (!grade) return errorResponse('Grade not found', 404);
 
-    // 3. Configure Anthropic Client
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return errorResponse('Missing Anthropic API Key', 500);
-    }
-    const anthropic = createAnthropic({ apiKey });
-
-    // 4. Construct System Context
+    // 3. Construct System Context
     const systemContext = `
 You are an expert teacher and AI grading assistant. 
 You previously graded a student's submission for the assignment "${assignment.title}".
@@ -72,9 +66,29 @@ The user (the teacher) is now chatting with you to understand your grading, ask 
 Be helpful, professional, and clear. If the teacher asks you to re-evaluate, provide your thoughts, but let them know they can manually override the score using the "Edit Score" option in the UI.
 `;
 
-    // 5. Stream the response
+    if (getAiProvider() === 'mimo') {
+      const mimoMessages: MimoMessage[] = [
+        { role: 'system', content: systemContext },
+        ...messages,
+      ];
+
+      const result = await streamMimoCompletion(mimoMessages, async (text) => {
+        const updatedMessages = [...messages, { role: 'assistant' as const, content: text }];
+        await db.update(grades)
+          .set({ chatHistory: updatedMessages })
+          .where(eq(grades.id, grade.id));
+      });
+
+      return result;
+    }
+
+    // 4. Stream the response with Claude when the provider is not MiMo.
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return errorResponse('Missing Anthropic API Key', 500);
+    const anthropic = createAnthropic({ apiKey });
+
     const result = streamText({
-      model: anthropic('claude-sonnet-4-6'), // use claude-sonnet-4-6 for better chat quality
+      model: anthropic(getAiModel()),
       system: systemContext,
       messages,
       async onFinish({ text }) {
