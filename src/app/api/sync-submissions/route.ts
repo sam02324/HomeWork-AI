@@ -217,7 +217,8 @@ export async function POST(request: Request) {
     let autoCreated = 0;
     const errors: string[] = [];
 
-    for (const row of rows) {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       try {
         // We intentionally find/create the student before the duplicate check
         // so that student records (like roll numbers) can self-heal/update 
@@ -283,11 +284,9 @@ export async function POST(request: Request) {
               console.warn(`Skipping R2 upload (using Drive URL fallback) due to:`, (r2Err as Error).message);
             }
           } catch (fileErr) {
+            // SEC-11: log details server-side; client message stays generic.
             console.error(`Failed to download Drive file ${row.driveFileId}:`, fileErr);
-            errors.push(
-              `Could not download file for ${row.studentName}: ` +
-              `${fileErr instanceof Error ? fileErr.message : 'Unknown error'}`
-            );
+            errors.push(`Failed to download file for row ${i + 1}`);
             // Continue without file — submission still created
           }
         }
@@ -318,11 +317,9 @@ export async function POST(request: Request) {
 
         synced++;
       } catch (rowErr) {
-        console.error(`Error processing row for ${row.studentName}:`, rowErr);
-        errors.push(
-          `Failed to process submission from ${row.studentName}: ` +
-          `${rowErr instanceof Error ? rowErr.message : 'Unknown error'}`
-        );
+        // SEC-11: log details server-side; surface only a row number to the client.
+        console.error(`Error processing row ${i + 1}:`, rowErr);
+        errors.push(`Failed to process row ${i + 1}`);
       }
     }
 

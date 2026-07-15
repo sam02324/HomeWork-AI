@@ -68,8 +68,8 @@ export async function GET() {
     
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('GET /api/google-folders error:', message);
-    return errorResponse(`Failed to list Google Folders: ${message}`, 500);
+    // SEC-11: log details server-side, return a generic message to the client.
+    console.error('GET /api/google-folders error:', error instanceof Error ? error.message : error);
+    return errorResponse('Failed to list Google folders. Please try reconnecting your Google account.', 500);
   }
 }

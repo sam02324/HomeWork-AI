@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, Users, BookOpen, TrendingUp, ChevronRight, X, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
 import { useClassrooms, useCreateClassroom, useDeleteClassroom } from '@/lib/api-client';
-import { Reveal } from '@/components/motion/Reveal';
+import { Reveal, CountUp } from '@/components/motion/Reveal';
 
 interface ClassroomData {
   id: string;
@@ -112,8 +112,23 @@ export default function ClassroomsPage() {
           Error loading classrooms: {fetchError instanceof Error ? fetchError.message : String(fetchError)}
         </div>
       ) : !classrooms || classrooms.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-          No classrooms yet. Click &quot;Create Classroom&quot; to get started.
+        <div className={styles.emptyState}>
+          {/* bespoke empty state: floating classroom board */}
+          <svg className={styles.emptyArt} viewBox="0 0 140 100" width="140" height="100" aria-hidden="true">
+            <defs>
+              <radialGradient id="clGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="hsl(350, 80%, 55%)" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="hsl(350, 80%, 55%)" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle cx="70" cy="50" r="46" fill="url(#clGlow)" />
+            <rect x="34" y="24" width="72" height="44" rx="6" fill="hsl(225, 22%, 12%)" stroke="hsl(350, 80%, 58%)" strokeWidth="2.5" />
+            <path d="M44 38h36 M44 48h26" stroke="hsla(0, 0%, 100%, 0.35)" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M70 68v10 M58 84h24" stroke="hsl(350, 80%, 58%)" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="112" cy="30" r="3" fill="hsl(25, 95%, 60%)" />
+            <circle cx="28" cy="62" r="2.5" fill="hsl(255, 70%, 65%)" />
+          </svg>
+          <p>No classrooms yet. Click &quot;Create Classroom&quot; to get started.</p>
         </div>
       ) : (
         <div className={`${styles.grid} stagger-children`}>
@@ -173,7 +188,7 @@ export default function ClassroomsPage() {
                 <div className={styles.cardStats}>
                   <div className={styles.cardStat}>
                     <Users size={13} />
-                    <span>{c.studentCount} students</span>
+                    <span><CountUp value={c.studentCount} /> students</span>
                   </div>
                   <div className={styles.cardStat}>
                     <TrendingUp size={13} />

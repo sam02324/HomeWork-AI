@@ -47,6 +47,7 @@
 }
 
 .tab {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -78,15 +79,42 @@
   opacity: 1;
 }
 
+/* accent pill grows in on the active tab; hover nudges the row */
+.tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 58%;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: translateY(-50%) scaleY(0);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.tab.tabActive::before {
+  transform: translateY(-50%) scaleY(1);
+}
+.tab:not(.tabActive):hover {
+  transform: translateX(3px);
+}
+
 /* Content */
 .content {
   padding: var(--space-8);
   max-width: 720px;
 }
 
-.section {
-  animation: fadeInUp 0.35s var(--ease-out) both;
+/* tab switch: cascade the section's children instead of one flat fade */
+.section > * {
+  animation: fadeInUp 0.45s var(--ease-out) both;
 }
+.section > *:nth-child(2) { animation-delay: 50ms; }
+.section > *:nth-child(3) { animation-delay: 100ms; }
+.section > *:nth-child(4) { animation-delay: 150ms; }
+.section > *:nth-child(5) { animation-delay: 200ms; }
+.section > *:nth-child(6) { animation-delay: 250ms; }
+.section > *:nth-child(n + 7) { animation-delay: 300ms; }
 
 .sectionTitle {
   font-size: 1.2rem;
@@ -227,6 +255,36 @@
 .saveBtn:hover {
   background: var(--accent-hover);
   box-shadow: var(--accent-glow);
+}
+.saveBtn:active {
+  transform: scale(0.97);
+}
+
+/* saved state: morph to success green, checkmark draws itself on */
+.saveBtnSaved {
+  background: var(--success) !important;
+  box-shadow: 0 0 18px hsla(160, 70%, 45%, 0.35);
+}
+.saveBtnSaved svg {
+  stroke-dasharray: 24;
+  animation: checkDraw 0.45s var(--ease-out) both;
+}
+
+@keyframes checkDraw {
+  from { stroke-dashoffset: 24; opacity: 0.3; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .section > *,
+  .saveBtnSaved svg {
+    animation: none;
+  }
+
+  .tab:not(.tabActive):hover {
+    transform: none;
+  }
 }
 
 /* Org Card */

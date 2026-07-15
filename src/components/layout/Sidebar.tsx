@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import {
   LayoutDashboard,
   Users,
@@ -42,6 +44,39 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useUser();
   const { signOut } = useClerk();
+
+  // Sliding active pill: tweens behind the nav items on route change.
+  const navRef = useRef<HTMLElement>(null);
+  const pillRef = useRef<HTMLDivElement>(null);
+  const pillInitialized = useRef(false);
+
+  useGSAP(
+    () => {
+      const nav = navRef.current;
+      const pill = pillRef.current;
+      if (!nav || !pill) return;
+      const active = nav.querySelector<HTMLElement>(`.${styles.navItemActive}`);
+      if (!active) {
+        gsap.set(pill, { autoAlpha: 0 });
+        pillInitialized.current = false;
+        return;
+      }
+      const target = { y: active.offsetTop, height: active.offsetHeight };
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!pillInitialized.current || reduce) {
+        // First paint (or reduced motion): place it, don't animate.
+        gsap.set(pill, { ...target, autoAlpha: 1, scaleY: 1 });
+        pillInitialized.current = true;
+        return;
+      }
+      // Slide with a slight stretch while travelling, then settle.
+      gsap.timeline()
+        .to(pill, { scaleY: 1.2, duration: 0.15, ease: 'power2.in' }, 0)
+        .to(pill, { ...target, autoAlpha: 1, duration: 0.45, ease: 'power3.out' }, 0)
+        .to(pill, { scaleY: 1, duration: 0.3, ease: 'power2.out' }, 0.15);
+    },
+    { scope: navRef, dependencies: [pathname] }
+  );
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
@@ -89,7 +124,8 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className={styles.nav}>
+        <nav className={styles.nav} ref={navRef}>
+          <div className={styles.navPill} ref={pillRef} aria-hidden="true" />
           <span className={styles.navLabel}>Main Menu</span>
           {mainNavItems.map((item) => {
             const Icon = item.icon;

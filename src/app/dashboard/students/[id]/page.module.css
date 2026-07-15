@@ -70,7 +70,8 @@
 .table { width:100%; border-collapse:collapse; }
 .table th { text-align:left; padding:var(--space-3) var(--space-4); font-size:0.72rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--glass-border); }
 .table td { padding:var(--space-3) var(--space-4); font-size:0.82rem; color:var(--text-secondary); border-bottom:1px solid var(--glass-border); }
-.row:hover { background:var(--glass-bg-hover); }
+.row { transition:background var(--duration-fast), box-shadow var(--duration-fast); }
+.row:hover { background:var(--glass-bg-hover); box-shadow:inset 3px 0 0 var(--accent); }
 .row:last-child td { border-bottom:none; }
 .titleCell { font-weight:600; color:var(--text-primary) !important; }
 .mono { font-family:var(--font-mono); font-weight:600; }

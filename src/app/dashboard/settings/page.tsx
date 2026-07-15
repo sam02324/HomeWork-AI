@@ -180,7 +180,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <button className={styles.saveBtn} onClick={handleSave}>
+              <button className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`} onClick={handleSave}>
                 {saved ? <><Check size={16} /> Saved!</> : 'Save Changes'}
               </button>
             </div>
@@ -232,7 +232,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <button className={styles.saveBtn} onClick={handleSave}>
+              <button className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`} onClick={handleSave}>
                 {saved ? <><Check size={16} /> Saved!</> : 'Save Changes'}
               </button>
             </div>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
               </div>
 
               <button 
-                className={styles.saveBtn} 
+                className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`}
                 onClick={handleSaveFolder} 
                 disabled={savingFolder || loadingFolders}
               >
@@ -454,7 +454,11 @@ export default function SettingsPage() {
                         const confirm2 = window.prompt("Type 'DELETE' to confirm wiping all data:");
                         if (confirm2 === 'DELETE') {
                           try {
-                            const res = await fetch('/api/settings/wipe-data', { method: 'POST' });
+                            const res = await fetch('/api/settings/wipe-data', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ confirm: 'DELETE ALL MY DATA' }),
+                            });
                             if (res.ok) {
                               alert('All data has been wiped successfully.');
                               window.location.reload();

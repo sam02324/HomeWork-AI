@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthUserId } from '@/lib/utils';
+import { getAuthUserId, rateLimitGuard } from '@/lib/utils';
 import { db } from '@/db';
 import { assignments, submissions, students, classrooms, googleTokens } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
@@ -43,9 +43,15 @@ async function uploadBufferToR2(
   return `${publicUrl}/${filename}`;
 }
 
+const FOLDER_ID_RE = /^[a-zA-Z0-9_-]+$/;
+
 export async function GET() {
   const userId = await getAuthUserId();
   if (userId instanceof NextResponse) return userId;
+
+  // SEC-10: this fans out to Google Drive + R2 — throttle to 5/min per user.
+  const limited = rateLimitGuard(`sync-all:${userId}`, 5, 60_000);
+  if (limited) return limited;
 
   try {
     const tokenRecord = await db.query.googleTokens.findFirst({
@@ -65,7 +71,11 @@ export async function GET() {
     
     let query = `mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and modifiedTime > '${sevenDaysAgo.toISOString()}'`;
     
+    // SEC-12: only interpolate the folder ID if it matches the safe charset.
     if (tokenRecord.syncFolderId) {
+      if (!FOLDER_ID_RE.test(tokenRecord.syncFolderId)) {
+        return NextResponse.json({ error: 'Stored sync folder ID is invalid.' }, { status: 400 });
+      }
       query += ` and '${tokenRecord.syncFolderId}' in parents`;
     }
 
@@ -275,7 +285,8 @@ export async function GET() {
     return NextResponse.json({ success: true, synced: totalSynced });
 
   } catch (error) {
+    // SEC-11: log internally, return a generic message.
     console.error('Sync-All error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: 'Sync failed. Please try again.' }, { status: 500 });
   }
 }

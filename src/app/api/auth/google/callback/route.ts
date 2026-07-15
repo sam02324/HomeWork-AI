@@ -1,6 +1,6 @@
 /**
  * GET /api/auth/google/callback
- * Handles the OAuth callback, exchanges code for tokens, stores in DB.
+ * Handles the OAuth callback, exchanges code for tokens, stores them encrypted.
  */
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
@@ -8,30 +8,56 @@ import { google } from 'googleapis';
 import { db } from '@/db';
 import { googleTokens } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { encrypt } from '@/lib/crypto';
+
+const STATE_COOKIE = 'google_oauth_state';
 
 export async function GET(request: Request) {
+  // SEC-17: redirect base from configured app URL only — never request headers.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: 'Server misconfigured: NEXT_PUBLIC_APP_URL is not set.' },
+      { status: 500 }
+    );
+  }
+
+  // Every return path clears the one-time state cookie.
+  const back = (reason?: string) => {
+    const qs = reason ? `?google_auth=error&reason=${encodeURIComponent(reason)}` : '?google_auth=success';
+    const res = NextResponse.redirect(`${appUrl}/dashboard${qs}`);
+    res.cookies.set(STATE_COOKIE, '', { httpOnly: true, path: '/', maxAge: 0 });
+    return res;
+  };
+
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state'); // userId set when the flow started
+  const state = url.searchParams.get('state');
   const error = url.searchParams.get('error');
-
-  const host = request.headers.get('host');
-  const protocol = request.headers.get('x-forwarded-proto') || 'http';
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000');
+  const cookieState = request.headers
+    .get('cookie')
+    ?.split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${STATE_COOKIE}=`))
+    ?.slice(STATE_COOKIE.length + 1);
 
   if (error) {
-    return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=${error}`);
+    return back(error);
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=missing_params`);
+    return back('missing_params');
   }
 
-  // Bind the OAuth result to the signed-in session — `state` is attacker-
-  // controllable, so tokens are only stored if it matches the session user.
+  // SEC-5: verify the nonce round-tripped through our cookie (CSRF defence).
+  if (!cookieState || state !== cookieState) {
+    return back('invalid_state');
+  }
+
+  // The user is determined solely by the Clerk session, never by `state`.
   const { userId } = await auth();
-  if (!userId || userId !== state) {
-    return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=session_mismatch`);
+  if (!userId) {
+    return back('not_authenticated');
   }
 
   try {
@@ -44,7 +70,7 @@ export async function GET(request: Request) {
     const { tokens } = await oauth2Client.getToken(code);
 
     if (!tokens.access_token || !tokens.refresh_token) {
-      return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=no_tokens`);
+      return back('no_tokens');
     }
 
     // Get the user's Google email
@@ -53,36 +79,39 @@ export async function GET(request: Request) {
     const userInfo = await oauth2.userinfo.get();
     const googleEmail = userInfo.data.email || null;
 
-    // Upsert the tokens
+    // Encrypt tokens at rest (SEC-4) before persisting.
+    const encryptedAccess = encrypt(tokens.access_token);
+    const encryptedRefresh = encrypt(tokens.refresh_token);
+
     const existing = await db.query.googleTokens.findFirst({
-      where: eq(googleTokens.userId, state),
+      where: eq(googleTokens.userId, userId),
     });
 
     if (existing) {
       await db.update(googleTokens)
         .set({
-          accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token,
+          accessToken: encryptedAccess,
+          refreshToken: encryptedRefresh,
           tokenExpiry: new Date(tokens.expiry_date || Date.now() + 3600_000),
           googleEmail,
           scopes: tokens.scope || '',
           updatedAt: new Date(),
         })
-        .where(eq(googleTokens.userId, state));
+        .where(eq(googleTokens.userId, userId));
     } else {
       await db.insert(googleTokens).values({
-        userId: state,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token!,
+        userId,
+        accessToken: encryptedAccess,
+        refreshToken: encryptedRefresh,
         tokenExpiry: new Date(tokens.expiry_date || Date.now() + 3600_000),
         googleEmail,
         scopes: tokens.scope || '',
       });
     }
 
-    return NextResponse.redirect(`${appUrl}/dashboard?google_auth=success`);
+    return back();
   } catch (err) {
     console.error('Google OAuth callback error:', err);
-    return NextResponse.redirect(`${appUrl}/dashboard?google_auth=error&reason=token_exchange_failed`);
+    return back('token_exchange_failed');
   }
 }

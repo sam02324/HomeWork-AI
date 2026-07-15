@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { assignments, submissions } from '@/db/schema';
+import { assignments, submissions, classrooms } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
 import { updateAssignmentSchema } from '@/lib/validations';
@@ -54,6 +54,16 @@ export async function PATCH(request: Request, { params }: Params) {
   if (body instanceof NextResponse) return body;
 
   try {
+    // SEC-3: if moving the assignment to another classroom, that classroom
+    // must also be owned by this teacher.
+    if (body.classroomId) {
+      const targetClassroom = await db.query.classrooms.findFirst({
+        where: and(eq(classrooms.id, body.classroomId), eq(classrooms.teacherId, userId)),
+        columns: { id: true },
+      });
+      if (!targetClassroom) return errorResponse('Classroom not found', 404);
+    }
+
     const updateData: Record<string, unknown> = { ...body, updatedAt: new Date() };
     if (body.dueDate) updateData.dueDate = new Date(body.dueDate);
 

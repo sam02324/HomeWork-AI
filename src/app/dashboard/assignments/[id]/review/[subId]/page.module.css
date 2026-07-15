@@ -334,26 +334,107 @@
   align-items: flex-end;
   gap: var(--space-3);
   max-width: min(78%, 720px);
-  animation: fadeInUp var(--duration-slow) var(--ease-out) both;
 }
 
+/* directional spring pop: users from the right, assistant from the left */
 .messageUser {
   align-self: flex-end;
+  animation: bubbleInRight 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .messageAssistant {
   align-self: flex-start;
+  animation: bubbleInLeft 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes bubbleInRight {
+  from { opacity: 0; transform: translate3d(14px, 10px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes bubbleInLeft {
+  from { opacity: 0; transform: translate3d(-14px, 10px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+/* blinking caret at the stream head */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  background: var(--accent);
+  vertical-align: text-bottom;
+  animation: caretBlink 0.9s steps(2, start) infinite;
+}
+
+@keyframes caretBlink {
+  to { visibility: hidden; }
+}
+
+/* score ring draws from 0 to its inline dasharray target */
+.ringProgress {
+  animation: ringSweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+@keyframes ringSweep {
+  from { stroke-dasharray: 0, 100; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .messageUser,
+  .messageAssistant,
+  .caret,
+  .ringProgress {
+    animation: none;
+  }
 }
 
 .messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  min-width: 0;
   padding: var(--space-3) var(--space-4);
   font-size: 0.9rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .messageContent p {
   white-space: pre-wrap;
   margin: 0;
+}
+
+.messageContent ul,
+.messageContent ol {
+  margin: 0;
+  padding-left: 1.25em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+.messageContent li {
+  margin: 0;
+}
+
+.messageContent code {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 0.85em;
+  background: hsla(0, 0%, 100%, 0.1);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+.messageContent strong {
+  font-weight: 650;
+}
+
+.msgHeading {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-top: 0.25em;
 }
 
 .messageAssistant .messageContent {

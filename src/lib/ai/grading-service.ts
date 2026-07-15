@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
 import { db } from '@/db';
 import { grades, submissions, assignments } from '@/db/schema';
-import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
+import type { Assignment, Submission, RubricCriteria } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter } from '@/lib/utils';
@@ -20,20 +21,6 @@ function getClient(): Anthropic | null {
     }
   }
   return client;
-}
-
-/* ═══════════════════════════════════════
-   Types
-   ═══════════════════════════════════════ */
-
-interface GradingResult {
-  totalScore: number;
-  criteriaScores: CriterionScore[];
-  feedback: string;
-  strengths: string[];
-  improvements: string[];
-  gradeLetter: string;
-  aiRationale: string;
 }
 
 /* ═══════════════════════════════════════
@@ -85,7 +72,7 @@ export async function gradeSubmission(
           where: eq(assignments.id, submission.assignmentId),
           columns: { teacherId: true },
         });
-        
+
         if (assignmentRecord) {
           // Check if teacher has OAuth tokens
           const { googleTokens } = await import('@/db/schema');
@@ -93,7 +80,7 @@ export async function gradeSubmission(
             where: eq(googleTokens.userId, assignmentRecord.teacherId),
           });
           const oauthUserId = tokenRecord ? assignmentRecord.teacherId : undefined;
-          
+
           const driveFile = await downloadDriveFile(submission.googleDriveFileId, oauthUserId);
           resolvedFileType = driveFile.mimeType;
           resolvedFileBuffer = driveFile.buffer;
@@ -104,7 +91,7 @@ export async function gradeSubmission(
               const parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
               const pdfData = await parser.getText();
               resolvedTextContent = pdfData.text;
-              
+
               // Also save the extracted text back to the submission for future use
               await db.update(submissions)
                 .set({ textContent: resolvedTextContent, fileType: resolvedFileType })
@@ -153,11 +140,12 @@ export async function gradeSubmission(
         { type: 'text', text: buildVisionGradingMessage() },
       ];
     } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
-      // Fetch image from URL and convert to base64
+      // Fetch image from URL and convert to base64 (origin-restricted — SEC-7b)
+      assertAllowedFileUrl(submission.fileUrl);
       const response = await fetch(submission.fileUrl);
       const arrayBuffer = await response.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString('base64');
-      
+
       let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
       if (submission.fileType === 'image/png') mediaType = 'image/png';
       else if (submission.fileType === 'image/gif') mediaType = 'image/gif';
@@ -257,18 +245,20 @@ export async function gradeSubmission(
     const percentage = (result.totalScore / assignment.maxScore) * 100;
     const gradeLetter = result.gradeLetter || getGradeLetter(percentage);
 
-    // 8. Save grade to database
     // AI detection is disabled, hardcode default safe values
     const aiDetectionScore = 0;
     const aiDetectionFlag = false;
 
+    // Upsert (SEC-8 / BUG-3): re-grading an errored submission overwrites the
+    // existing row instead of crashing on the submissionId UNIQUE constraint.
+    // Teacher override fields are intentionally left untouched.
     await db.insert(grades).values({
       submissionId: submission.id,
-      totalScore: result.totalScore.toString(),
+      totalScore: totalScore.toString(),
       maxScore: assignment.maxScore,
       gradeLetter,
       feedback: result.feedback,
-      criteriaScores: result.criteriaScores,
+      criteriaScores,
       strengths: result.strengths,
       improvements: result.improvements,
       aiModel: model,
@@ -276,6 +266,23 @@ export async function gradeSubmission(
       aiDetectionScore,
       aiDetectionFlag,
       aiRationale: result.aiRationale,
+    }).onConflictDoUpdate({
+      target: grades.submissionId,
+      set: {
+        totalScore: totalScore.toString(),
+        maxScore: assignment.maxScore,
+        gradeLetter,
+        feedback: result.feedback,
+        criteriaScores,
+        strengths: result.strengths,
+        improvements: result.improvements,
+        aiModel: 'claude-sonnet-4-6',
+        aiTokensUsed: tokensUsed,
+        aiDetectionScore,
+        aiDetectionFlag,
+        aiRationale: result.aiRationale,
+        gradedAt: new Date(),
+      },
     });
 
     // 9. Update submission status to 'graded'
@@ -316,6 +323,9 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
   const toGrade = pendingSubmissions.filter((s) => s.status === 'pending' || s.status === 'error');
 
   if (toGrade.length === 0) {
+    // Nothing to grade. The caller has already flipped status to 'grading', so
+    // we MUST release that lock here (BUG-2) — pick the correct terminal state.
+    await finalizeAssignmentStatus(assignmentId);
     return 0;
   }
 
@@ -337,18 +347,27 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
     }
   }
 
-  // Update assignment status to 'graded' if all done
-  const remainingPending = await db.query.submissions.findMany({
+  // Always release the 'grading' lock based on the *current* DB state (BUG-9):
+  // submissions may have been added during the run, so re-query fresh.
+  await finalizeAssignmentStatus(assignmentId);
+
+  return gradedCount;
+}
+
+/**
+ * Move an assignment off the transient 'grading' status to a terminal state,
+ * derived from the live submission rows. Guarantees the lock is released even
+ * when new submissions arrived mid-run or nothing was pending to begin with.
+ */
+async function finalizeAssignmentStatus(assignmentId: string): Promise<void> {
+  const current = await db.query.submissions.findMany({
     where: eq(submissions.assignmentId, assignmentId),
   });
 
-  const allGraded = remainingPending.every((s) => s.status === 'graded' || s.status === 'error');
+  const fullyGraded =
+    current.length > 0 && current.every((s) => s.status === 'graded' || s.status === 'error');
 
-  if (allGraded) {
-    await db.update(assignments)
-      .set({ status: 'graded', updatedAt: new Date() })
-      .where(eq(assignments.id, assignmentId));
-  }
-
-  return gradedCount;
+  await db.update(assignments)
+    .set({ status: fullyGraded ? 'graded' : 'published', updatedAt: new Date() })
+    .where(eq(assignments.id, assignmentId));
 }

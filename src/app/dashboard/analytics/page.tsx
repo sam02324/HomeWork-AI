@@ -3,7 +3,7 @@
 import { Users, FileText, TrendingUp, Clock } from 'lucide-react';
 import styles from './page.module.css';
 import { useDashboardStats, useAssignments, useClassrooms } from '@/lib/api-client';
-import { Reveal } from '@/components/motion/Reveal';
+import { Reveal, CountUp } from '@/components/motion/Reveal';
 
 export default function AnalyticsPage() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
@@ -17,9 +17,9 @@ export default function AnalyticsPage() {
   const timeSavedLabel = timeSaved >= 60 ? `${(timeSaved / 60).toFixed(1)} hrs` : `${timeSaved} min`;
 
   const STATS = [
-    { label: 'Total Students', value: statsLoading ? '...' : totalStudents, icon: Users, color: 'var(--accent)' },
-    { label: 'Total Assignments', value: statsLoading ? '...' : totalAssignments, icon: FileText, color: 'hsl(280,65%,60%)' },
-    { label: 'Overall Average', value: statsLoading ? '...' : `${avgScore}%`, icon: TrendingUp, color: 'var(--score-good)' },
+    { label: 'Total Students', value: statsLoading ? '...' : <CountUp value={totalStudents} />, icon: Users, color: 'var(--accent)' },
+    { label: 'Total Assignments', value: statsLoading ? '...' : <CountUp value={totalAssignments} />, icon: FileText, color: 'hsl(280,65%,60%)' },
+    { label: 'Overall Average', value: statsLoading ? '...' : <CountUp value={avgScore} suffix="%" />, icon: TrendingUp, color: 'var(--score-good)' },
     { label: 'Time Saved', value: statsLoading ? '...' : timeSavedLabel, icon: Clock, color: 'var(--success)' },
   ];
 
@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
           {/* Assignment Overview */}
           <div className={styles.chartCard} data-reveal>
             <h3 className={styles.chartTitle}>Assignments by Status</h3>
-            <div style={{ padding: '20px' }}>
+            <div className="stagger-children" style={{ padding: '20px' }}>
               {['draft', 'published', 'grading', 'graded'].map(status => {
                 const count = assignments?.filter(a => a.status === status).length ?? 0;
                 const colors: Record<string, string> = {
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
           {/* Classrooms Summary */}
           <div className={styles.chartCard} data-reveal>
             <h3 className={styles.chartTitle}>Classrooms Summary</h3>
-            <div style={{ padding: '20px' }}>
+            <div className="stagger-children" style={{ padding: '20px' }}>
               {classrooms && classrooms.length > 0 ? (
                 classrooms.map(c => (
                   <div key={c.id} style={{

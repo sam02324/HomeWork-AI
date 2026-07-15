@@ -4,7 +4,19 @@ import { db } from '@/db';
 import { assignments, submissions, students, classrooms, users } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { downloadDriveFile } from '@/lib/google-sheets';
-import { randomUUID } from 'crypto';
+import { randomUUID, timingSafeEqual } from 'crypto';
+
+/** Constant-time string compare (SEC-16). Returns false on length mismatch. */
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  try {
+    return timingSafeEqual(ab, bb);
+  } catch {
+    return false;
+  }
+}
 
 interface WebhookPayload {
   secret: string;
@@ -56,8 +68,13 @@ export async function POST(request: Request) {
   try {
     const payload: WebhookPayload = await request.json();
 
-    // 1. Validate Secret
-    if (!payload.secret || payload.secret !== process.env.WEBHOOK_SECRET) {
+    // 1. Validate Secret (SEC-16: constant-time compare; fail closed if unset).
+    const expectedSecret = process.env.WEBHOOK_SECRET;
+    if (!expectedSecret) {
+      console.error('WEBHOOK_SECRET is not configured');
+      return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+    }
+    if (!payload.secret || !safeEqual(payload.secret, expectedSecret)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -196,7 +213,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, synced, classroom: classroom.name, assignment: assignment.title });
 
   } catch (error) {
+    // SEC-11: log internally, return a generic message.
     console.error('Webhook error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }

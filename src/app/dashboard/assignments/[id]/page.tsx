@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import styles from './page.module.css';
 import { Reveal } from '@/components/motion/Reveal';
+import { useToast } from '@/components/ui/Toast';
 import { 
   useAssignment, 
   useStudents, 
@@ -54,6 +55,7 @@ export default function AssignmentDetailsPage() {
   const [syncResult, setSyncResult] = useState<{ message: string; errors: string[] } | null>(null);
 
   const updateAssignment = useUpdateAssignment(id);
+  const toast = useToast();
 
   // Pre-Grade Modal State
   const [showPreGradeModal, setShowPreGradeModal] = useState(false);
@@ -95,7 +97,7 @@ export default function AssignmentDetailsPage() {
       });
     } catch (err) {
       console.error('Upload failed', err);
-      alert('Failed to upload submission');
+      toast.error('Failed to upload submission');
     } finally {
       setUploadingFor(null);
     }
@@ -120,7 +122,7 @@ export default function AssignmentDetailsPage() {
       const text = await file.text();
       setLocalReferenceText(prev => prev ? prev + '\n\n--- Uploaded from: ' + file.name + ' ---\n\n' + text : text);
     } catch {
-      alert('Could not read the file. Please paste the content manually.');
+      toast.error('Could not read the file. Please paste the content manually.');
     } finally {
       setIsUploadingReference(false);
       e.target.value = '';
@@ -144,7 +146,7 @@ export default function AssignmentDetailsPage() {
       });
       setShowEditDetailsModal(false);
     } catch {
-      alert('Failed to update assignment details');
+      toast.error('Failed to update assignment details');
     }
   }
 
@@ -273,7 +275,7 @@ export default function AssignmentDetailsPage() {
                 <th>Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-children">
               {students?.map(student => {
                 const sub = submissions?.find(s => s.studentId === student.id);
                 const isUploading = uploadingFor === student.id;
@@ -333,7 +335,7 @@ export default function AssignmentDetailsPage() {
                                 if (url) {
                                   window.open(url, '_blank');
                                 } else {
-                                  alert('No file URL available for this submission.');
+                                  toast.error('No file URL available for this submission.');
                                 }
                               }}
                               title="View Document"
@@ -468,7 +470,8 @@ export default function AssignmentDetailsPage() {
                       rubric: localRubric 
                     });
                     setShowPreGradeModal(false);
-                  } catch { alert('Save failed'); }
+                    toast.success('Rubric saved');
+                  } catch { toast.error('Save failed'); }
                 }} disabled={updateAssignment.isPending}>
                   {updateAssignment.isPending ? 'Saving...' : <><Save size={14}/> Save Rubric</>}
                 </button>
@@ -586,7 +589,8 @@ export default function AssignmentDetailsPage() {
                       referenceAnswers: localReferenceText
                     });
                     setShowReferenceModal(false);
-                  } catch { alert('Save failed'); }
+                    toast.success('Reference answers saved');
+                  } catch { toast.error('Save failed'); }
                 }} disabled={updateAssignment.isPending}>
                   {updateAssignment.isPending ? 'Saving...' : <><Save size={14}/> Save Reference</>}
                 </button>

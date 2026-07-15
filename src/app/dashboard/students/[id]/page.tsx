@@ -5,7 +5,7 @@ import { ArrowLeft, TrendingUp, Award, Target, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from './page.module.css';
-import { Reveal } from '@/components/motion/Reveal';
+import { Reveal, CountUp } from '@/components/motion/Reveal';
 import { useStudentAnalytics } from '@/lib/api-client';
 
 export default function StudentAnalyticsPage() {
@@ -72,10 +72,10 @@ export default function StudentAnalyticsPage() {
       {/* Stats */}
       <div className={styles.statsRow} data-reveal>
         {[
-          { icon: TrendingUp, label: 'Average Score', value: `${avgScore}%` },
-          { icon: Target, label: 'Completed', value: `${totalSubmissions}` },
-          { icon: Award, label: 'Class Rank', value: `-` },
-          { icon: BarChart3, label: 'Consistency', value: `-` },
+          { icon: TrendingUp, label: 'Average Score', value: <CountUp value={avgScore} suffix="%" /> },
+          { icon: Target, label: 'Completed', value: <CountUp value={totalSubmissions} /> },
+          { icon: Award, label: 'Class Rank', value: '-' },
+          { icon: BarChart3, label: 'Consistency', value: '-' },
         ].map((s, i) => {
           const Icon = s.icon;
           return (
@@ -105,7 +105,7 @@ export default function StudentAnalyticsPage() {
                 <XAxis dataKey="assignmentTitle" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13 }} />
-                <Area type="monotone" dataKey="score" stroke="hsl(350, 80%, 45%)" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: 'hsl(350, 80%, 45%)', r: 4, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="score" stroke="hsl(350, 80%, 45%)" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: 'hsl(350, 80%, 45%)', r: 4, strokeWidth: 0 }} animationDuration={900} animationEasing="ease-out" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -121,7 +121,7 @@ export default function StudentAnalyticsPage() {
                   <PolarGrid stroke="var(--glass-border)" />
                   <PolarAngleAxis dataKey="topic" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar name="Student" dataKey="score" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.3} />
+                  <Radar name="Student" dataKey="score" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.3} animationDuration={900} animationEasing="ease-out" animationBegin={200} />
                 </RadarChart>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)' }}>
@@ -147,7 +147,7 @@ export default function StudentAnalyticsPage() {
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-children">
               {HISTORY.length === 0 ? (
                 <tr><td colSpan={5} style={{textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)'}}>No submissions yet.</td></tr>
               ) : HISTORY.map((h) => (

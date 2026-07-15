@@ -2,16 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { assignments, submissions, grades } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { getAuthUserId, errorResponse } from '@/lib/utils';
+import { getAuthUserId, errorResponse, rateLimitGuard } from '@/lib/utils';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
 import { getAiModel, getAiProvider, streamMimoCompletion, type MimoMessage } from '@/lib/ai/mimo-client';
 
 type Params = { params: Promise<{ id: string; subId: string }> };
 
+const MAX_MESSAGES = 40;
+const MAX_MESSAGE_CHARS = 8000;
+
 export async function POST(req: NextRequest, { params }: Params) {
   const userId = await getAuthUserId();
   if (userId instanceof NextResponse) return userId;
+
+  // SEC-10: throttle this LLM-backed endpoint — 30 requests/min per user.
+  const limited = rateLimitGuard(`chat:${userId}`, 30, 60_000);
+  if (limited) return limited;
 
   const { id, subId } = await params;
   const { messages } = (await req.json()) as {
@@ -20,6 +27,14 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!messages || !Array.isArray(messages)) {
     return errorResponse('Missing messages array', 400);
+  }
+
+  // SEC-10: bound conversation length and per-message size.
+  if (messages.length > MAX_MESSAGES) {
+    return errorResponse(`Conversation too long (max ${MAX_MESSAGES} messages).`, 400);
+  }
+  if (messages.some((m) => typeof m?.content === 'string' && m.content.length > MAX_MESSAGE_CHARS)) {
+    return errorResponse(`Each message must be ${MAX_MESSAGE_CHARS} characters or fewer.`, 400);
   }
 
   try {
@@ -62,8 +77,10 @@ Grade Letter: ${grade.gradeLetter}
 Your Rationale: ${grade.aiRationale || 'No rationale available.'}
 Feedback: ${grade.feedback}
 
-The user (the teacher) is now chatting with you to understand your grading, ask for specific breakdowns, or request you to re-evaluate specific parts. 
+The user (the teacher) is now chatting with you to understand your grading, ask for specific breakdowns, or request you to re-evaluate specific parts.
 Be helpful, professional, and clear. If the teacher asks you to re-evaluate, provide your thoughts, but let them know they can manually override the score using the "Edit Score" option in the UI.
+
+Formatting: reply in short plain-text paragraphs. Use simple hyphen bullets for lists. Do not use markdown headings, tables, or horizontal rules — this renders in a compact chat bubble.
 `;
 
     if (getAiProvider() === 'mimo') {

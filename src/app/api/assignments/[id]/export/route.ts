@@ -8,7 +8,13 @@ type Params = { params: Promise<{ id: string }> };
 
 /** Escape a CSV cell (wrap in quotes, double internal quotes). */
 function csvCell(value: unknown): string {
-  const s = value == null ? '' : String(value);
+  let s = value == null ? '' : String(value);
+  // SEC-6: neutralize spreadsheet formula injection. A cell beginning with one
+  // of these triggers formula evaluation in Excel/Sheets — prefix with a quote
+  // so it's treated as literal text (e.g. =HYPERLINK(...) -> '=HYPERLINK(...)).
+  if (/^[=+\-@\t\r]/.test(s)) {
+    s = `'${s}`;
+  }
   return `"${s.replace(/"/g, '""')}"`;
 }
 

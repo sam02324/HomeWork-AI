@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, type ChangeEvent, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Bot, Save, Sparkles } from 'lucide-react';
 import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
@@ -10,6 +10,67 @@ import styles from './page.module.css';
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+}
+
+/** Inline markdown-lite: **bold** and `code` spans. */
+function renderInline(text: string, keyBase: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <strong key={`${keyBase}-${i}`}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      return <code key={`${keyBase}-${i}`}>{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
+}
+
+/**
+ * Dependency-free markdown-lite renderer for chat bubbles. The assistant
+ * replies with headings, bullets, and bold — without this they render as
+ * raw `**` / `##` / `-` noise in a single paragraph.
+ */
+function MessageBody({ content }: { content: string }) {
+  const blocks: ReactNode[] = [];
+  let list: { ordered: boolean; items: ReactNode[] } | null = null;
+
+  const flushList = (key: string) => {
+    if (!list) return;
+    blocks.push(
+      list.ordered ? <ol key={key}>{list.items}</ol> : <ul key={key}>{list.items}</ul>
+    );
+    list = null;
+  };
+
+  content.split('\n').forEach((raw, i) => {
+    const line = raw.trimEnd();
+    const bullet = line.match(/^\s*[-*•]\s+(.+)/);
+    const ordered = line.match(/^\s*\d+[.)]\s+(.+)/);
+    const heading = line.match(/^#{1,4}\s+(.+)/);
+
+    if (bullet || ordered) {
+      const item = (bullet ?? ordered)![1];
+      if (!list || list.ordered !== !!ordered) {
+        flushList(`l-${i}`);
+        list = { ordered: !!ordered, items: [] };
+      }
+      list.items.push(<li key={`i-${i}`}>{renderInline(item, `i-${i}`)}</li>);
+      return;
+    }
+
+    flushList(`l-${i}`);
+    if (!line.trim()) return; // blank line = paragraph break
+    if (heading) {
+      blocks.push(
+        <p key={`h-${i}`} className={styles.msgHeading}>{renderInline(heading[1], `h-${i}`)}</p>
+      );
+      return;
+    }
+    blocks.push(<p key={`p-${i}`}>{renderInline(line, `p-${i}`)}</p>);
+  });
+  flushList('l-end');
+
+  return <>{blocks}</>;
 }
 
 export default function InteractiveReviewPage() {
@@ -184,6 +245,7 @@ export default function InteractiveReviewPage() {
                 fill="none" stroke="var(--bg-tertiary)" strokeWidth="3"
               />
               <path
+                className={styles.ringProgress}
                 d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831"
                 fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round"
                 strokeDasharray={`${scorePct}, 100`}
@@ -275,7 +337,10 @@ export default function InteractiveReviewPage() {
             <div key={idx} className={`${styles.message} ${m.role === 'user' ? styles.messageUser : styles.messageAssistant}`}>
               {m.role !== 'user' && <span className={styles.botChip}><Bot size={14} /></span>}
               <div className={styles.messageContent}>
-                <p>{m.content}</p>
+                <MessageBody content={m.content} />
+                {isLoadingChat && m.role === 'assistant' && idx === messages.length - 1 && m.content && (
+                  <span className={styles.caret} aria-hidden="true" />
+                )}
               </div>
             </div>
           ))}

@@ -11,6 +11,8 @@
 
 import { google } from 'googleapis';
 import type { JWT } from 'googleapis-common';
+import { createHash } from 'node:crypto';
+import { encrypt, decryptOrLegacy } from '@/lib/crypto';
 
 /* ═══════════════════════════════════════
    Types
@@ -118,9 +120,11 @@ export async function getOAuthClientForUser(userId: string) {
     `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/google/callback`
   );
 
+  // Decrypt at rest (SEC-4). decryptOrLegacy transparently handles tokens that
+  // were stored as plaintext before encryption was introduced.
   oauth2Client.setCredentials({
-    access_token: token.accessToken,
-    refresh_token: token.refreshToken,
+    access_token: decryptOrLegacy(token.accessToken),
+    refresh_token: decryptOrLegacy(token.refreshToken),
     expiry_date: token.tokenExpiry.getTime(),
   });
 
@@ -128,10 +132,10 @@ export async function getOAuthClientForUser(userId: string) {
   if (token.tokenExpiry.getTime() <= Date.now()) {
     const { credentials } = await oauth2Client.refreshAccessToken();
 
-    // Update stored tokens
+    // Re-encrypt the refreshed access token before persisting.
     await db.update(googleTokens)
       .set({
-        accessToken: credentials.access_token!,
+        accessToken: encrypt(credentials.access_token!),
         tokenExpiry: new Date(credentials.expiry_date || Date.now() + 3600_000),
         updatedAt: new Date(),
       })
@@ -369,12 +373,8 @@ export function extractDriveFileId(url: string): string | null {
  */
 function generateResponseId(timestamp: string, identifier: string): string {
   const raw = `${timestamp}|${identifier.toLowerCase().trim()}`;
-  // Simple hash — crypto not needed for dedup, just uniqueness
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) {
-    const char = raw.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return `gf_${Math.abs(hash).toString(36)}_${timestamp.replace(/\D/g, '').slice(0, 14)}`;
+  // SHA-256 (BUG-6/SEC-15): 32-bit djb2 collided across distinct rows, which
+  // could drop legitimate submissions during dedup.
+  const hash = createHash('sha256').update(raw).digest('hex').slice(0, 16);
+  return `gf_${hash}_${timestamp.replace(/\D/g, '').slice(0, 14)}`;
 }
