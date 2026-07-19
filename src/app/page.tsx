@@ -400,6 +400,41 @@ export default function LandingPage() {
           });
         });
 
+        /* Keep the original rolling energy while presenting factual, non-numeric MVP details. */
+        gsap.utils.toArray<HTMLElement>(q('[data-roll-text]')).forEach((el) => {
+          const split = SplitText.create(el, {
+            type: 'chars',
+            charsClass: styles.rollChar,
+          });
+          const roll = gsap.timeline({
+            scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+          });
+
+          roll
+            .from(split.chars, {
+              yPercent: 125,
+              rotateX: -100,
+              autoAlpha: 0,
+              transformOrigin: '50% 100%',
+              duration: 0.7,
+              stagger: { each: 0.025, from: 'random' },
+              ease: 'back.out(1.7)',
+            })
+            .to(
+              split.chars,
+              {
+                opacity: 0.25,
+                duration: 0.055,
+                repeat: 3,
+                yoyo: true,
+                stagger: { each: 0.012, from: 'random' },
+                ease: 'steps(1)',
+              },
+              '-=0.28'
+            )
+            .to(split.chars, { opacity: 1, duration: 0.12 });
+        });
+
         /* ── Workflow progress line ── */
         if (stepsLineRef.current) {
           gsap.fromTo(
@@ -708,7 +743,7 @@ export default function LandingPage() {
         <div className={styles.statsInner}>
           {PRODUCT_FACTS.map((fact, i) => (
             <div key={i} className={styles.statItem} data-reveal>
-              <div className={styles.statValue}>{fact.value}</div>
+              <div className={styles.statValue} data-roll-text>{fact.value}</div>
               <div className={styles.statLabel}>{fact.label}</div>
             </div>
           ))}

@@ -723,10 +723,18 @@
 }
 
 .statValue {
+  overflow: hidden;
+  perspective: 500px;
   font-size: clamp(1.1rem, 2.2vw, 1.55rem);
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.25;
+}
+
+.rollChar {
+  display: inline-block;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 .statSuffix {
