@@ -700,13 +700,13 @@ export default function NewAssignmentPage() {
               <div className={styles.estimateCard}>
                 <Sparkles size={18} />
                 <div>
-                  <h4>AI Grading Estimate</h4>
+                  <h4>Submission Scope</h4>
                   <p>
                     {selectedClass
-                      ? `~${selectedClass.studentCount} submissions × ₹0.50 avg = ₹${(selectedClass.studentCount * 0.5).toFixed(0)} estimated cost`
-                      : 'Select a class to see estimate'}
+                      ? `${selectedClass.studentCount} students are currently enrolled in this classroom.`
+                      : 'Select a classroom to confirm the current student count.'}
                   </p>
-                  <p className={styles.estimateNote}>Estimated grading time: ~{selectedClass ? Math.ceil(selectedClass.studentCount * 0.15) : '—'} minutes</p>
+                  <p className={styles.estimateNote}>Processing time varies with submission count, file size, and document format.</p>
                 </div>
               </div>
             </div>

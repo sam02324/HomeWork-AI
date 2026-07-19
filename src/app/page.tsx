@@ -12,14 +12,15 @@ import {
   PenTool,
   BarChart3,
   MessageSquare,
-  Layers,
   ArrowRight,
   ArrowUpRight,
   Check,
-  Star,
   Zap,
   Menu,
   X,
+  FileCheck2,
+  RefreshCw,
+  ShieldCheck,
 } from 'lucide-react';
 import styles from './page.module.css';
 import { Cursor } from '@/components/motion/Cursor';
@@ -28,63 +29,42 @@ gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
 
 /* ═══ Data ═══ */
 const FEATURES = [
-  { icon: Brain, title: 'AI-Powered Grading', desc: 'Auto-grade essays, short answers, and problem sets with Claude AI. Detailed mistake analysis and improvement suggestions.' },
-  { icon: ClipboardList, title: 'Custom Rubrics', desc: 'Build detailed rubrics with weighted criteria, grading strictness levels, and point-based scoring systems.' },
-  { icon: PenTool, title: 'Handwriting Recognition', desc: 'Upload handwritten assignments — our OCR reads and grades them automatically. Works with Hindi and English.' },
-  { icon: BarChart3, title: 'Student Analytics', desc: 'Track performance trends, detect weak topics, predict struggling students, and generate improvement roadmaps.' },
-  { icon: MessageSquare, title: 'Instant Feedback', desc: 'Every submission gets detailed feedback — mistake explanations, concept gaps, and actionable tips.' },
-  { icon: Layers, title: 'Batch Grading', desc: 'Grade 30+ submissions in minutes. Upload once, get all results with a single click.' },
+  { icon: Brain, title: 'Rubric-Based Draft Grades', desc: 'Generate a score breakdown and feedback draft from the rubric, reference material, and strictness you provide.' },
+  { icon: ClipboardList, title: 'Custom Rubrics', desc: 'Define weighted criteria, scoring levels, reference answers, and assignment-specific grading instructions.' },
+  { icon: PenTool, title: 'Flexible Submissions', desc: 'Process typed answers, PDFs, and common image formats, including scanned or handwritten work.' },
+  { icon: RefreshCw, title: 'Google Forms Sync', desc: 'Connect Google Drive and Sheets, then import Form responses and linked submission files into an assignment.' },
+  { icon: MessageSquare, title: 'Feedback & Review', desc: 'Inspect criterion feedback, ask follow-up questions, and override the score or note before using the result.' },
+  { icon: BarChart3, title: 'Class Analytics', desc: 'View real grade history, class averages, assignment status, and student performance trends from your own data.' },
 ];
 
 const STEPS = [
-  { num: '01', title: 'Upload & Configure', desc: 'Upload assignments, set your rubric, add reference answers, and choose grading strictness.' },
-  { num: '02', title: 'AI Grades Instantly', desc: 'Claude AI grades each submission with detailed feedback, score breakdowns, and concept analysis.' },
-  { num: '03', title: 'Review & Improve', desc: 'Review results, override if needed, and track student analytics to drive improvement.' },
+  { num: '01', title: 'Create the Assignment', desc: 'Choose a classroom, define the maximum score, add a rubric, and attach reference material when available.' },
+  { num: '02', title: 'Import Submissions', desc: 'Sync responses from Google Forms or add text, PDF, and image submissions to the assignment.' },
+  { num: '03', title: 'Generate, Review, Decide', desc: 'Generate draft grades, inspect the evidence and feedback, then keep or override each result.' },
 ];
 
-const PRICING = [
-  {
-    name: 'Free',
-    price: '₹0',
-    period: '/month',
-    desc: 'For individual tutors trying it out',
-    features: ['50 gradings/month', '1 classroom', '20 students', 'Basic analytics', 'PDF & text submissions'],
-    cta: 'Start Free',
-    popular: false,
-  },
-  {
-    name: 'Pro',
-    price: '₹999',
-    period: '/month',
-    desc: 'For teachers & small coaching centres',
-    features: ['2,000 gradings/month', '20 classrooms', '500 students', 'Full analytics & heatmaps', 'RAG-aware grading', 'Rubric templates', 'Handwriting recognition', 'Priority support'],
-    cta: 'Start 14-Day Trial',
-    popular: true,
-  },
-  {
-    name: 'Institute',
-    price: '₹4,999',
-    period: '/month',
-    desc: 'For coaching institutes & schools',
-    features: ['10,000 gradings/month', 'Unlimited classrooms', '2,000 students', 'API access', 'White-label option', 'Dedicated support', 'Custom AI tuning', 'SSO & admin panel'],
-    cta: 'Contact Sales',
-    popular: false,
-  },
+const MVP_FEATURES = [
+  'Classrooms, students, and assignments',
+  'Custom rubric and reference material',
+  'Google Forms, Sheets, and Drive sync',
+  'Text, PDF, and image grading workflow',
+  'Teacher score overrides and review notes',
+  'CSV export and performance analytics',
 ];
 
-const TESTIMONIALS = [
-  { quote: 'Reduced my grading time from 4 hours to 20 minutes daily. The AI feedback is better than what I used to write myself.', name: 'Rajesh Kumar', role: 'Physics Teacher, Allen Career Institute', initials: 'RK' },
-  { quote: 'The analytics helped me identify struggling students before they failed. Three students who were at-risk improved by 30% in two months.', name: 'Priya Mehta', role: 'Maths Faculty, FIITJEE', initials: 'PM' },
-  { quote: 'Best ₹999 I spend every month. My coaching centre runs smoother and parents love the detailed reports.', name: 'Amit Sharma', role: 'Owner, Sharma Classes Kota', initials: 'AS' },
+const PRINCIPLES = [
+  { icon: ShieldCheck, title: 'Teacher-controlled', desc: 'GradeAI produces a draft. The teacher reviews the work and remains responsible for the final score.' },
+  { icon: FileCheck2, title: 'Evidence-based', desc: 'Scores are broken down against the saved rubric so teachers can inspect where marks were awarded or deducted.' },
+  { icon: RefreshCw, title: 'Built for iteration', desc: 'This is an early MVP. Real classroom feedback will shape reliability, workflows, and future pricing.' },
 ];
 
-const MARQUEE_ITEMS = ['AI Grading', 'Handwriting OCR', 'Custom Rubrics', 'Batch Grading', 'Student Analytics', 'Instant Feedback', 'RAG-Aware Scoring'];
+const MARQUEE_ITEMS = ['Rubric Grading', 'PDF & Image Input', 'Google Forms Sync', 'Teacher Overrides', 'Criterion Feedback', 'Student Analytics', 'CSV Export'];
 
-const STATS = [
-  { value: 50000, suffix: '+', label: 'Assignments Graded' },
-  { value: 2500, suffix: '+', label: 'Teachers' },
-  { value: 95, suffix: '%', label: 'Time Saved' },
-  { value: 4.9, suffix: '/5', label: 'Average Rating', decimals: 1 },
+const PRODUCT_FACTS = [
+  { value: 'Text, PDF & image', label: 'Submission formats' },
+  { value: 'Google Forms', label: 'Import workflow' },
+  { value: 'Rubric-based', label: 'Scoring structure' },
+  { value: 'Teacher review', label: 'Final decision' },
 ];
 
 /* ═══ Canvas particle constellation — hero background ═══ */
@@ -420,24 +400,6 @@ export default function LandingPage() {
           });
         });
 
-        /* ── Stat counters ── */
-        gsap.utils.toArray<HTMLElement>(q('[data-count]')).forEach((el) => {
-          const target = parseFloat(el.dataset.count || '0');
-          const decimals = parseInt(el.dataset.decimals || '0', 10);
-          const obj = { n: 0 };
-          gsap.to(obj, {
-            n: target,
-            duration: 1.8,
-            ease: 'power2.out',
-            scrollTrigger: { trigger: el, start: 'top 88%', once: true },
-            onUpdate: () => {
-              el.textContent = decimals
-                ? obj.n.toFixed(decimals)
-                : Math.round(obj.n).toLocaleString('en-IN');
-            },
-          });
-        });
-
         /* ── Workflow progress line ── */
         if (stepsLineRef.current) {
           gsap.fromTo(
@@ -599,15 +561,15 @@ export default function LandingPage() {
           <div className={styles.navLinks}>
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#testimonials">Testimonials</a>
+            <a href="#mvp-access">MVP access</a>
+            <a href="#principles">Principles</a>
           </div>
 
           <div className={styles.navActions}>
             <a href="/dashboard" className={styles.signInBtn}>Sign In</a>
             <Magnetic strength={0.3}>
               <a href="/dashboard" className={styles.ctaPrimary}>
-                Start Free <ArrowRight size={14} />
+                Open MVP <ArrowRight size={14} />
               </a>
             </Magnetic>
           </div>
@@ -625,10 +587,10 @@ export default function LandingPage() {
         <div className={`${styles.mobileNav} ${mobileMenu ? styles.mobileNavOpen : ''}`}>
           <a href="#features" onClick={() => setMobileMenu(false)}>Features</a>
           <a href="#how-it-works" onClick={() => setMobileMenu(false)}>How it works</a>
-          <a href="#pricing" onClick={() => setMobileMenu(false)}>Pricing</a>
-          <a href="#testimonials" onClick={() => setMobileMenu(false)}>Testimonials</a>
+          <a href="#mvp-access" onClick={() => setMobileMenu(false)}>MVP access</a>
+          <a href="#principles" onClick={() => setMobileMenu(false)}>Principles</a>
           <a href="/dashboard" className={styles.ctaPrimary}>
-            Start Free <ArrowRight size={14} />
+            Open MVP <ArrowRight size={14} />
           </a>
         </div>
       </nav>
@@ -644,7 +606,7 @@ export default function LandingPage() {
         <div className={styles.heroContent}>
           <div className={styles.heroBadge} data-hero-badge>
             <Zap size={12} />
-            <span>Powered by Claude AI</span>
+            <span>Early MVP · Built for teacher review</span>
           </div>
 
           <h1 className={styles.heroTitle}>
@@ -659,16 +621,16 @@ export default function LandingPage() {
           </h1>
 
           <p className={styles.heroSubtitle} data-hero-sub>
-            AI grading that returns 10+ hours to every teacher, every week —
-            rubric-precise scores, detailed feedback, and analytics that catch
-            struggling students early.
+            Import homework from Google Forms or add text, PDF, and image submissions.
+            Generate rubric-based draft grades, review the evidence, and keep the
+            final decision with the teacher.
           </p>
 
           <div className={styles.heroCtas}>
             <div data-hero-cta>
               <Magnetic>
                 <a href="/dashboard" className={styles.heroCtaPrimary}>
-                  <span>Start Grading Free</span>
+                  <span>Open the MVP</span>
                   <ArrowRight size={16} />
                 </a>
               </Magnetic>
@@ -688,14 +650,14 @@ export default function LandingPage() {
                 <div className={styles.previewDots}>
                   <span /><span /><span />
                 </div>
-                <span className={styles.previewTitle}>Grading Result</span>
+                <span className={styles.previewTitle}>Illustrative grading preview</span>
               </div>
               <div className={styles.previewBody}>
                 <div className={styles.previewStudent}>
-                  <div className={styles.previewAvatar}>PS</div>
+                  <div className={styles.previewAvatar}>01</div>
                   <div>
-                    <div className={styles.previewName}>Priya Sharma</div>
-                    <div className={styles.previewClass}>12th Physics — Thermodynamics Test</div>
+                    <div className={styles.previewName}>Sample submission</div>
+                    <div className={styles.previewClass}>Physics · Example data, not a customer result</div>
                   </div>
                 </div>
                 <div className={styles.previewScoreRow}>
@@ -707,10 +669,10 @@ export default function LandingPage() {
                     <span className={styles.previewScoreText}>82%</span>
                   </div>
                   <div className={styles.previewFeedback}>
-                    <div className={styles.previewGrade}>A-</div>
+                    <div className={styles.previewGrade}>Draft</div>
                     <div className={styles.previewTags}>
-                      <span className={styles.tagGood}>Strong concepts</span>
-                      <span className={styles.tagWarn}>Review Carnot cycle</span>
+                      <span className={styles.tagGood}>Rubric breakdown ready</span>
+                      <span className={styles.tagWarn}>Teacher review required</span>
                     </div>
                   </div>
                 </div>
@@ -741,16 +703,13 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── STATS ── */}
+      {/* ── VERIFIED PRODUCT FACTS ── */}
       <section className={styles.stats}>
         <div className={styles.statsInner}>
-          {STATS.map((s, i) => (
+          {PRODUCT_FACTS.map((fact, i) => (
             <div key={i} className={styles.statItem} data-reveal>
-              <div className={styles.statValue}>
-                <span data-count={s.value} data-decimals={s.decimals || 0}>0</span>
-                <span className={styles.statSuffix}>{s.suffix}</span>
-              </div>
-              <div className={styles.statLabel}>{s.label}</div>
+              <div className={styles.statValue}>{fact.value}</div>
+              <div className={styles.statLabel}>{fact.label}</div>
             </div>
           ))}
         </div>
@@ -809,70 +768,60 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section className={styles.pricing} id="pricing">
+      {/* ── MVP ACCESS ── */}
+      <section className={styles.pricing} id="mvp-access">
         <div className={styles.sectionInner}>
-          <span className={styles.sectionTag} data-reveal>Pricing</span>
+          <span className={styles.sectionTag} data-reveal>MVP access</span>
           <h2 className={styles.sectionTitle} data-split>
-            Simple, transparent <em className={styles.serifItalic}>pricing</em>
+            Test the real workflow, <em className={styles.serifItalic}>without fake plans</em>
           </h2>
           <p className={styles.sectionSubtitle} data-reveal>
-            Start free, scale as you grow. No hidden fees.
+            GradeAI does not currently have subscriptions, paid tiers, or usage limits configured.
+            Pricing will be published only after the MVP is validated with real users.
           </p>
 
-          <div className={styles.pricingGrid} data-reveal-group>
-            {PRICING.map((plan, i) => (
-              <div key={i} className={`${styles.pricingCard} ${plan.popular ? styles.pricingPopular : ''}`}>
-                {plan.popular && <div className={styles.popularBadge}>Most Popular</div>}
-                <h3 className={styles.planName}>{plan.name}</h3>
-                <div className={styles.planPrice}>
-                  {plan.price}
-                  <span>{plan.period}</span>
-                </div>
-                <p className={styles.planDesc}>{plan.desc}</p>
-                <ul className={styles.planFeatures}>
-                  {plan.features.map((f, fi) => (
-                    <li key={fi}>
-                      <Check size={14} className={styles.checkIcon} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a href="/dashboard" className={`${styles.planCta} ${plan.popular ? styles.planCtaPrimary : ''}`}>
-                  {plan.cta}
-                </a>
-              </div>
-            ))}
+          <div className={`${styles.pricingGrid} ${styles.mvpAccessGrid}`} data-reveal-group>
+            <div className={`${styles.pricingCard} ${styles.mvpAccessCard}`}>
+              <div className={styles.popularBadge}>Current product</div>
+              <h3 className={styles.planName}>GradeAI MVP</h3>
+              <div className={styles.planPrice}>Early access</div>
+              <p className={styles.planDesc}>Use the working teacher workflow and evaluate it with non-critical assignments first.</p>
+              <ul className={styles.planFeatures}>
+                {MVP_FEATURES.map((feature) => (
+                  <li key={feature}>
+                    <Check size={14} className={styles.checkIcon} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <a href="/dashboard" className={`${styles.planCta} ${styles.planCtaPrimary}`}>
+                Open GradeAI
+              </a>
+              <p className={styles.mvpNote}>AI output can be wrong. Review every grade before sharing it with students.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section className={styles.testimonials} id="testimonials">
+      {/* ── PRODUCT PRINCIPLES ── */}
+      <section className={styles.testimonials} id="principles">
         <div className={styles.sectionInner}>
-          <span className={styles.sectionTag} data-reveal>Testimonials</span>
+          <span className={styles.sectionTag} data-reveal>Product principles</span>
           <h2 className={styles.sectionTitle} data-split>
-            Loved by teachers across <em className={styles.serifItalic}>India</em>
+            Honest by design, <em className={styles.serifItalic}>teacher-led by default</em>
           </h2>
 
           <div className={styles.testimonialGrid} data-reveal-group>
-            {TESTIMONIALS.map((t, i) => (
-              <figure key={i} className={styles.testimonialCard}>
-                <div className={styles.testimonialStars}>
-                  {[...Array(5)].map((_, si) => (
-                    <Star key={si} size={14} fill="var(--warning)" stroke="var(--warning)" />
-                  ))}
-                </div>
-                <blockquote className={styles.testimonialQuote}>&ldquo;{t.quote}&rdquo;</blockquote>
-                <figcaption className={styles.testimonialAuthor}>
-                  <div className={styles.testimonialAvatar}>{t.initials}</div>
-                  <div>
-                    <div className={styles.testimonialName}>{t.name}</div>
-                    <div className={styles.testimonialRole}>{t.role}</div>
-                  </div>
-                </figcaption>
-              </figure>
-            ))}
+            {PRINCIPLES.map((principle) => {
+              const Icon = principle.icon;
+              return (
+                <article key={principle.title} className={styles.testimonialCard}>
+                  <div className={styles.principleIcon}><Icon size={20} /></div>
+                  <h3 className={styles.principleTitle}>{principle.title}</h3>
+                  <p className={styles.testimonialQuote}>{principle.desc}</p>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -881,15 +830,15 @@ export default function LandingPage() {
       <section className={styles.finalCta}>
         <div className={styles.finalCtaInner}>
           <h2 className={styles.finalCtaTitle} data-split>
-            Get your <em className={styles.serifItalic}>evenings</em> back.
+            Test one assignment <em className={styles.serifItalic}>end to end.</em>
           </h2>
           <p className={styles.finalCtaSub} data-reveal>
-            Join 2,500+ teachers saving 10+ hours every week
+            Start with real rubric criteria, verify every result, and decide whether the workflow fits your classroom.
           </p>
           <div data-reveal>
             <Magnetic>
               <a href="/dashboard" className={styles.finalCtaBtn}>
-                Start Grading Free <ArrowRight size={16} />
+                Open the MVP <ArrowRight size={16} />
               </a>
             </Magnetic>
           </div>
@@ -905,31 +854,23 @@ export default function LandingPage() {
                 <Zap size={20} className={styles.logoIcon} />
                 <span>GradeAI</span>
               </Link>
-              <p>AI-powered grading for the modern educator. Save time, improve outcomes.</p>
+              <p>Teacher-reviewed AI grading for text, PDF, image, and Google Forms submission workflows.</p>
             </div>
             <div className={styles.footerCol}>
               <h4>Product</h4>
               <a href="#features">Features</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#">Roadmap</a>
-              <a href="#">API Docs</a>
+              <a href="#how-it-works">Workflow</a>
+              <a href="#mvp-access">MVP access</a>
             </div>
             <div className={styles.footerCol}>
-              <h4>Company</h4>
-              <a href="#">About</a>
-              <a href="#">Careers</a>
-              <a href="#">Blog</a>
-              <a href="#">Contact</a>
-            </div>
-            <div className={styles.footerCol}>
-              <h4>Legal</h4>
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-              <a href="#">Data Processing</a>
+              <h4>Access</h4>
+              <Link href="/sign-in">Sign in</Link>
+              <Link href="/sign-up">Create account</Link>
+              <a href="#principles">Product principles</a>
             </div>
           </div>
           <div className={styles.footerBottom}>
-            <p>© 2026 GradeAI. All rights reserved.</p>
+            <p>© 2026 GradeAI · MVP software · Review AI-generated grades before use.</p>
           </div>
         </div>
       </footer>

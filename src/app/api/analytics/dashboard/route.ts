@@ -67,7 +67,6 @@ export async function GET() {
       pendingGradings: pendingStats?.total || 0,
       avgScore: scoreStats?.avgScore || null,
       gradedThisWeek,
-      timeSavedMinutes: gradedThisWeek * 3, // ~3 min per manual grading
     });
   } catch (error) {
     console.error('GET /api/analytics/dashboard error:', error);

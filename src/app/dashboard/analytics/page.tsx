@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, FileText, TrendingUp, Clock } from 'lucide-react';
+import { Users, FileText, TrendingUp, CheckCircle } from 'lucide-react';
 import styles from './page.module.css';
 import { useDashboardStats, useAssignments, useClassrooms } from '@/lib/api-client';
 import { Reveal, CountUp } from '@/components/motion/Reveal';
@@ -13,14 +13,13 @@ export default function AnalyticsPage() {
   const totalStudents = stats?.totalStudents ?? 0;
   const totalAssignments = stats?.totalAssignments ?? 0;
   const avgScore = stats?.avgScore ?? 0;
-  const timeSaved = stats?.timeSavedMinutes ?? 0;
-  const timeSavedLabel = timeSaved >= 60 ? `${(timeSaved / 60).toFixed(1)} hrs` : `${timeSaved} min`;
+  const gradedThisWeek = stats?.gradedThisWeek ?? 0;
 
   const STATS = [
     { label: 'Total Students', value: statsLoading ? '...' : <CountUp value={totalStudents} />, icon: Users, color: 'var(--accent)' },
     { label: 'Total Assignments', value: statsLoading ? '...' : <CountUp value={totalAssignments} />, icon: FileText, color: 'hsl(280,65%,60%)' },
     { label: 'Overall Average', value: statsLoading ? '...' : <CountUp value={avgScore} suffix="%" />, icon: TrendingUp, color: 'var(--score-good)' },
-    { label: 'Time Saved', value: statsLoading ? '...' : timeSavedLabel, icon: Clock, color: 'var(--success)' },
+    { label: 'Graded This Week', value: statsLoading ? '...' : <CountUp value={gradedThisWeek} />, icon: CheckCircle, color: 'var(--success)' },
   ];
 
   const hasData = totalStudents > 0 || totalAssignments > 0;

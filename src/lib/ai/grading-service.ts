@@ -349,19 +349,19 @@ function getSafeGradingError(error: unknown): string {
   const status = error instanceof Anthropic.APIError ? error.status : undefined;
 
   if (message.includes('Anthropic API Key') || status === 401 || status === 403) {
-    return 'Claude is not configured correctly in Railway. Verify ANTHROPIC_API_KEY and redeploy.';
+    return 'The AI grading service is not configured correctly. Contact the application administrator.';
   }
   if (status === 429) {
-    return 'Claude rate limit reached. Wait briefly and retry grading.';
+    return 'The AI grading service is busy. Wait briefly and retry grading.';
   }
   if (status && status >= 500) {
-    return 'Claude is temporarily unavailable. Retry grading in a moment.';
+    return 'The AI grading service is temporarily unavailable. Retry grading in a moment.';
   }
   if (message.includes('no content to grade') || message.includes('unsupported submission content')) {
     return 'The submission has no readable text or supported file content.';
   }
   if (message.includes('valid grading JSON') || message.includes('Unexpected token')) {
-    return 'Claude returned an invalid grading response. Retry the submission.';
+    return 'The AI grading service returned an invalid response. Retry the submission.';
   }
   if (
     error instanceof z.ZodError ||
@@ -369,7 +369,7 @@ function getSafeGradingError(error: unknown): string {
     message.includes('Criterion score exceeds') ||
     message.includes('total exceeds')
   ) {
-    return 'Claude returned inconsistent rubric scores. Retry grading; no inaccurate grade was saved.';
+    return 'The AI grading service returned inconsistent rubric scores. Retry grading; no inaccurate grade was saved.';
   }
   if (message.includes('Google') || message.includes('Drive')) {
     return 'The submission file could not be downloaded from Google Drive. Reconnect Google and retry.';

@@ -1,7 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Search, Bell, Sun, Moon, ChevronDown } from 'lucide-react';
+import { Search, Sun, Moon } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import styles from './Topbar.module.css';
 
@@ -44,7 +45,10 @@ function getBreadcrumbs(pathname: string): { label: string; href: string }[] {
 export function Topbar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useUser();
   const breadcrumbs = getBreadcrumbs(pathname);
+  const fullName = user?.fullName || user?.firstName || 'Teacher';
+  const initials = fullName.substring(0, 2).toUpperCase();
 
   return (
     <header className={styles.topbar}>
@@ -78,12 +82,6 @@ export function Topbar() {
 
       {/* Right: Actions */}
       <div className={styles.right}>
-        {/* Notification bell */}
-        <button className={styles.iconBtn} type="button" aria-label="Notifications">
-          <Bell className={styles.iconBtnIcon} />
-          <span className={styles.notifBadge}>3</span>
-        </button>
-
         {/* Theme toggle */}
         <button className={styles.iconBtn} type="button" onClick={toggleTheme} aria-label="Toggle theme">
           {theme === 'dark' ? (
@@ -94,11 +92,10 @@ export function Topbar() {
         </button>
 
         {/* User avatar */}
-        <button className={styles.avatarBtn} type="button" aria-label="User menu">
-          <div className={styles.avatar}>RK</div>
-          <span className={styles.avatarName}>Rajesh</span>
-          <ChevronDown className={styles.avatarChevron} />
-        </button>
+        <div className={styles.avatarBtn} aria-label={`Signed in as ${fullName}`}>
+          <div className={styles.avatar}>{initials}</div>
+          <span className={styles.avatarName}>{fullName}</span>
+        </div>
       </div>
     </header>
   );

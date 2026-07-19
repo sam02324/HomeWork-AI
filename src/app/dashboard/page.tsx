@@ -11,7 +11,6 @@ import {
   Plus,
   Upload,
   ChevronRight,
-  AlertTriangle,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -228,7 +227,7 @@ function DashboardContent() {
                 <div key={ga.id} className={styles.gradingCard} style={{ marginBottom: '12px' }}>
                   <div className={styles.gradingHeader}>
                     <span className={styles.gradingTitle}>{ga.title}</span>
-                    <span className={styles.gradingEta}>ETA: ~2 min</span>
+                    <span className={styles.gradingEta}>In progress</span>
                   </div>
                   <div className={styles.gradingProgress}>
                     <div className={styles.gradingBar}>
@@ -245,18 +244,18 @@ function DashboardContent() {
             )}
           </div>
 
-          {/* At-Risk Students */}
+          {/* Teacher review reminder */}
           <div className={styles.rightSection}>
             <div className={styles.sectionHeader}>
               <h2>
-                <AlertTriangle size={16} className={styles.warnIcon} />
-                At-Risk Students
+                <CheckCircle size={16} className={styles.sectionIcon} />
+                Teacher Review
               </h2>
             </div>
 
             <div className={styles.riskList}>
               <div style={{ padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.9rem', textAlign: 'center' }}>
-                No at-risk students detected yet. This section will populate once you have graded assignments with student data.
+                AI-generated scores are drafts. Open each graded submission to verify the rubric breakdown and override it when needed.
               </div>
             </div>
           </div>

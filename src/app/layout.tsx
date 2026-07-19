@@ -6,9 +6,9 @@ import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GradeAI — AI-Powered Homework Grader & Student Analytics",
+  title: "GradeAI — Teacher-Reviewed Homework Grading",
   description:
-    "Grade smarter, teach more. AI-powered homework grading that saves teachers 10+ hours every week with intelligent feedback, rubric-based scoring, and student performance analytics.",
+    "An early MVP for importing homework, generating rubric-based draft grades, reviewing feedback, and tracking student performance.",
   keywords: [
     "AI grading",
     "homework grader",

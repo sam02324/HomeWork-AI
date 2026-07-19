@@ -13,7 +13,6 @@ import {
   Settings,
   Zap,
   Search,
-  Bell,
   Sun,
   Moon,
   Menu,
@@ -196,10 +195,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className={styles.topbarRight}>
               <button className={styles.themeToggle} onClick={toggleTheme} title="Toggle theme">
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <button className={styles.notifBtn}>
-                <Bell size={18} />
-                <span className={styles.notifDot} />
               </button>
               <div className={styles.topbarAvatar}>{initials}</div>
             </div>

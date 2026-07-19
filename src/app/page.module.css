@@ -723,11 +723,10 @@
 }
 
 .statValue {
-  font-size: clamp(2.4rem, 5vw, 3.75rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.1rem, 2.2vw, 1.55rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
 }
 
 .statSuffix {
@@ -982,6 +981,17 @@
   align-items: stretch;
 }
 
+.mvpAccessGrid {
+  grid-template-columns: minmax(0, 760px);
+  justify-content: center;
+}
+
+.mvpAccessCard {
+  border-color: var(--accent-muted);
+  background: linear-gradient(180deg, var(--accent-subtle), var(--glass-bg));
+  box-shadow: var(--accent-glow);
+}
+
 .pricingCard {
   position: relative;
   display: flex;
@@ -1104,6 +1114,14 @@
   box-shadow: var(--accent-glow-strong);
 }
 
+.mvpNote {
+  margin-top: var(--space-5);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
 /* ── Testimonials ── */
 .testimonials {
   padding: clamp(100px, 14vh, 160px) 0;
@@ -1132,6 +1150,23 @@
 .testimonialCard:hover {
   border-color: var(--glass-border-hover);
   transform: translateY(-4px);
+}
+
+.principleIcon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--accent-text);
+  background: var(--accent-muted);
+  border: 1px solid var(--accent-subtle);
+  border-radius: var(--radius-md);
+}
+
+.principleTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .testimonialStars {
@@ -1239,7 +1274,7 @@
 
 .footerGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: var(--space-10);
   margin-bottom: var(--space-12);
 }

@@ -289,7 +289,6 @@ interface DashboardStats {
   pendingGradings: number;
   avgScore: number | null;
   gradedThisWeek: number;
-  timeSavedMinutes: number;
 }
 
 export function useDashboardStats() {

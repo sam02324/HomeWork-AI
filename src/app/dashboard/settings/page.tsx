@@ -4,39 +4,30 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   User,
-  Building2,
-  CreditCard,
-  Bell,
   Shield,
   Palette,
-  Globe,
   ChevronRight,
-  Camera,
-  Mail,
-  Phone,
-  MapPin,
   Check,
   Link2,
 } from 'lucide-react';
 import styles from './page.module.css';
 import { Reveal } from '@/components/motion/Reveal';
-import { useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 
 const TABS = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'organization', label: 'Organization', icon: Building2 },
-  { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
+  { id: 'account', label: 'Account', icon: User },
+  { id: 'access', label: 'MVP Access', icon: Check },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'data', label: 'Data & Privacy', icon: Shield },
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('account');
   const [saved, setSaved] = useState(false);
   const { user } = useUser();
+  const { openUserProfile } = useClerk();
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
@@ -118,172 +109,43 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className={styles.content}>
-          {/* Profile */}
-          {activeTab === 'profile' && (
-            <div className={styles.section} key="profile">
-              <h2 className={styles.sectionTitle}>Profile Information</h2>
-              <p className={styles.sectionDesc}>Update your personal details and teaching profile</p>
+          {/* Account */}
+          {activeTab === 'account' && (
+            <div className={styles.section} key="account">
+              <h2 className={styles.sectionTitle}>Account</h2>
+              <p className={styles.sectionDesc}>These details come from your signed-in account.</p>
 
               <div className={styles.avatarSection}>
-                <div className={styles.avatar}>
-                  <span>{initials}</span>
-                </div>
-                <div className={styles.avatarActions}>
-                  <button className={styles.avatarBtn}>
-                    <Camera size={14} />
-                    Change Photo
-                  </button>
-                  <p className={styles.avatarHint}>JPG or PNG, max 2MB</p>
-                </div>
-              </div>
-
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Full Name</label>
-                  <input className={styles.input} defaultValue={fullName} />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Display Name</label>
-                  <input className={styles.input} defaultValue={user?.firstName || 'Teacher'} />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    <Mail size={14} /> Email
-                  </label>
-                  <input className={styles.input} defaultValue={user?.primaryEmailAddress?.emailAddress || ''} type="email" />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    <Phone size={14} /> Phone
-                  </label>
-                  <input className={styles.input} placeholder="+1 234 567 8900" defaultValue="" />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Subject Expertise</label>
-                  <input className={styles.input} placeholder="e.g. Mathematics" defaultValue="" />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    <MapPin size={14} /> Location
-                  </label>
-                  <input className={styles.input} placeholder="City, Country" defaultValue="" />
-                </div>
-              </div>
-
-              <div className={styles.formGroup} style={{ marginTop: 20 }}>
-                <label className={styles.label}>Bio</label>
-                <textarea
-                  className={styles.textarea}
-                  rows={3}
-                  placeholder="Tell us about your teaching experience..."
-                  defaultValue=""
-                />
-              </div>
-
-              <button className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`} onClick={handleSave}>
-                {saved ? <><Check size={16} /> Saved!</> : 'Save Changes'}
-              </button>
-            </div>
-          )}
-
-          {/* Organization */}
-          {activeTab === 'organization' && (
-            <div className={styles.section} key="org">
-              <h2 className={styles.sectionTitle}>Organization</h2>
-              <p className={styles.sectionDesc}>Manage your coaching institute or school settings</p>
-
-              <div className={styles.orgCard}>
-                <div className={styles.orgLogo}>O</div>
+                <div className={styles.avatar}><span>{initials}</span></div>
                 <div>
-                  <h3 className={styles.orgName}>My Organization</h3>
-                  <p className={styles.orgMeta}>Setup your organization details below</p>
+                  <h3 className={styles.planName}>{fullName}</h3>
+                  <p className={styles.sectionDesc}>{user?.primaryEmailAddress?.emailAddress || 'No email available'}</p>
                 </div>
               </div>
 
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Organization Name</label>
-                  <input className={styles.input} placeholder="e.g. Springfield High School" defaultValue="" />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    <Globe size={14} /> Website
-                  </label>
-                  <input className={styles.input} placeholder="https://" defaultValue="" />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Organization Type</label>
-                  <select className={styles.select}>
-                    <option>Coaching Institute</option>
-                    <option>School</option>
-                    <option>College / University</option>
-                    <option>Individual Tutor</option>
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Board / Curriculum</label>
-                  <select className={styles.select}>
-                    <option>CBSE</option>
-                    <option>ICSE</option>
-                    <option>State Board</option>
-                    <option>IB</option>
-                    <option>JEE / NEET Prep</option>
-                  </select>
-                </div>
-              </div>
-
-              <button className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`} onClick={handleSave}>
-                {saved ? <><Check size={16} /> Saved!</> : 'Save Changes'}
+              <button className={styles.saveBtn} onClick={() => openUserProfile()}>
+                Manage account details
               </button>
             </div>
           )}
 
-          {/* Billing */}
-          {activeTab === 'billing' && (
-            <div className={styles.section} key="billing">
-              <h2 className={styles.sectionTitle}>Billing & Plan</h2>
-              <p className={styles.sectionDesc}>Manage your subscription and usage</p>
+          {/* MVP access */}
+          {activeTab === 'access' && (
+            <div className={styles.section} key="access">
+              <h2 className={styles.sectionTitle}>MVP Access</h2>
+              <p className={styles.sectionDesc}>GradeAI does not currently have billing, subscriptions, invoices, or application-enforced usage tiers.</p>
 
               <div className={styles.planCard}>
                 <div className={styles.planHeader}>
                   <div>
-                    <span className={styles.planBadge}>Current Plan</span>
-                    <h3 className={styles.planName}>Free Tier</h3>
-                    <p className={styles.planPrice}>₹0<span>/month</span></p>
-                  </div>
-                  <button className={styles.upgradeBtn}>Upgrade to Pro</button>
-                </div>
-
-                <div className={styles.usageGrid}>
-                  <div className={styles.usageItem}>
-                    <div className={styles.usageLabel}>Gradings Used</div>
-                    <div className={styles.usageBar}>
-                      <div className={styles.usageFill} style={{ width: '0%' }} />
-                    </div>
-                    <div className={styles.usageText}>0 / 100</div>
-                  </div>
-                  <div className={styles.usageItem}>
-                    <div className={styles.usageLabel}>Classes</div>
-                    <div className={styles.usageBar}>
-                      <div className={styles.usageFill} style={{ width: '0%' }} />
-                    </div>
-                    <div className={styles.usageText}>0 / 3</div>
-                  </div>
-                  <div className={styles.usageItem}>
-                    <div className={styles.usageLabel}>Students</div>
-                    <div className={styles.usageBar}>
-                      <div className={styles.usageFill} style={{ width: '0%' }} />
-                    </div>
-                    <div className={styles.usageText}>0 / 50</div>
+                    <span className={styles.planBadge}>Current access</span>
+                    <h3 className={styles.planName}>GradeAI MVP</h3>
+                    <p className={styles.planPrice}>Early access</p>
                   </div>
                 </div>
-              </div>
-
-              <h3 className={styles.invoiceTitle}>Recent Invoices</h3>
-              <div className={styles.invoiceList}>
-                <div className={styles.invoiceRow} style={{ color: 'var(--text-tertiary)', border: 'none', justifyContent: 'center' }}>
-                  No recent invoices found.
-                </div>
+                <p className={styles.sectionDesc}>
+                  Use the current classroom, assignment, sync, grading, review, export, and analytics features while the product is being validated.
+                </p>
               </div>
             </div>
           )}
@@ -332,66 +194,18 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Notifications */}
-          {activeTab === 'notifications' && (
-            <div className={styles.section} key="notif">
-              <h2 className={styles.sectionTitle}>Notification Preferences</h2>
-              <p className={styles.sectionDesc}>Choose what you want to be notified about</p>
-
-              <div className={styles.notifList}>
-                {[
-                  { label: 'Grading Complete', desc: 'When a batch of assignments finishes grading', default: true },
-                  { label: 'New Submissions', desc: 'When students submit assignments', default: true },
-                  { label: 'At-Risk Alerts', desc: 'When a student is flagged as at-risk', default: true },
-                  { label: 'Weekly Reports', desc: 'Weekly analytics summary for your classes', default: false },
-                  { label: 'Product Updates', desc: 'New features and platform updates', default: false },
-                ].map((n, i) => (
-                  <div key={i} className={styles.notifItem}>
-                    <div>
-                      <h4>{n.label}</h4>
-                      <p>{n.desc}</p>
-                    </div>
-                    <label className={styles.toggle}>
-                      <input type="checkbox" defaultChecked={n.default} />
-                      <span className={styles.toggleSlider} />
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Security */}
           {activeTab === 'security' && (
             <div className={styles.section} key="security">
               <h2 className={styles.sectionTitle}>Security</h2>
-              <p className={styles.sectionDesc}>Keep your account safe and secure</p>
+              <p className={styles.sectionDesc}>Authentication and session security are managed by your account provider.</p>
 
               <div className={styles.securityItem}>
                 <div>
-                  <h4>Password</h4>
-                  <p>Last changed 3 months ago</p>
+                  <h4>Account security</h4>
+                  <p>Manage your password, multi-factor authentication, signed-in devices, and account deletion from the secure account panel.</p>
                 </div>
-                <button className={styles.outlineBtn}>Change Password</button>
-              </div>
-              <div className={styles.securityItem}>
-                <div>
-                  <h4>Two-Factor Authentication</h4>
-                  <p>Add an extra layer of security to your account</p>
-                </div>
-                <button className={styles.outlineBtn}>Enable 2FA</button>
-              </div>
-              <div className={styles.securityItem}>
-                <div>
-                  <h4>Active Sessions</h4>
-                  <p>2 devices currently logged in</p>
-                </div>
-                <button className={styles.outlineBtn}>View Sessions</button>
-              </div>
-              <div className={styles.dangerZone}>
-                <h4>Danger Zone</h4>
-                <p>Once you delete your account, there is no going back.</p>
-                <button className={styles.dangerBtn}>Delete Account</button>
+                <button className={styles.outlineBtn} onClick={() => openUserProfile()}>Open account security</button>
               </div>
             </div>
           )}
@@ -422,15 +236,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className={styles.formGroup} style={{ marginTop: 24 }}>
-                <label className={styles.label}>Language</label>
-                <select className={styles.select}>
-                  <option>English</option>
-                  <option>हिन्दी (Hindi)</option>
-                  <option>தமிழ் (Tamil)</option>
-                  <option>తెలుగు (Telugu)</option>
-                </select>
-              </div>
+              <p className={styles.sectionDesc} style={{ marginTop: 24 }}>English is the only interface language currently implemented.</p>
             </div>
           )}
 

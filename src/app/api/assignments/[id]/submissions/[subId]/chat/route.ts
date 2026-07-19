@@ -84,7 +84,7 @@ Formatting: reply in short plain-text paragraphs. Use simple hyphen bullets for 
 
     // 4. Stream the response with Claude.
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return errorResponse('Missing Anthropic API Key', 500);
+    if (!apiKey) return errorResponse('AI chat is not configured', 500);
     const anthropic = createAnthropic({ apiKey });
 
     const result = streamText({

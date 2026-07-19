@@ -1,13 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { BookOpen, Sparkles, Upload, FileText, Globe, Check } from 'lucide-react';
+import Link from 'next/link';
+import { ClipboardList, FileText, SlidersHorizontal } from 'lucide-react';
 import styles from './page.module.css';
 import { Reveal } from '@/components/motion/Reveal';
 
 export default function KnowledgeBasePage() {
-  const [notified, setNotified] = useState(false);
-
   return (
     <Reveal className={styles.page}>
       <div className={styles.header} data-reveal>
@@ -15,7 +13,7 @@ export default function KnowledgeBasePage() {
         <h1 className="page-title">
           Teach the AI <em className="serif-accent">your way</em>
         </h1>
-        <p className={styles.subtitle}>Upload reference materials to improve AI grading accuracy</p>
+        <p className={styles.subtitle}>Use assignment-level context while the reusable library is not available</p>
       </div>
 
       {/* Coming Soon Banner */}
@@ -63,18 +61,16 @@ export default function KnowledgeBasePage() {
           </svg>
         </div>
 
-        <h2 data-reveal>Coming Soon</h2>
+        <h2 data-reveal>Not included in the current MVP</h2>
         <p data-reveal>
-          The Knowledge Base will let you upload textbooks, syllabi, previous papers, and marking schemes.
-          The AI will use this context to grade more accurately and align with your teaching style.
+          A reusable document library is not implemented yet. For now, add the context needed for grading directly to each assignment.
         </p>
 
         <div className={styles.featureGrid}>
           {[
-            { icon: Upload, title: 'Upload Materials', desc: 'Upload PDFs, images, and text documents to create your reference library' },
-            { icon: BookOpen, title: 'RAG-Aware Grading', desc: 'AI retrieves relevant sections from your materials before grading each answer' },
-            { icon: FileText, title: 'Syllabus Alignment', desc: 'Map your curriculum so AI understands what topics students should know' },
-            { icon: Globe, title: 'Board-Specific', desc: 'Pre-loaded knowledge for CBSE, ICSE, State Boards, JEE, and NEET patterns' },
+            { icon: ClipboardList, title: 'Assignment Rubric', desc: 'Define weighted criteria and scoring levels for the assignment.' },
+            { icon: FileText, title: 'Reference Answers', desc: 'Paste the answer key or expected responses into the assignment.' },
+            { icon: SlidersHorizontal, title: 'Grading Instructions', desc: 'Add assignment-specific rules and choose the grading strictness.' },
           ].map((f, i) => {
             const Icon = f.icon;
             return (
@@ -87,24 +83,9 @@ export default function KnowledgeBasePage() {
           })}
         </div>
 
-        <button
-          className={`${styles.notifyBtn} ${notified ? styles.notifyBtnDone : ''}`}
-          onClick={() => setNotified(true)}
-          disabled={notified}
-          data-reveal
-        >
-          {notified ? (
-            <>
-              <Check size={14} />
-              You&apos;re on the list
-            </>
-          ) : (
-            <>
-              <Sparkles size={14} />
-              Notify me when it&apos;s ready
-            </>
-          )}
-        </button>
+        <Link href="/dashboard/assignments/new" className={styles.notifyBtn} data-reveal>
+          Create an assignment
+        </Link>
       </div>
     </Reveal>
   );
