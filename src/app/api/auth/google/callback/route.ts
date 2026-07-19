@@ -8,7 +8,7 @@ import { google } from 'googleapis';
 import { db } from '@/db';
 import { googleTokens } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { encrypt } from '@/lib/crypto';
+import { encrypt, isTokenEncryptionConfigured } from '@/lib/crypto';
 
 const STATE_COOKIE = 'google_oauth_state';
 
@@ -29,6 +29,10 @@ export async function GET(request: Request) {
     res.cookies.set(STATE_COOKIE, '', { httpOnly: true, path: '/', maxAge: 0 });
     return res;
   };
+
+  if (!isTokenEncryptionConfigured()) {
+    return back('token_encryption_not_configured');
+  }
 
   const url = new URL(request.url);
   const code = url.searchParams.get('code');

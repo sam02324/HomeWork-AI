@@ -12,7 +12,7 @@
 import { google } from 'googleapis';
 import type { JWT } from 'googleapis-common';
 import { createHash } from 'node:crypto';
-import { encrypt, decryptOrLegacy } from '@/lib/crypto';
+import { decrypt, encrypt } from '@/lib/crypto';
 
 /* ═══════════════════════════════════════
    Types
@@ -48,6 +48,38 @@ export interface DriveFile {
   mimeType: string;
   /** Original filename */
   name: string;
+}
+
+/** A safe, user-actionable Google connection failure. */
+export class GoogleConnectionError extends Error {
+  constructor(
+    message: string,
+    public readonly code: 'GOOGLE_RECONNECT_REQUIRED' | 'GOOGLE_AUTH_EXPIRED'
+  ) {
+    super(message);
+    this.name = 'GoogleConnectionError';
+  }
+}
+
+function isEncryptedToken(value: string): boolean {
+  // AES-GCM values created by crypto.ts are iv.authTag.ciphertext (base64url).
+  return /^[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]+$/.test(value);
+}
+
+function decryptStoredGoogleToken(value: string): string {
+  const plaintext = decrypt(value);
+  if (plaintext) return plaintext;
+
+  if (isEncryptedToken(value)) {
+    // A token copied from another Railway project requires the original key.
+    throw new GoogleConnectionError(
+      'This Google connection belongs to a different deployment. Disconnect and reconnect Google.',
+      'GOOGLE_RECONNECT_REQUIRED'
+    );
+  }
+
+  // Tokens stored before encryption was introduced remain supported.
+  return value;
 }
 
 /* ═══════════════════════════════════════
@@ -120,17 +152,26 @@ export async function getOAuthClientForUser(userId: string) {
     `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/google/callback`
   );
 
-  // Decrypt at rest (SEC-4). decryptOrLegacy transparently handles tokens that
-  // were stored as plaintext before encryption was introduced.
+  // Preserve legacy plaintext tokens, but never submit unreadable ciphertext to Google.
   oauth2Client.setCredentials({
-    access_token: decryptOrLegacy(token.accessToken),
-    refresh_token: decryptOrLegacy(token.refreshToken),
+    access_token: decryptStoredGoogleToken(token.accessToken),
+    refresh_token: decryptStoredGoogleToken(token.refreshToken),
     expiry_date: token.tokenExpiry.getTime(),
   });
 
   // Auto-refresh if expired
   if (token.tokenExpiry.getTime() <= Date.now()) {
-    const { credentials } = await oauth2Client.refreshAccessToken();
+    let credentials;
+    try {
+      ({ credentials } = await oauth2Client.refreshAccessToken());
+    } catch (error) {
+      console.error('Google OAuth refresh failed:', error);
+      await db.delete(googleTokens).where(eq(googleTokens.userId, userId));
+      throw new GoogleConnectionError(
+        'Your Google authorization expired. Reconnect Google to continue.',
+        'GOOGLE_AUTH_EXPIRED'
+      );
+    }
 
     // Re-encrypt the refreshed access token before persisting.
     await db.update(googleTokens)

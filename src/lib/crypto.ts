@@ -12,6 +12,11 @@ const ALGO = 'aes-256-gcm';
 const IV_LEN = 12; // 96-bit nonce — the GCM standard
 const TAG_LEN = 16; // 128-bit auth tag
 
+/** True only when token encryption can safely be used in this deployment. */
+export function isTokenEncryptionConfigured(): boolean {
+  return /^[0-9a-fA-F]{64}$/.test(process.env.TOKEN_ENCRYPTION_KEY ?? '');
+}
+
 /** Load and validate the 32-byte key. Throws if misconfigured. */
 function getKey(): Buffer {
   const hex = process.env.TOKEN_ENCRYPTION_KEY;

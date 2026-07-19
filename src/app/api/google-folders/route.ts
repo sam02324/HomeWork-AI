@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
-import { getOAuthClientForUser } from '@/lib/google-sheets';
+import { getOAuthClientForUser, GoogleConnectionError } from '@/lib/google-sheets';
 import { google } from 'googleapis';
 import { db } from '@/db';
 import { googleTokens } from '@/db/schema';
@@ -68,6 +68,9 @@ export async function GET() {
     
     return response;
   } catch (error) {
+    if (error instanceof GoogleConnectionError) {
+      return errorResponse(error.message, 401, error.code);
+    }
     // SEC-11: log details server-side, return a generic message to the client.
     console.error('GET /api/google-folders error:', error instanceof Error ? error.message : error);
     return errorResponse('Failed to list Google folders. Please try reconnecting your Google account.', 500);

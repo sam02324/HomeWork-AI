@@ -25,7 +25,10 @@ Google Drive and Sheets integration requires a stable public callback URL.
 2. Set `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` for the same service.
 3. In Google Cloud Console, add this exact **Authorized redirect URI** to the Web OAuth client:
    `https://your-service.up.railway.app/api/auth/google/callback`
-4. Redeploy after changing Railway variables.
+4. Set `TOKEN_ENCRYPTION_KEY` to a stable 64-character hexadecimal secret. Generate it with
+   `openssl rand -hex 32`. Do not change it after teachers have connected Google accounts,
+   otherwise their stored OAuth tokens can no longer be read.
+5. Redeploy after changing Railway variables, then reconnect Google from GradeAI settings.
 
 For local development, use `http://localhost:3000` and add
 `http://localhost:3000/api/auth/google/callback` to the same OAuth client.

@@ -17,7 +17,7 @@ import { assignments, submissions, students, googleTokens } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard, parseBody } from '@/lib/utils';
 import { syncSubmissionsSchema } from '@/lib/validations';
-import { fetchSheetRows, downloadDriveFile } from '@/lib/google-sheets';
+import { fetchSheetRows, downloadDriveFile, GoogleConnectionError } from '@/lib/google-sheets';
 import type { FormResponse } from '@/lib/google-sheets';
 import { randomUUID } from 'crypto';
 import { PDFParse } from 'pdf-parse';
@@ -182,6 +182,9 @@ export async function POST(request: Request) {
       rows = await fetchSheetRows(assignment.spreadsheetId, oauthUserId);
     } catch (err) {
       console.error('Failed to fetch Google Sheet:', err);
+      if (err instanceof GoogleConnectionError) {
+        return errorResponse(err.message, 401, err.code);
+      }
       return errorResponse(
         'Failed to read Google Sheet. Make sure the Spreadsheet ID is correct ' +
         'and the service account has access.',
