@@ -73,6 +73,16 @@ export default function AssignmentDetailsPage() {
   const [localReferenceText, setLocalReferenceText] = useState('');
   const [isUploadingReference, setIsUploadingReference] = useState(false);
 
+  // The API orders submissions newest first. Render every attempt instead of
+  // collapsing them to the first submission for each student.
+  const submissionRows = submissions?.map((sub) => ({
+    student: sub.student,
+    submission: sub,
+  })) ?? [];
+  const studentsWithoutSubmissions = students?.filter(
+    (student) => !submissions?.some((sub) => sub.studentId === student.id)
+  ) ?? [];
+
   if (assignmentLoading || studentsLoading || submissionsLoading) {
     return <div className={styles.loading}>Loading assignment details...</div>;
   }
@@ -270,19 +280,18 @@ export default function AssignmentDetailsPage() {
               <tr>
                 <th>Student</th>
                 <th>Roll Number</th>
+                <th>Submitted</th>
                 <th>Status</th>
                 <th>Score</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody className="stagger-children">
-              {students?.map(student => {
-                const sub = submissions?.find(s => s.studentId === student.id);
-                const isUploading = uploadingFor === student.id;
-                const grade = sub?.grade as Grade | undefined;
+              {submissionRows.map(({ student, submission: sub }) => {
+                const grade = sub.grade as Grade | undefined;
 
                 return (
-                  <tr key={student.id} className={styles.row}>
+                  <tr key={sub.id} className={styles.row}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <strong>{student.name}</strong>
@@ -300,14 +309,13 @@ export default function AssignmentDetailsPage() {
                     </td>
                     <td>{student.rollNumber}</td>
                     <td>
-                      {sub ? (
-                        <span className={`${styles.badge} ${sub.status === 'graded' ? styles.badgeSuccess : styles.badgeWarning}`}>
-                          {sub.status === 'graded' ? <CheckCircle size={14} /> : <Clock size={14} />}
-                          {sub.status === 'graded' ? 'Graded' : 'Pending'}
-                        </span>
-                      ) : (
-                        <span className={styles.badgePending}>No Submission</span>
-                      )}
+                      {new Date(sub.submittedAt).toLocaleString()}
+                    </td>
+                    <td>
+                      <span className={`${styles.badge} ${sub.status === 'graded' ? styles.badgeSuccess : styles.badgeWarning}`}>
+                        {sub.status === 'graded' ? <CheckCircle size={14} /> : <Clock size={14} />}
+                        {sub.status === 'graded' ? 'Graded' : 'Pending'}
+                      </span>
                     </td>
                     <td>
                       {sub?.status === 'graded' && grade ? (
@@ -325,86 +333,85 @@ export default function AssignmentDetailsPage() {
                     </td>
                     <td>
                       <div className={styles.actionCell}>
-                        {sub ? (
-                          <>
-                            <button 
-                              className={styles.viewSubBtn}
-                              onClick={() => {
-                                const url = sub.fileUrl 
-                                  || (sub.googleDriveFileId ? `https://drive.google.com/file/d/${sub.googleDriveFileId}/view` : null);
-                                if (url) {
-                                  window.open(url, '_blank');
-                                } else {
-                                  toast.error('No file URL available for this submission.');
-                                }
-                              }}
-                              title="View Document"
-                            >
-                              <FileText size={14} /> View
-                            </button>
-                            {sub.status === 'graded' && grade ? (
-                              <button
-                                className={styles.reviewBtn}
-                                onClick={() => router.push(`/dashboard/assignments/${id}/review/${sub.id}`)}
-                                title="Review AI Grade"
-                              >
-                                <Eye size={14} /> Review Grade
-                              </button>
-                            ) : (
-                              <button
-                                className={styles.reviewBtn}
-                                onClick={() => router.push(`/dashboard/assignments/${id}/review/${sub.id}`)}
-                                title="Edit Manual Score"
-                              >
-                                <Eye size={14} /> Edit Score
-                              </button>
-                            )}
-                            <button
-                              className={styles.deleteBtn}
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this submission?')) {
-                                  deleteSubmission.mutate(sub.id);
-                                }
-                              }}
-                              disabled={deleteSubmission.isPending}
-                              title="Delete Submission"
-                              style={{ 
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
-                                gap: '4px', 
-                                padding: '4px 8px', 
-                                background: 'transparent', 
-                                border: '1px solid var(--danger-color)', 
-                                color: 'var(--danger-color)', 
-                                borderRadius: '4px', 
-                                cursor: 'pointer',
-                                fontSize: '0.8rem'
-                              }}
-                            >
-                              <Trash2 size={14} /> Delete
-                            </button>
-                          </>
-                        ) : (
-                          <label className={styles.uploadBtn}>
-                            <Upload size={14} />
-                            {isUploading ? 'Uploading...' : 'Upload Submission'}
-                            <input 
-                              type="file" 
-                              style={{ display: 'none' }} 
-                              onChange={(e) => handleFileUpload(student.id, e)}
-                              accept=".pdf,image/*,text/plain" 
-                              disabled={isUploading}
-                            />
-                          </label>
-                        )}
+                        <button
+                          className={styles.viewSubBtn}
+                          onClick={() => {
+                            const url = sub.fileUrl
+                              || (sub.googleDriveFileId ? `https://drive.google.com/file/d/${sub.googleDriveFileId}/view` : null);
+                            if (url) {
+                              window.open(url, '_blank');
+                            } else {
+                              toast.error('No file URL available for this submission.');
+                            }
+                          }}
+                          title="View Document"
+                        >
+                          <FileText size={14} /> View
+                        </button>
+                        <button
+                          className={styles.reviewBtn}
+                          onClick={() => router.push(`/dashboard/assignments/${id}/review/${sub.id}`)}
+                          title={sub.status === 'graded' && grade ? 'Review AI Grade' : 'Edit Manual Score'}
+                        >
+                          <Eye size={14} /> {sub.status === 'graded' && grade ? 'Review Grade' : 'Edit Score'}
+                        </button>
+                        <button
+                          className={styles.deleteBtn}
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this submission?')) {
+                              deleteSubmission.mutate(sub.id);
+                            }
+                          }}
+                          disabled={deleteSubmission.isPending}
+                          title="Delete Submission"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            background: 'transparent',
+                            border: '1px solid var(--danger-color)',
+                            color: 'var(--danger-color)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <Trash2 size={14} /> Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {(!students || students.length === 0) && (
+              {studentsWithoutSubmissions.map((student) => {
+                const isUploading = uploadingFor === student.id;
+                return (
+                  <tr key={student.id} className={styles.row}>
+                    <td><strong>{student.name}</strong></td>
+                    <td>{student.rollNumber}</td>
+                    <td>—</td>
+                    <td><span className={styles.badgePending}>No Submission</span></td>
+                    <td><span className={styles.textMuted}>—</span></td>
+                    <td>
+                      <label className={styles.uploadBtn}>
+                        <Upload size={14} />
+                        {isUploading ? 'Uploading...' : 'Upload Submission'}
+                        <input
+                          type="file"
+                          style={{ display: 'none' }}
+                          onChange={(e) => handleFileUpload(student.id, e)}
+                          accept=".pdf,image/*,text/plain"
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </td>
+                  </tr>
+                );
+              })}
+              {submissionRows.length === 0 && studentsWithoutSubmissions.length === 0 && (
                 <tr>
-                  <td colSpan={5} className={styles.emptyState}>
+                  <td colSpan={6} className={styles.emptyState}>
                     No students in this classroom yet.
                   </td>
                 </tr>
