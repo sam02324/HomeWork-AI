@@ -31,6 +31,12 @@ interface MimoCompletion {
   tokensUsed: number;
 }
 
+interface MimoCompletionOptions {
+  thinking?: 'enabled' | 'disabled';
+  temperature?: number;
+  jsonMode?: boolean;
+}
+
 const DEFAULT_MIMO_BASE_URL = 'https://api.xiaomimimo.com/v1';
 const DEFAULT_MIMO_MODEL = 'mimo-v2.5';
 const DEFAULT_MIMO_THINKING = 'disabled';
@@ -74,9 +80,11 @@ async function readError(response: Response): Promise<string> {
 
 export async function createMimoCompletion(
   messages: MimoMessage[],
-  maxCompletionTokens = 4000
+  maxCompletionTokens = 4000,
+  options: MimoCompletionOptions = {}
 ): Promise<MimoCompletion> {
   const config = getMimoConfig();
+  const thinking = options.thinking || config.thinking;
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -88,7 +96,9 @@ export async function createMimoCompletion(
       messages,
       max_completion_tokens: maxCompletionTokens,
       stream: false,
-      thinking: { type: config.thinking },
+      thinking: { type: thinking },
+      ...(thinking === 'disabled' ? { temperature: options.temperature ?? 0.1 } : {}),
+      ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
     }),
     signal: AbortSignal.timeout(120_000),
   });

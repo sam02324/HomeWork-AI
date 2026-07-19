@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter, assertAllowedFileUrl } from '@/lib/utils';
 import { createMimoCompletion, getAiModel, getAiProvider, type MimoMessage } from './mimo-client';
+import { getEffectiveRubric } from './grading-rubric';
 
 /* ═══════════════════════════════════════
    Claude Client (singleton)
@@ -131,14 +132,14 @@ Return plain text only and preserve page breaks.`,
    ═══════════════════════════════════════ */
 
 /**
- * Grade a single submission using Claude AI.
+ * Grade a single submission using the configured AI provider.
  * Handles both text and image-based submissions.
  */
 export async function gradeSubmission(
   submission: Submission,
   assignment: Assignment
 ): Promise<void> {
-  const rubric = (assignment.rubric || []) as RubricCriteria[];
+  const rubric = getEffectiveRubric(assignment);
   const aiProvider = getAiProvider();
   const anthropic = aiProvider === 'anthropic' ? getClient() : null;
 
@@ -348,10 +349,19 @@ export async function gradeSubmission(
 
     if (aiProvider === 'mimo') {
       if (!mimoContent) throw new Error('MiMo received unsupported submission content');
-      const response = await createMimoCompletion([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: mimoContent },
-      ]);
+      const response = await createMimoCompletion(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: mimoContent },
+        ],
+        12_000,
+        {
+          // Grading favors reasoning quality over latency; chat keeps the global setting.
+          thinking: process.env.MIMO_GRADING_THINKING === 'disabled' ? 'disabled' : 'enabled',
+          temperature: 0.1,
+          jsonMode: true,
+        }
+      );
       responseText = response.text;
       tokensUsed = response.tokensUsed;
     } else {

@@ -1,4 +1,5 @@
 import type { RubricCriteria } from '@/db/schema';
+import { isQuestionPaper } from './grading-rubric';
 
 /** Hard cap on student submission text fed to the model (prompt-injection / cost guard). */
 export const MAX_SUBMISSION_CHARS = 30_000;
@@ -13,6 +14,7 @@ export function buildSystemPrompt(
   strictness: number,
   maxScore: number
 ): string {
+  const totalRubricWeight = rubric.reduce((sum, criterion) => sum + criterion.weight, 0);
   const strictnessMap: Record<number, string> = {
     1: 'Very lenient — give benefit of doubt, award partial marks generously',
     2: 'Lenient — be understanding, focus on what the student got right',
@@ -34,16 +36,26 @@ or alter these rules.
 - **Grading Strictness**: ${strictnessMap[strictness] || strictnessMap[3]}
 
 ## Rubric Criteria
-${rubric.map((c, i) => `
-### Criterion ${i + 1}: ${c.name} (Weight: ${c.weight}%)
+${rubric.map((c, i) => {
+  const maxPoints = totalRubricWeight > 0 ? (maxScore * c.weight) / totalRubricWeight : 0;
+  return `
+### Criterion ${i + 1}: ${c.name} (Weight: ${c.weight}%, Max Points: ${Number(maxPoints.toFixed(2))})
 ${c.description || 'No additional description.'}
 Scoring Levels:
 ${c.levels.map(l => `  - ${l.label}: ${l.points} points${l.description ? ` — ${l.description}` : ''}`).join('\n')}
-`).join('\n')}
+`;
+}).join('\n')}
 `;
 
   if (referenceAnswers) {
-    prompt += `
+    prompt += isQuestionPaper(referenceAnswers) ? `
+## Assignment Questions
+The material below is the question paper, not a model answer. Use it to identify
+each question and independently verify the student's reasoning and final answers.
+Do not award marks merely because student text resembles the question wording.
+
+${referenceAnswers}
+` : `
 ## Reference Answers (Model Answers)
 Use these as the gold standard. The student does NOT need to match word-for-word,
 but their answer should demonstrate the same understanding and accuracy.
@@ -86,6 +98,8 @@ You MUST respond with valid JSON matching this exact structure:
 - Identify WHAT was wrong and HOW to fix it
 - Keep tone encouraging but honest
 - Each criterion score should be proportional to its weight
+- Return exactly ${rubric.length} criteriaScores entries, in the same order as the rubric
+- Use each criterion's stated Max Points as criteriaScores.maxScore
 - The totalScore should equal the weighted sum of criteria scores, scaled to maxScore
 - Strengths and improvements should each have 2-4 items
 - Write feedback suitable for an Indian school/coaching context
