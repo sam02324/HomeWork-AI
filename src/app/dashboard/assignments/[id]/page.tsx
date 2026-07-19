@@ -225,7 +225,7 @@ export default function AssignmentDetailsPage() {
                   if (result.gradedCount > 0) {
                     toast.success(result.message);
                   } else {
-                    toast.error('No submissions were graded. Check the submission file and AI configuration.');
+                    toast.error(result.errors[0] || 'No submissions needed grading.');
                   }
                 } catch (error) {
                   toast.error(error instanceof Error ? error.message : 'Grading failed');

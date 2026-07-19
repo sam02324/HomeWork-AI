@@ -38,10 +38,10 @@ export async function POST(_req: Request, { params }: Params) {
     }
 
     try {
-      const gradedCount = await gradeAllSubmissions(id);
+      const result = await gradeAllSubmissions(id);
       return successResponse({
-        message: `Grading complete. ${gradedCount} submissions graded.`,
-        gradedCount,
+        message: `Grading complete. ${result.gradedCount} graded, ${result.failedCount} failed.`,
+        ...result,
       });
     } catch (gradingError) {
       // Release the lock so the teacher can retry instead of being stuck in 'grading'.

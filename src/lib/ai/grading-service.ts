@@ -1,5 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { z } from 'zod';
 import { db } from '@/db';
 import { grades, submissions, assignments } from '@/db/schema';
 import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
@@ -115,8 +114,8 @@ export async function gradeSubmission(
               // render a bounded number of pages and use its vision input.
               if (!resolvedTextContent && aiProvider === 'mimo') {
                 const screenshots = await parser.getScreenshot({
-                  desiredWidth: 1400,
-                  first: 6,
+                  desiredWidth: 1024,
+                  first: 4,
                   imageBuffer: false,
                   imageDataUrl: true,
                 });
@@ -279,7 +278,7 @@ export async function gradeSubmission(
     // Extract JSON from response (handle markdown code blocks)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error('Claude did not return valid JSON');
+      throw new Error(`${model} did not return valid grading JSON`);
     }
 
     const result: GradingResult = JSON.parse(jsonMatch[0]);
@@ -346,9 +345,49 @@ export async function gradeSubmission(
 
 /**
  * Grade all pending submissions for an assignment.
- * Returns count of successfully graded submissions.
+ * Returns counts and safe, actionable failure messages for the UI.
  */
-export async function gradeAllSubmissions(assignmentId: string): Promise<number> {
+export interface GradingBatchResult {
+  gradedCount: number;
+  failedCount: number;
+  errors: string[];
+}
+
+function getSafeGradingError(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+
+  if (message.includes('MIMO_API_KEY')) {
+    return 'MiMo is not configured in Railway. Add MIMO_API_KEY and redeploy.';
+  }
+  if (/MiMo API error \((401|403)\)/.test(message)) {
+    return 'MiMo rejected the Railway API key. Replace MIMO_API_KEY and redeploy.';
+  }
+  if (message.includes('MiMo API error (429)')) {
+    return 'MiMo rate limit reached. Wait briefly and retry grading.';
+  }
+  if (/MiMo API error \((400|413)\)/.test(message)) {
+    return 'MiMo rejected the scanned-PDF image payload. Try a smaller PDF or image submission.';
+  }
+  if (/MiMo API error \(5\d\d\)/.test(message)) {
+    return 'MiMo is temporarily unavailable. Retry grading in a moment.';
+  }
+  if (message.includes('scanned PDF could not be converted')) {
+    return 'The scanned PDF could not be read. Upload it as JPG or PNG and retry.';
+  }
+  if (message.includes('no content to grade') || message.includes('unsupported submission content')) {
+    return 'The submission has no readable text or supported file content.';
+  }
+  if (message.includes('valid grading JSON') || message.includes('Unexpected token')) {
+    return 'MiMo returned an invalid grading response. Retry the submission.';
+  }
+  if (message.includes('Google') || message.includes('Drive')) {
+    return 'The submission file could not be downloaded from Google Drive. Reconnect Google and retry.';
+  }
+
+  return 'AI grading failed. Check the Railway deployment logs for the grading error.';
+}
+
+export async function gradeAllSubmissions(assignmentId: string): Promise<GradingBatchResult> {
   // Get assignment
   const assignment = await db.query.assignments.findFirst({
     where: eq(assignments.id, assignmentId),
@@ -369,7 +408,7 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
     // Nothing to grade. The caller has already flipped status to 'grading', so
     // we MUST release that lock here (BUG-2) — pick the correct terminal state.
     await finalizeAssignmentStatus(assignmentId);
-    return 0;
+    return { gradedCount: 0, failedCount: 0, errors: [] };
   }
 
   // Update assignment status
@@ -378,6 +417,8 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
     .where(eq(assignments.id, assignmentId));
 
   let gradedCount = 0;
+  let failedCount = 0;
+  const errors = new Set<string>();
 
   // Grade each submission sequentially to avoid rate limits
   for (const submission of toGrade) {
@@ -386,6 +427,8 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
       gradedCount++;
     } catch (error) {
       console.error(`Failed to grade submission ${submission.id}:`, error);
+      failedCount++;
+      errors.add(getSafeGradingError(error));
       // Continue grading other submissions
     }
   }
@@ -394,7 +437,7 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<number>
   // submissions may have been added during the run, so re-query fresh.
   await finalizeAssignmentStatus(assignmentId);
 
-  return gradedCount;
+  return { gradedCount, failedCount, errors: [...errors] };
 }
 
 /**

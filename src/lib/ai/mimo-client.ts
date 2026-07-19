@@ -94,7 +94,8 @@ export async function createMimoCompletion(
   });
 
   if (!response.ok) {
-    throw new Error(await readError(response));
+    const providerError = await readError(response);
+    throw new Error(`MiMo API error (${response.status}): ${providerError}`);
   }
 
   const payload = (await response.json()) as MimoCompletionResponse;
@@ -131,7 +132,8 @@ export async function streamMimoCompletion(
   });
 
   if (!response.ok) {
-    throw new Error(await readError(response));
+    const providerError = await readError(response);
+    throw new Error(`MiMo API error (${response.status}): ${providerError}`);
   }
   if (!response.body) throw new Error('MiMo returned no response stream');
 

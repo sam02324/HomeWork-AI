@@ -194,7 +194,7 @@ export function useGradeAssignment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (assignmentId: string) =>
-      apiFetch<{ message: string; gradedCount: number }>(
+      apiFetch<{ message: string; gradedCount: number; failedCount: number; errors: string[] }>(
         `/api/assignments/${assignmentId}/grade`,
         { method: 'POST' }
       ),
