@@ -6,8 +6,9 @@ import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/d
 import { eq } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter, assertAllowedFileUrl } from '@/lib/utils';
-import { createMimoCompletion, getAiModel, getAiProvider, type MimoMessage } from './mimo-client';
 import { getEffectiveRubric } from './grading-rubric';
+
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
 /* ═══════════════════════════════════════
    Claude Client (singleton)
@@ -85,54 +86,12 @@ function applyRubricMath(
   };
 }
 
-async function extractScannedPdfText(pdfBuffer: Buffer): Promise<string | null> {
-  const ocrClient = getClient();
-  if (!ocrClient) return null;
-
-  const response = await ocrClient.messages.create({
-    model: process.env.ANTHROPIC_OCR_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
-    max_tokens: 8000,
-    system: 'You are a high-accuracy OCR engine. Transcribe faithfully without grading, summarizing, or inventing missing content.',
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'document',
-            source: {
-              type: 'base64',
-              media_type: 'application/pdf',
-              data: pdfBuffer.toString('base64'),
-            },
-          },
-          {
-            type: 'text',
-            text: `Extract every readable student answer from every page.
-Preserve question numbers, equations, mathematical notation, units, chemical formulae, tables, and labels.
-Describe diagrams with their visible labels and relationships.
-Mark uncertain text as [unclear] instead of guessing.
-Return plain text only and preserve page breaks.`,
-          },
-        ],
-      },
-    ],
-  });
-
-  const text = response.content
-    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-    .map((block) => block.text)
-    .join('\n')
-    .trim();
-
-  return text || null;
-}
-
 /* ═══════════════════════════════════════
    Core Grading Function
    ═══════════════════════════════════════ */
 
 /**
- * Grade a single submission using the configured AI provider.
+ * Grade a single submission using Claude.
  * Handles both text and image-based submissions.
  */
 export async function gradeSubmission(
@@ -140,8 +99,7 @@ export async function gradeSubmission(
   assignment: Assignment
 ): Promise<void> {
   const rubric = getEffectiveRubric(assignment);
-  const aiProvider = getAiProvider();
-  const anthropic = aiProvider === 'anthropic' ? getClient() : null;
+  const anthropic = getClient();
 
   // 1. Update submission status to 'grading'
   await db.update(submissions)
@@ -160,16 +118,11 @@ export async function gradeSubmission(
 
     // 3. Build the user message based on submission type
     let userContent: Anthropic.MessageParam['content'];
-    let mimoContent: MimoMessage['content'] | null = null;
 
     // If we have no textContent but have a googleDriveFileId, try to fetch and extract now
     let resolvedTextContent = submission.textContent;
     let resolvedFileType = submission.fileType;
     let resolvedFileBuffer: Buffer | null = null;
-    let mimoPdfPages: Array<{
-      type: 'image_url';
-      image_url: { url: string };
-    }> = [];
 
     if (!resolvedTextContent && submission.googleDriveFileId) {
       try {
@@ -200,41 +153,13 @@ export async function gradeSubmission(
               parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
               const pdfData = await parser.getText();
               resolvedTextContent = pdfData.text.trim();
-
-              // MiMo does not accept PDF documents directly. For scanned PDFs,
-              // render every page when the document is short. Longer scans use
-              // full-document OCR below so no answers are silently omitted.
-              if (!resolvedTextContent && aiProvider === 'mimo') {
-                const info = await parser.getInfo();
-                if (info.total <= 4) {
-                  const screenshots = await parser.getScreenshot({
-                    desiredWidth: 1400,
-                    imageBuffer: false,
-                    imageDataUrl: true,
-                  });
-                  mimoPdfPages = screenshots.pages.map((page) => ({
-                    type: 'image_url' as const,
-                    image_url: { url: page.dataUrl },
-                  }));
-                }
-              }
             } catch (pdfErr) {
               console.error(`PDF parse error during grading for ${submission.googleDriveFileId}:`, pdfErr);
             } finally {
               await parser?.destroy();
             }
 
-            // Some server runtimes cannot rasterize PDFs. Use document OCR as
-            // a fallback, then keep MiMo as the grading model.
-            if (!resolvedTextContent && aiProvider === 'mimo' && mimoPdfPages.length === 0) {
-              try {
-                resolvedTextContent = await extractScannedPdfText(driveFile.buffer);
-              } catch (ocrError) {
-                console.error(`PDF OCR fallback failed for ${submission.googleDriveFileId}:`, ocrError);
-              }
-            }
-
-            // Cache extracted/OCR text so retries do not repeat document processing.
+            // Cache extracted text; scanned PDFs remain native Claude documents.
             await db.update(submissions)
               .set({ textContent: resolvedTextContent || null, fileType: resolvedFileType })
               .where(eq(submissions.id, submission.id));
@@ -248,7 +173,6 @@ export async function gradeSubmission(
     if (resolvedTextContent) {
       // Text submission
       userContent = buildGradingMessage(resolvedTextContent);
-      mimoContent = userContent;
     } else if (resolvedFileBuffer && resolvedFileType?.startsWith('image/')) {
       // Image downloaded from Drive
       const base64 = resolvedFileBuffer.toString('base64');
@@ -270,13 +194,6 @@ export async function gradeSubmission(
           type: 'text' as const,
           text: buildVisionGradingMessage(),
         },
-      ];
-      mimoContent = [
-        {
-          type: 'image_url',
-          image_url: { url: `data:${mediaType};base64,${base64}` },
-        },
-        { type: 'text', text: buildVisionGradingMessage() },
       ];
     } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
       // Fetch image from URL and convert to base64 (origin-restricted — SEC-7b)
@@ -304,89 +221,49 @@ export async function gradeSubmission(
           text: buildVisionGradingMessage(),
         },
       ];
-      mimoContent = [
-        {
-          type: 'image_url',
-          image_url: { url: `data:${mediaType};base64,${base64}` },
-        },
-        { type: 'text', text: buildVisionGradingMessage() },
-      ];
     } else if (resolvedFileBuffer && resolvedFileType === 'application/pdf') {
-      if (aiProvider === 'mimo') {
-        if (mimoPdfPages.length === 0) {
-          throw new Error('The scanned PDF could not be converted into images for grading');
-        }
-        userContent = buildVisionGradingMessage();
-        mimoContent = [
-          ...mimoPdfPages,
-          { type: 'text', text: buildVisionGradingMessage() },
-        ];
-      } else {
-        // PDF downloaded from Drive but text extraction failed — send as document
-        const base64 = resolvedFileBuffer.toString('base64');
-        userContent = [
-          {
-            type: 'document' as const,
-            source: {
-              type: 'base64' as const,
-              media_type: 'application/pdf' as const,
-              data: base64,
-            },
+      // Claude accepts scanned PDFs natively, preserving every page for grading.
+      const base64 = resolvedFileBuffer.toString('base64');
+      userContent = [
+        {
+          type: 'document' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: 'application/pdf' as const,
+            data: base64,
           },
-          {
-            type: 'text' as const,
-            text: buildVisionGradingMessage(),
-          },
-        ];
-      }
+        },
+        {
+          type: 'text' as const,
+          text: buildVisionGradingMessage(),
+        },
+      ];
     } else {
       throw new Error('Submission has no content to grade');
     }
 
-    let responseText: string;
-    let tokensUsed: number;
-    const model = getAiModel();
-
-    if (aiProvider === 'mimo') {
-      if (!mimoContent) throw new Error('MiMo received unsupported submission content');
-      const response = await createMimoCompletion(
-        [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: mimoContent },
-        ],
-        12_000,
-        {
-          // Grading favors reasoning quality over latency; chat keeps the global setting.
-          thinking: process.env.MIMO_GRADING_THINKING === 'disabled' ? 'disabled' : 'enabled',
-          temperature: 0.1,
-          jsonMode: true,
-        }
-      );
-      responseText = response.text;
-      tokensUsed = response.tokensUsed;
-    } else {
-      if (!anthropic) {
-        throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
-      }
-
-      const response = await anthropic.messages.create({
-        model,
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: userContent,
-          },
-        ],
-      });
-
-      responseText = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map((block) => block.text)
-        .join('');
-      tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+    if (!anthropic) {
+      throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
     }
+
+    const model = process.env.ANTHROPIC_MODEL || DEFAULT_ANTHROPIC_MODEL;
+    const response = await anthropic.messages.create({
+      model,
+      max_tokens: 4000,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: userContent,
+        },
+      ],
+    });
+
+    const responseText = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
+      .join('');
+    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
 
     // Extract JSON from response (handle markdown code blocks)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -469,30 +346,22 @@ export interface GradingBatchResult {
 
 function getSafeGradingError(error: unknown): string {
   const message = error instanceof Error ? error.message : '';
+  const status = error instanceof Anthropic.APIError ? error.status : undefined;
 
-  if (message.includes('MIMO_API_KEY')) {
-    return 'MiMo is not configured in Railway. Add MIMO_API_KEY and redeploy.';
+  if (message.includes('Anthropic API Key') || status === 401 || status === 403) {
+    return 'Claude is not configured correctly in Railway. Verify ANTHROPIC_API_KEY and redeploy.';
   }
-  if (/MiMo API error \((401|403)\)/.test(message)) {
-    return 'MiMo rejected the Railway API key. Replace MIMO_API_KEY and redeploy.';
+  if (status === 429) {
+    return 'Claude rate limit reached. Wait briefly and retry grading.';
   }
-  if (message.includes('MiMo API error (429)')) {
-    return 'MiMo rate limit reached. Wait briefly and retry grading.';
-  }
-  if (/MiMo API error \((400|413)\)/.test(message)) {
-    return 'MiMo rejected the scanned-PDF image payload. Try a smaller PDF or image submission.';
-  }
-  if (/MiMo API error \(5\d\d\)/.test(message)) {
-    return 'MiMo is temporarily unavailable. Retry grading in a moment.';
-  }
-  if (message.includes('scanned PDF could not be converted')) {
-    return 'Automatic PDF processing failed. Verify ANTHROPIC_API_KEY in Railway and retry.';
+  if (status && status >= 500) {
+    return 'Claude is temporarily unavailable. Retry grading in a moment.';
   }
   if (message.includes('no content to grade') || message.includes('unsupported submission content')) {
     return 'The submission has no readable text or supported file content.';
   }
   if (message.includes('valid grading JSON') || message.includes('Unexpected token')) {
-    return 'MiMo returned an invalid grading response. Retry the submission.';
+    return 'Claude returned an invalid grading response. Retry the submission.';
   }
   if (
     error instanceof z.ZodError ||
@@ -500,7 +369,7 @@ function getSafeGradingError(error: unknown): string {
     message.includes('Criterion score exceeds') ||
     message.includes('total exceeds')
   ) {
-    return 'MiMo returned inconsistent rubric scores. Retry grading; no inaccurate grade was saved.';
+    return 'Claude returned inconsistent rubric scores. Retry grading; no inaccurate grade was saved.';
   }
   if (message.includes('Google') || message.includes('Drive')) {
     return 'The submission file could not be downloaded from Google Drive. Reconnect Google and retry.';

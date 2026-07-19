@@ -5,7 +5,6 @@ import { eq, and } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, rateLimitGuard } from '@/lib/utils';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
-import { getAiModel, getAiProvider, streamMimoCompletion, type MimoMessage } from '@/lib/ai/mimo-client';
 
 type Params = { params: Promise<{ id: string; subId: string }> };
 
@@ -83,29 +82,13 @@ Be helpful, professional, and clear. If the teacher asks you to re-evaluate, pro
 Formatting: reply in short plain-text paragraphs. Use simple hyphen bullets for lists. Do not use markdown headings, tables, or horizontal rules — this renders in a compact chat bubble.
 `;
 
-    if (getAiProvider() === 'mimo') {
-      const mimoMessages: MimoMessage[] = [
-        { role: 'system', content: systemContext },
-        ...messages,
-      ];
-
-      const result = await streamMimoCompletion(mimoMessages, async (text) => {
-        const updatedMessages = [...messages, { role: 'assistant' as const, content: text }];
-        await db.update(grades)
-          .set({ chatHistory: updatedMessages })
-          .where(eq(grades.id, grade.id));
-      });
-
-      return result;
-    }
-
-    // 4. Stream the response with Claude when the provider is not MiMo.
+    // 4. Stream the response with Claude.
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return errorResponse('Missing Anthropic API Key', 500);
     const anthropic = createAnthropic({ apiKey });
 
     const result = streamText({
-      model: anthropic(getAiModel()),
+      model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6'),
       system: systemContext,
       messages,
       async onFinish({ text }) {
