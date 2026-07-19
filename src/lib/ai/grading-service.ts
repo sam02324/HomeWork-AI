@@ -76,6 +76,10 @@ export async function gradeSubmission(
     let resolvedTextContent = submission.textContent;
     let resolvedFileType = submission.fileType;
     let resolvedFileBuffer: Buffer | null = null;
+    let mimoPdfPages: Array<{
+      type: 'image_url';
+      image_url: { url: string };
+    }> = [];
 
     if (!resolvedTextContent && submission.googleDriveFileId) {
       try {
@@ -100,11 +104,27 @@ export async function gradeSubmission(
           resolvedFileBuffer = driveFile.buffer;
 
           if (driveFile.mimeType === 'application/pdf') {
+            let parser: InstanceType<(typeof import('pdf-parse'))['PDFParse']> | null = null;
             try {
               const { PDFParse } = await import('pdf-parse');
-              const parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
+              parser = new PDFParse({ data: new Uint8Array(driveFile.buffer) });
               const pdfData = await parser.getText();
-              resolvedTextContent = pdfData.text;
+              resolvedTextContent = pdfData.text.trim();
+
+              // MiMo does not accept PDF documents directly. For scanned PDFs,
+              // render a bounded number of pages and use its vision input.
+              if (!resolvedTextContent && aiProvider === 'mimo') {
+                const screenshots = await parser.getScreenshot({
+                  desiredWidth: 1400,
+                  first: 6,
+                  imageBuffer: false,
+                  imageDataUrl: true,
+                });
+                mimoPdfPages = screenshots.pages.map((page) => ({
+                  type: 'image_url' as const,
+                  image_url: { url: page.dataUrl },
+                }));
+              }
 
               // Also save the extracted text back to the submission for future use
               await db.update(submissions)
@@ -112,6 +132,8 @@ export async function gradeSubmission(
                 .where(eq(submissions.id, submission.id));
             } catch (pdfErr) {
               console.error(`PDF parse error during grading for ${submission.googleDriveFileId}:`, pdfErr);
+            } finally {
+              await parser?.destroy();
             }
           }
         }
@@ -188,25 +210,32 @@ export async function gradeSubmission(
       ];
     } else if (resolvedFileBuffer && resolvedFileType === 'application/pdf') {
       if (aiProvider === 'mimo') {
-        throw new Error('MiMo requires extracted text for PDF submissions');
-      }
-
-      // PDF downloaded from Drive but text extraction failed — send as document
-      const base64 = resolvedFileBuffer.toString('base64');
-      userContent = [
-        {
-          type: 'document' as const,
-          source: {
-            type: 'base64' as const,
-            media_type: 'application/pdf' as const,
-            data: base64,
+        if (mimoPdfPages.length === 0) {
+          throw new Error('The scanned PDF could not be converted into images for grading');
+        }
+        userContent = buildVisionGradingMessage();
+        mimoContent = [
+          ...mimoPdfPages,
+          { type: 'text', text: buildVisionGradingMessage() },
+        ];
+      } else {
+        // PDF downloaded from Drive but text extraction failed — send as document
+        const base64 = resolvedFileBuffer.toString('base64');
+        userContent = [
+          {
+            type: 'document' as const,
+            source: {
+              type: 'base64' as const,
+              media_type: 'application/pdf' as const,
+              data: base64,
+            },
           },
-        },
-        {
-          type: 'text' as const,
-          text: buildVisionGradingMessage(),
-        },
-      ];
+          {
+            type: 'text' as const,
+            text: buildVisionGradingMessage(),
+          },
+        ];
+      }
     } else {
       throw new Error('Submission has no content to grade');
     }

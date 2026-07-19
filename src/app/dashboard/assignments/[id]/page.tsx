@@ -218,9 +218,18 @@ export default function AssignmentDetailsPage() {
           </button>
           <button 
             className={styles.gradeBtn} 
-            onClick={() => {
+            onClick={async () => {
               if (confirm('Are you sure you want to start grading all pending submissions?')) {
-                gradeAssignment.mutate(id);
+                try {
+                  const result = await gradeAssignment.mutateAsync(id);
+                  if (result.gradedCount > 0) {
+                    toast.success(result.message);
+                  } else {
+                    toast.error('No submissions were graded. Check the submission file and AI configuration.');
+                  }
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : 'Grading failed');
+                }
               }
             }}
             disabled={gradeAssignment.isPending || !submissions?.some(s => s.status === 'pending' || s.status === 'error')}
