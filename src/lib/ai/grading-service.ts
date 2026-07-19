@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
 import { db } from '@/db';
 import { grades, submissions, assignments } from '@/db/schema';
 import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
@@ -34,6 +35,95 @@ interface GradingResult {
   improvements: string[];
   gradeLetter: string;
   aiRationale: string;
+}
+
+const gradingResultSchema: z.ZodType<GradingResult> = z.object({
+  totalScore: z.number().finite().nonnegative(),
+  criteriaScores: z.array(z.object({
+    criterionName: z.string().min(1),
+    score: z.number().finite().nonnegative(),
+    maxScore: z.number().finite().positive(),
+    feedback: z.string(),
+  })).min(1),
+  feedback: z.string().min(1),
+  strengths: z.array(z.string().min(1)).min(1),
+  improvements: z.array(z.string().min(1)).min(1),
+  gradeLetter: z.string().min(1),
+  aiRationale: z.string().min(1),
+});
+
+function applyRubricMath(
+  result: GradingResult,
+  rubric: RubricCriteria[],
+  assignmentMaxScore: number
+): GradingResult {
+  if (result.totalScore > assignmentMaxScore) {
+    throw new Error('Grading response total exceeds the assignment maximum');
+  }
+  if (rubric.length === 0) return result;
+
+  if (result.criteriaScores.length !== rubric.length) {
+    throw new Error('Grading response omitted rubric criteria');
+  }
+
+  const totalWeight = rubric.reduce((sum, criterion) => sum + criterion.weight, 0);
+  if (totalWeight <= 0) throw new Error('Assignment rubric has no positive weight');
+
+  let weightedRatio = 0;
+  for (let index = 0; index < rubric.length; index++) {
+    const criterion = result.criteriaScores[index];
+    if (criterion.score > criterion.maxScore) {
+      throw new Error(`Criterion score exceeds maximum for ${criterion.criterionName}`);
+    }
+    weightedRatio += (criterion.score / criterion.maxScore) * (rubric[index].weight / totalWeight);
+  }
+
+  return {
+    ...result,
+    totalScore: Number((weightedRatio * assignmentMaxScore).toFixed(2)),
+  };
+}
+
+async function extractScannedPdfText(pdfBuffer: Buffer): Promise<string | null> {
+  const ocrClient = getClient();
+  if (!ocrClient) return null;
+
+  const response = await ocrClient.messages.create({
+    model: process.env.ANTHROPIC_OCR_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+    max_tokens: 8000,
+    system: 'You are a high-accuracy OCR engine. Transcribe faithfully without grading, summarizing, or inventing missing content.',
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: pdfBuffer.toString('base64'),
+            },
+          },
+          {
+            type: 'text',
+            text: `Extract every readable student answer from every page.
+Preserve question numbers, equations, mathematical notation, units, chemical formulae, tables, and labels.
+Describe diagrams with their visible labels and relationships.
+Mark uncertain text as [unclear] instead of guessing.
+Return plain text only and preserve page breaks.`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const text = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n')
+    .trim();
+
+  return text || null;
 }
 
 /* ═══════════════════════════════════════
@@ -111,29 +201,42 @@ export async function gradeSubmission(
               resolvedTextContent = pdfData.text.trim();
 
               // MiMo does not accept PDF documents directly. For scanned PDFs,
-              // render a bounded number of pages and use its vision input.
+              // render every page when the document is short. Longer scans use
+              // full-document OCR below so no answers are silently omitted.
               if (!resolvedTextContent && aiProvider === 'mimo') {
-                const screenshots = await parser.getScreenshot({
-                  desiredWidth: 1024,
-                  first: 4,
-                  imageBuffer: false,
-                  imageDataUrl: true,
-                });
-                mimoPdfPages = screenshots.pages.map((page) => ({
-                  type: 'image_url' as const,
-                  image_url: { url: page.dataUrl },
-                }));
+                const info = await parser.getInfo();
+                if (info.total <= 4) {
+                  const screenshots = await parser.getScreenshot({
+                    desiredWidth: 1400,
+                    imageBuffer: false,
+                    imageDataUrl: true,
+                  });
+                  mimoPdfPages = screenshots.pages.map((page) => ({
+                    type: 'image_url' as const,
+                    image_url: { url: page.dataUrl },
+                  }));
+                }
               }
-
-              // Also save the extracted text back to the submission for future use
-              await db.update(submissions)
-                .set({ textContent: resolvedTextContent, fileType: resolvedFileType })
-                .where(eq(submissions.id, submission.id));
             } catch (pdfErr) {
               console.error(`PDF parse error during grading for ${submission.googleDriveFileId}:`, pdfErr);
             } finally {
               await parser?.destroy();
             }
+
+            // Some server runtimes cannot rasterize PDFs. Use document OCR as
+            // a fallback, then keep MiMo as the grading model.
+            if (!resolvedTextContent && aiProvider === 'mimo' && mimoPdfPages.length === 0) {
+              try {
+                resolvedTextContent = await extractScannedPdfText(driveFile.buffer);
+              } catch (ocrError) {
+                console.error(`PDF OCR fallback failed for ${submission.googleDriveFileId}:`, ocrError);
+              }
+            }
+
+            // Cache extracted/OCR text so retries do not repeat document processing.
+            await db.update(submissions)
+              .set({ textContent: resolvedTextContent || null, fileType: resolvedFileType })
+              .where(eq(submissions.id, submission.id));
           }
         }
       } catch (driveErr) {
@@ -281,11 +384,12 @@ export async function gradeSubmission(
       throw new Error(`${model} did not return valid grading JSON`);
     }
 
-    const result: GradingResult = JSON.parse(jsonMatch[0]);
+    const parsedResult = gradingResultSchema.parse(JSON.parse(jsonMatch[0]));
+    const result = applyRubricMath(parsedResult, rubric, assignment.maxScore);
     // 6. Calculate tokens used (handled above)
     // 7. Ensure grade letter is correct
     const percentage = (result.totalScore / assignment.maxScore) * 100;
-    const gradeLetter = result.gradeLetter || getGradeLetter(percentage);
+    const gradeLetter = getGradeLetter(percentage);
 
     // AI detection is disabled, hardcode default safe values
     const aiDetectionScore = 0;
@@ -372,13 +476,21 @@ function getSafeGradingError(error: unknown): string {
     return 'MiMo is temporarily unavailable. Retry grading in a moment.';
   }
   if (message.includes('scanned PDF could not be converted')) {
-    return 'The scanned PDF could not be read. Upload it as JPG or PNG and retry.';
+    return 'Automatic PDF processing failed. Verify ANTHROPIC_API_KEY in Railway and retry.';
   }
   if (message.includes('no content to grade') || message.includes('unsupported submission content')) {
     return 'The submission has no readable text or supported file content.';
   }
   if (message.includes('valid grading JSON') || message.includes('Unexpected token')) {
     return 'MiMo returned an invalid grading response. Retry the submission.';
+  }
+  if (
+    error instanceof z.ZodError ||
+    message.includes('rubric criteria') ||
+    message.includes('Criterion score exceeds') ||
+    message.includes('total exceeds')
+  ) {
+    return 'MiMo returned inconsistent rubric scores. Retry grading; no inaccurate grade was saved.';
   }
   if (message.includes('Google') || message.includes('Drive')) {
     return 'The submission file could not be downloaded from Google Drive. Reconnect Google and retry.';
