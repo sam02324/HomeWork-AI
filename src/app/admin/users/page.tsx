@@ -20,6 +20,7 @@ import {
 } from '@/lib/admin/user-overview';
 import { adminUserQuerySchema, type AdminUserQuery } from '@/lib/validations';
 import styles from './page.module.css';
+import { Select } from '@/components/ui/Select';
 
 export const metadata: Metadata = {
   title: 'Users | GradeAI Owner Console',
@@ -144,22 +145,32 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 
           <label>
             <span>Plan</span>
-            <select name="plan" defaultValue={result.filters.plan}>
-              <option value="all">All plans</option>
-              <option value="subscription">Subscription</option>
-              <option value="pay_per_submission">Per submission</option>
-              <option value="unassigned">Not assigned</option>
-            </select>
+            <Select
+              name="plan"
+              defaultValue={result.filters.plan}
+              ariaLabel="Filter users by plan"
+              options={[
+                { value: 'all', label: 'All plans' },
+                { value: 'subscription', label: 'Subscription' },
+                { value: 'pay_per_submission', label: 'Per submission' },
+                { value: 'unassigned', label: 'Not assigned' },
+              ]}
+            />
           </label>
 
           <label>
             <span>Role</span>
-            <select name="role" defaultValue={result.filters.role}>
-              <option value="all">All roles</option>
-              <option value="teacher">Teacher</option>
-              <option value="student">Student</option>
-              <option value="admin">Admin</option>
-            </select>
+            <Select
+              name="role"
+              defaultValue={result.filters.role}
+              ariaLabel="Filter users by role"
+              options={[
+                { value: 'all', label: 'All roles' },
+                { value: 'teacher', label: 'Teacher' },
+                { value: 'student', label: 'Student' },
+                { value: 'admin', label: 'Admin' },
+              ]}
+            />
           </label>
 
           <button type="submit">Apply filters</button>

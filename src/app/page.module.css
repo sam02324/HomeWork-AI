@@ -821,24 +821,23 @@
 
 .featureCard {
   position: relative;
-  width: clamp(320px, 28vw, 420px);
-  min-height: 400px;
+  width: clamp(300px, 27vw, 380px);
+  min-height: 340px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: var(--space-4);
-  padding: var(--space-8);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
   transition: border-color var(--duration-normal) var(--ease-out), background var(--duration-normal) var(--ease-out);
 }
 
 .featureCard:hover {
-  border-color: var(--accent-muted);
-  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  background: var(--surface-hover);
 }
 
 .featureIndex {
@@ -996,8 +995,8 @@
 
 .mvpAccessCard {
   border-color: var(--accent-muted);
-  background: linear-gradient(180deg, var(--accent-subtle), var(--glass-bg));
-  box-shadow: var(--accent-glow);
+  background: linear-gradient(180deg, var(--accent-subtle), var(--surface));
+  box-shadow: var(--shadow-sm);
 }
 
 .pricingCard {
@@ -1005,16 +1004,14 @@
   display: flex;
   flex-direction: column;
   padding: var(--space-8);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   transition: transform var(--duration-slow) var(--ease-out), border-color var(--duration-normal) var(--ease-out);
 }
 
 .pricingCard:hover {
-  transform: translateY(-6px);
+  transform: translateY(-2px);
   border-color: var(--glass-border-hover);
 }
 
@@ -1138,26 +1135,29 @@
 .testimonialGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-6);
+  gap: 0;
   margin-top: var(--space-4);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .testimonialCard {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  padding: var(--space-8);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  transition: border-color var(--duration-normal) var(--ease-out), transform var(--duration-slow) var(--ease-out);
+  padding: var(--space-6);
+  background: transparent;
+  border-right: 1px solid var(--border-color);
+  transition: background var(--duration-normal) var(--ease-out);
 }
 
+.testimonialCard:last-child { border-right: 0; }
+
 .testimonialCard:hover {
-  border-color: var(--glass-border-hover);
-  transform: translateY(-4px);
+  background: var(--surface-hover);
 }
 
 .principleIcon {
@@ -1339,6 +1339,9 @@
     position: relative;
     z-index: 3;
   }
+
+  .testimonialCard { border-right: 0; border-bottom: 1px solid var(--border-color); }
+  .testimonialCard:last-child { border-bottom: 0; }
 }
 
 @media (max-width: 767px) {

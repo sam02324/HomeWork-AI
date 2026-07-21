@@ -425,6 +425,11 @@
   overflow-y: auto;
 }
 
+.content > * {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
+}
+
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 768px) {
   .sidebar {

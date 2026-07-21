@@ -13,6 +13,8 @@ import {
 import styles from './page.module.css';
 import { Reveal } from '@/components/motion/Reveal';
 import { useClerk, useUser } from '@clerk/nextjs';
+import { Select } from '@/components/ui/Select';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 const TABS = [
   { id: 'account', label: 'Account', icon: User },
@@ -157,30 +159,30 @@ export default function SettingsPage() {
               <p className={styles.sectionDesc}>Manage your connected apps and sync preferences.</p>
 
               <div className={styles.formGroup} style={{ marginTop: 20 }}>
-                <label className={styles.label}>Target Sync Folder (Google Drive)</label>
+                <label className={styles.label} htmlFor="sync-folder">Target Sync Folder (Google Drive)</label>
                 <p className={styles.sectionDesc} style={{ fontSize: '0.85rem', marginBottom: 12 }}>
                   GradeAI will only automatically sync Google Forms and Sheets that are inside this specific folder.
                   If you leave this blank, it will scan your entire Google Drive.
                 </p>
                 {fetchError && (
-                  <div style={{ color: 'red', fontSize: '0.85rem', marginBottom: 12, padding: '8px', border: '1px solid red', borderRadius: '4px' }}>
+                  <div className={styles.integrationError} role="alert">
                     <strong>Google API Error:</strong> {fetchError}
-                    <p style={{ marginTop: '4px' }}>You may need to <a href="/api/auth/google" style={{ textDecoration: 'underline' }}>Reconnect your Google Account</a> to update permissions.</p>
+                    <p>You may need to <a href="/api/auth/google">reconnect your Google account</a> to update permissions.</p>
                   </div>
                 )}
                 {loadingFolders ? (
-                  <p>Loading your Google Drive folders...</p>
+                  <Skeleton height="var(--control-height)" radius="var(--radius-sm)" />
                 ) : (
-                  <select 
-                    className={styles.select} 
-                    value={selectedFolder} 
-                    onChange={e => setChosenFolder(e.target.value)}
-                  >
-                    <option value="">-- Scan Entire Drive --</option>
-                    {folders.map(f => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                  </select>
+                  <Select
+                    id="sync-folder"
+                    className={styles.selectControl}
+                    value={selectedFolder}
+                    onValueChange={setChosenFolder}
+                    options={[
+                      { value: '', label: 'Scan entire Drive' },
+                      ...folders.map((folder) => ({ value: folder.id, label: folder.name })),
+                    ]}
+                  />
                 )}
               </div>
 

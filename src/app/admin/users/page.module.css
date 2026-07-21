@@ -22,7 +22,7 @@
 
 .header h1 {
   margin: var(--space-3) 0 var(--space-2);
-  font-size: clamp(2.4rem, 5vw, 4.4rem);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
   letter-spacing: -0.055em;
   line-height: 0.95;
 }
@@ -59,8 +59,13 @@
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: 0;
   margin-bottom: var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .summaryCard {
@@ -70,10 +75,11 @@
   gap: 2px var(--space-3);
   min-height: 108px;
   padding: var(--space-4);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(145deg, var(--glass-bg-strong), var(--glass-bg));
+  border-right: 1px solid var(--border-color);
+  background: transparent;
 }
+
+.summaryCard:last-child { border-right: 0; }
 
 .summaryIcon {
   grid-row: 1 / span 2;
@@ -99,9 +105,9 @@
 .panel {
   overflow: hidden;
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  background: var(--bg-secondary);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .filters {
@@ -123,20 +129,18 @@
   text-transform: uppercase;
 }
 
-.filters input,
-.filters select {
+.filters input {
   width: 100%;
   height: 42px;
   padding: 0 var(--space-3);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
-  background: var(--bg-tertiary);
+  background: var(--control-bg);
   outline: none;
 }
 
-.filters input:focus,
-.filters select:focus {
+.filters input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-muted);
 }
@@ -156,7 +160,7 @@
   padding-left: 38px;
 }
 
-.filters button,
+.filters > button,
 .filters > a,
 .emptyState a,
 .pagination a {
@@ -169,7 +173,7 @@
   font-weight: 600;
 }
 
-.filters button {
+.filters > button {
   padding: 0 var(--space-4);
   border: 0;
   color: white;
@@ -200,13 +204,13 @@
 
 .tableScroll table {
   width: 100%;
-  min-width: 980px;
+  min-width: 860px;
   border-collapse: collapse;
 }
 
 .tableScroll th,
 .tableScroll td {
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4);
   text-align: left;
   border-bottom: 1px solid var(--glass-border);
 }
@@ -429,6 +433,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .summaryCard:nth-child(2) { border-right: 0; }
+  .summaryCard:nth-child(-n + 2) { border-bottom: 1px solid var(--border-color); }
+
   .filters {
     grid-template-columns: 1fr 1fr;
   }
@@ -448,6 +455,9 @@
   .filters {
     grid-template-columns: 1fr;
   }
+
+  .summaryCard { border-right: 0; border-bottom: 1px solid var(--border-color); }
+  .summaryCard:last-child { border-bottom: 0; }
 
   .searchField {
     grid-column: auto;

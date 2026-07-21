@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ShieldOff } from 'lucide-react';
 import styles from '../../admin-operations.module.css';
+import { Select } from '@/components/ui/Select';
 
 type AccountStatus = 'active' | 'suspended';
 
@@ -58,19 +59,41 @@ export function AccountActions({ userId, status, plan, credits, quota }: Props) 
     <form className={styles.actionForm} onSubmit={submit}>
       <div className={styles.field}>
         <label htmlFor="owner-action">Action</label>
-        <select id="owner-action" value={action} onChange={(event) => { setAction(event.target.value as ActionName); setValue(''); }}>
-          <option value="adjust_credits">Adjust credits (current {credits})</option>
-          <option value="set_quota">Set monthly quota ({quota ?? 'unset'})</option>
-          <option value="set_plan">Set account plan</option>
-          {status === 'active' ? <option value="suspend">Suspend account</option> : <option value="reinstate">Reinstate account</option>}
-        </select>
+        <Select
+          id="owner-action"
+          value={action}
+          onValueChange={(nextAction) => {
+            setAction(nextAction as ActionName);
+            setValue('');
+          }}
+          options={[
+            { value: 'adjust_credits', label: `Adjust credits (current ${credits})` },
+            { value: 'set_quota', label: `Set monthly quota (${quota ?? 'unset'})` },
+            { value: 'set_plan', label: 'Set account plan' },
+            status === 'active'
+              ? { value: 'suspend', label: 'Suspend account' }
+              : { value: 'reinstate', label: 'Reinstate account' },
+          ]}
+        />
       </div>
 
       {(action === 'adjust_credits' || action === 'set_quota') && (
         <div className={styles.field}><label htmlFor="owner-value">{action === 'adjust_credits' ? 'Credit delta' : 'Quota (blank unsets)'}</label><input id="owner-value" type="number" value={value} onChange={(event) => setValue(event.target.value)} required={action === 'adjust_credits'} /></div>
       )}
       {action === 'set_plan' && (
-        <div className={styles.field}><label htmlFor="owner-plan">Plan</label><select id="owner-plan" value={value || plan} onChange={(event) => setValue(event.target.value)}><option value="unassigned">Unassigned</option><option value="subscription">Subscription</option><option value="pay_per_submission">Pay per submission</option></select></div>
+        <div className={styles.field}>
+          <label htmlFor="owner-plan">Plan</label>
+          <Select
+            id="owner-plan"
+            value={value || plan}
+            onValueChange={setValue}
+            options={[
+              { value: 'unassigned', label: 'Unassigned' },
+              { value: 'subscription', label: 'Subscription' },
+              { value: 'pay_per_submission', label: 'Pay per submission' },
+            ]}
+          />
+        </div>
       )}
       <div className={styles.field}><label htmlFor="owner-reason">Reason (audit log)</label><input id="owner-reason" value={reason} onChange={(event) => setReason(event.target.value)} minLength={5} maxLength={500} required placeholder="Support case or business reason" /></div>
       <button className={destructive ? styles.buttonDanger : styles.button} type="submit" disabled={state === 'saving'}>

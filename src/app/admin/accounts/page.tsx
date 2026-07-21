@@ -6,6 +6,7 @@ import { requireAdminPage } from '@/lib/admin/auth';
 import { getAdminAccounts } from '@/lib/admin/accounts';
 import { adminAccountQuerySchema, type AdminAccountQuery } from '@/lib/validations';
 import styles from '../admin-operations.module.css';
+import { Select } from '@/components/ui/Select';
 
 export const metadata: Metadata = { title: 'Account Actions | GradeAI Owner Console' };
 
@@ -50,7 +51,19 @@ export default async function AdminAccountsPage({ searchParams }: { searchParams
       <section className={styles.panel}>
         <form className={styles.filterForm} action="/admin/accounts" method="get">
           <div className={styles.field}><label htmlFor="account-search">Search</label><input id="account-search" name="q" type="search" defaultValue={result.filters.q} placeholder="Name or email" maxLength={100} /></div>
-          <div className={styles.field}><label htmlFor="account-status">Status</label><select id="account-status" name="status" defaultValue={result.filters.status}><option value="all">All accounts</option><option value="active">Active</option><option value="suspended">Suspended</option></select></div>
+          <div className={styles.field}>
+            <label htmlFor="account-status">Status</label>
+            <Select
+              id="account-status"
+              name="status"
+              defaultValue={result.filters.status}
+              options={[
+                { value: 'all', label: 'All accounts' },
+                { value: 'active', label: 'Active' },
+                { value: 'suspended', label: 'Suspended' },
+              ]}
+            />
+          </div>
           <button className={styles.button} type="submit"><Search size={14} /> Filter</button>
           <Link className={styles.buttonGhost} href="/admin/accounts">Clear</Link>
         </form>

@@ -12,12 +12,14 @@ import {
   Upload,
   ChevronRight,
   Sparkles,
+  FileText,
   X,
 } from 'lucide-react';
 import styles from './page.module.css';
 import { useDashboardStats, useAssignments, useGoogleAuthStatus } from '@/lib/api-client';
 import { useUser } from '@clerk/nextjs';
 import { Reveal, CountUp } from '@/components/motion/Reveal';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 
 
@@ -160,9 +162,24 @@ function DashboardContent() {
 
           <div className={`${styles.assignmentList} stagger-children`}>
             {assignmentsLoading ? (
-              <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>Loading assignments...</div>
+              Array.from({ length: 3 }).map((_, index) => (
+                <div className={styles.assignmentSkeleton} key={index}>
+                  <Skeleton width={8} height={8} radius="var(--radius-full)" />
+                  <div className={styles.skeletonCopy}>
+                    <Skeleton width="48%" height={13} />
+                    <Skeleton width="28%" height={10} />
+                  </div>
+                  <Skeleton width={92} height={8} radius="var(--radius-full)" />
+                </div>
+              ))
             ) : recentAssignments.length === 0 ? (
-              <div style={{ padding: '20px', color: 'var(--text-tertiary)' }}>No assignments found. Get started by creating your first assignment.</div>
+              <div className={styles.compactEmpty}>
+                <FileText size={20} aria-hidden="true" />
+                <div>
+                  <strong>No assignments yet</strong>
+                  <span>Create one to start collecting and grading work.</span>
+                </div>
+              </div>
             ) : (
               recentAssignments.map((a) => (
                 <div key={a.id} className={styles.assignmentCard}>
@@ -221,7 +238,7 @@ function DashboardContent() {
             </div>
 
             {gradingAssignments.length === 0 ? (
-              <div style={{ padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>No assignments currently being graded.</div>
+              <p className={styles.inlineEmpty}>No assignments are being graded right now.</p>
             ) : (
               gradingAssignments.map(ga => (
                 <div key={ga.id} className={styles.gradingCard} style={{ marginBottom: '12px' }}>
@@ -254,7 +271,7 @@ function DashboardContent() {
             </div>
 
             <div className={styles.riskList}>
-              <div style={{ padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.9rem', textAlign: 'center' }}>
+              <div className={styles.reviewNote}>
                 AI-generated scores are drafts. Open each graded submission to verify the rubric breakdown and override it when needed.
               </div>
             </div>
@@ -279,7 +296,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 'var(--space-6) var(--space-8)', color: 'var(--text-tertiary)' }}>Loading dashboard...</div>}>
+    <Suspense fallback={<div className={styles.page}><Skeleton width="42%" height={36} /><div className={styles.dashboardFallback}><Skeleton height={118} /><Skeleton height={118} /><Skeleton height={118} /><Skeleton height={118} /></div></div>}>
       <DashboardContent />
     </Suspense>
   );

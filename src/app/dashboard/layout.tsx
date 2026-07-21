@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, createContext, useContext } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
@@ -24,13 +24,9 @@ import {
 import styles from './layout.module.css';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CommandPalette } from '@/components/CommandPalette';
-import { Cursor } from '@/components/motion/Cursor';
 import { Tilt } from '@/components/motion/Tilt';
 import { isAdminRole } from '@/lib/auth/roles';
-
-/* ═══ Theme Context ═══ */
-const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
-export function useTheme() { return useContext(ThemeContext); }
+import { useTheme } from '@/components/providers/ThemeProvider';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -46,7 +42,7 @@ const ADMIN_NAV_ITEM = { href: '/admin', label: 'Owner Console', icon: ShieldChe
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { theme, toggleTheme } = useTheme();
   const { user } = useUser();
   const { signOut } = useClerk();
   const isAdmin = isAdminRole(user?.publicMetadata.role);
@@ -57,12 +53,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
-
-  function toggleTheme() {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    document.documentElement.setAttribute('data-theme', next);
-  }
 
   // Zero-setup background auto-sync
   useEffect(() => {
@@ -83,9 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle: toggleTheme }}>
       <div className={styles.layout}>
-        <Cursor />
         {/* ── Sidebar ── */}
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
           <div className={styles.sidebarHeader}>
@@ -214,6 +202,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <CommandPalette open={searchOpen} setOpen={setSearchOpen} />
         </div>
       </div>
-    </ThemeContext.Provider>
   );
 }

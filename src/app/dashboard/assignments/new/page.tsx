@@ -21,6 +21,8 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import { useClassrooms, useCreateAssignment, useUploadFile, useGoogleSheets } from '@/lib/api-client';
 import { Reveal } from '@/components/motion/Reveal';
+import { Select } from '@/components/ui/Select';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 /* ───── types ───── */
 interface RubricCriterion {
@@ -285,36 +287,45 @@ export default function NewAssignmentPage() {
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Class *</label>
+                <label className={styles.label} htmlFor="assignment-class">Class *</label>
                 {classroomsLoading ? (
-                  <div style={{ padding: '12px', color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>Loading classrooms...</div>
+                  <Skeleton height="var(--control-height)" radius="var(--radius-sm)" />
                 ) : !classrooms || classrooms.length === 0 ? (
-                  <div style={{ padding: '12px', background: 'var(--bg-tertiary)', borderRadius: '8px', fontSize: '0.9rem' }}>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>You haven&apos;t created any classrooms yet.</p>
-                    <Link href="/dashboard/classrooms" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline' }}>
-                      → Create a classroom first
+                  <div className={styles.fieldNotice}>
+                    <p>You haven&apos;t created any classrooms yet.</p>
+                    <Link href="/dashboard/classrooms">
+                      Create a classroom first
                     </Link>
                   </div>
                 ) : (
-                  <select className={styles.select} value={classId} onChange={(e) => setClassId(e.target.value)}>
-                    <option value="">Select a class</option>
-                    {classrooms.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.grade} {c.subject} — {c.name} ({c.studentCount} students)
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    id="assignment-class"
+                    className={styles.selectControl}
+                    value={classId}
+                    onValueChange={setClassId}
+                    options={[
+                      { value: '', label: 'Select a class' },
+                      ...classrooms.map((classroom) => ({
+                        value: classroom.id,
+                        label: `${classroom.grade} ${classroom.subject} - ${classroom.name} (${classroom.studentCount} students)`,
+                      })),
+                    ]}
+                  />
                 )}
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Subject *</label>
-                <select className={styles.select} value={subject} onChange={(e) => setSubject(e.target.value)}>
-                  <option value="">Select subject</option>
-                  {SUBJECTS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                <label className={styles.label} htmlFor="assignment-subject">Subject *</label>
+                <Select
+                  id="assignment-subject"
+                  className={styles.selectControl}
+                  value={subject}
+                  onValueChange={setSubject}
+                  options={[
+                    { value: '', label: 'Select subject' },
+                    ...SUBJECTS.map((item) => ({ value: item, label: item })),
+                  ]}
+                />
               </div>
 
               <div className={styles.formGroup}>

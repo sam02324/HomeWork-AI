@@ -63,6 +63,10 @@ html {
   --sidebar-width: 260px;
   --sidebar-collapsed: 72px;
   --topbar-height: 64px;
+
+  /* Layout and controls */
+  --content-max: 1440px;
+  --control-height: 44px;
 }
 
 /* ===== DARK THEME (Default) ===== */
@@ -84,6 +88,15 @@ html {
   --glass-blur: 16px;
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   --glass-highlight: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 50%);
+
+  /* Quiet surfaces keep hierarchy clear without turning every block into a card. */
+  --surface: hsl(0, 0%, 7%);
+  --surface-raised: hsl(0, 0%, 9%);
+  --surface-hover: hsl(0, 0%, 11%);
+  --border-color: rgba(255, 255, 255, 0.09);
+  --control-bg: hsl(0, 0%, 10%);
+  --control-bg-hover: hsl(0, 0%, 12%);
+  --control-border: rgba(255, 255, 255, 0.11);
 
   /* Text */
   --text-primary: hsl(0, 0%, 94%);
@@ -163,6 +176,14 @@ html {
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
   --glass-highlight: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
 
+  --surface: hsl(0, 0%, 100%);
+  --surface-raised: hsl(30, 8%, 98%);
+  --surface-hover: hsl(30, 7%, 95%);
+  --border-color: rgba(20, 16, 14, 0.09);
+  --control-bg: hsl(30, 8%, 98%);
+  --control-bg-hover: hsl(30, 7%, 95%);
+  --control-border: rgba(20, 16, 14, 0.13);
+
   --text-primary: hsl(0, 0%, 8%);
   --text-secondary: hsl(0, 0%, 40%);
   --text-tertiary: hsl(0, 0%, 55%);
@@ -193,6 +214,7 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   min-height: 100vh;
+  transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
 }
 
 /* Ambient gradient mesh — subtle warm glow */
@@ -224,6 +246,21 @@ button {
 input, textarea, select {
   font-family: inherit;
   color: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: var(--text-primary);
+  background: var(--accent-muted);
 }
 
 img {
@@ -443,38 +480,6 @@ ul, ol {
   .animate-shimmer {
     animation: none;
   }
-}
-
-/* ===== CUSTOM CURSOR (shared by landing + dashboard) ===== */
-.cursor-dot {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  z-index: 2001;
-  pointer-events: none;
-}
-
-.cursor-ring {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  z-index: 2000;
-  pointer-events: none;
-}
-
-/* hide the native cursor only while the custom one is mounted */
-body.cursor-none,
-body.cursor-none a,
-body.cursor-none button {
-  cursor: none;
 }
 
 /* ===== PAGE HEADER PATTERN (dashboard + landing shared DNA) ===== */

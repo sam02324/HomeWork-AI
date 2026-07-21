@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
+import { FileText, Plus, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
 import styles from './page.module.css';
 
 import { useState, useRef, useEffect } from 'react';
 import { useAssignments, useClassrooms, useGradeAssignment, useDeleteAssignment } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/Toast';
+import { Select } from '@/components/ui/Select';
 import { Reveal } from '@/components/motion/Reveal';
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
@@ -127,19 +128,29 @@ export default function AssignmentsPage() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <select className={styles.filterSelect} value={classFilter} onChange={e => setClassFilter(e.target.value)}>
-          <option value="">All Classes</option>
-          {classrooms?.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <select className={styles.filterSelect} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="grading">Grading</option>
-          <option value="graded">Graded</option>
-        </select>
+        <Select
+          className={styles.filterSelect}
+          value={classFilter}
+          onValueChange={setClassFilter}
+          ariaLabel="Filter by classroom"
+          options={[
+            { value: '', label: 'All classrooms' },
+            ...(classrooms?.map((classroom) => ({ value: classroom.id, label: classroom.name })) ?? []),
+          ]}
+        />
+        <Select
+          className={styles.filterSelect}
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          ariaLabel="Filter by status"
+          options={[
+            { value: '', label: 'All statuses' },
+            { value: 'draft', label: 'Draft' },
+            { value: 'published', label: 'Published' },
+            { value: 'grading', label: 'Grading' },
+            { value: 'graded', label: 'Graded' },
+          ]}
+        />
       </div>
 
       <div className={styles.tableWrap} data-reveal>
@@ -167,7 +178,15 @@ export default function AssignmentsPage() {
                 </tr>
               ))
             ) : !filteredAssignments || filteredAssignments.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)' }}>No assignments found</td></tr>
+              <tr>
+                <td colSpan={7} className={styles.emptyCell}>
+                  <div className={styles.emptyTable}>
+                    <FileText size={22} aria-hidden="true" />
+                    <strong>No assignments found</strong>
+                    <span>Adjust the filters or create your first assignment.</span>
+                  </div>
+                </td>
+              </tr>
             ) : (
               filteredAssignments.map((a) => {
                 const st = STATUS_MAP[a.status] || STATUS_MAP.draft;

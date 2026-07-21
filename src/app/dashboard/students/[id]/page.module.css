@@ -12,17 +12,17 @@
 .riskBadge { display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 10px; border-radius:var(--radius-full); margin-top:var(--space-2); text-transform:uppercase; letter-spacing:0.03em; }
 
 /* Stats */
-.statsRow { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-4); margin-bottom:var(--space-6); }
-.statCard { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:var(--space-4) var(--space-5); text-align:center; transition:all var(--duration-fast) var(--ease-out); }
-.statCard:hover { background:var(--glass-bg-hover); transform:translateY(-2px); }
+.statsRow { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:var(--space-6); overflow:hidden; border:1px solid var(--border-color); border-radius:var(--radius-lg); background:var(--surface); box-shadow:var(--shadow-xs); }
+.statCard { padding:var(--space-4) var(--space-5); text-align:left; border-right:1px solid var(--border-color); transition:background var(--duration-fast) var(--ease-out); }
+.statCard:last-child { border-right:0; }
+.statCard:hover { background:var(--surface-hover); }
 .statIcon { color:var(--accent); margin-bottom:var(--space-2); }
 .statValue { font-size:1.3rem; font-weight:800; color:var(--text-primary); font-family:var(--font-mono); }
 .statLabel { font-size:0.72rem; color:var(--text-tertiary); margin-top:2px; }
 
 /* Charts */
 .chartsGrid { display:grid; grid-template-columns:1.2fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5); }
-.chartCard { background:var(--glass-bg); backdrop-filter:blur(var(--glass-blur)); -webkit-backdrop-filter:blur(var(--glass-blur)); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:var(--space-5); margin-bottom:var(--space-5); position:relative; overflow:hidden; }
-.chartCard::before { content:''; position:absolute; inset:0; background:var(--glass-highlight); pointer-events:none; }
+.chartCard { background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:var(--space-5); margin-bottom:var(--space-5); position:relative; overflow:hidden; box-shadow:var(--shadow-xs); }
 .chartsGrid .chartCard { margin-bottom:0; }
 .chartTitle { display:flex; align-items:center; gap:var(--space-2); font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:var(--space-4); }
 .chartWrap { width:100%; }
@@ -78,5 +78,5 @@
 .gradeBadge { font-weight:700; color:var(--text-primary); }
 .statusBadge { font-size:0.72rem; font-weight:500; color:var(--success); }
 
-@media (max-width:1024px) { .chartsGrid, .bottomGrid { grid-template-columns:1fr; } .statsRow { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:1024px) { .chartsGrid, .bottomGrid { grid-template-columns:1fr; } .statsRow { grid-template-columns:repeat(2,1fr); } .statCard:nth-child(2) { border-right:0; } .statCard:nth-child(-n + 2) { border-bottom:1px solid var(--border-color); } }
 @media (max-width:768px) { .page { padding:var(--space-4); } .hero { flex-direction:column; text-align:center; } .statsRow { grid-template-columns:1fr 1fr; } }

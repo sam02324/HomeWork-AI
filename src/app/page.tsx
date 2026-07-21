@@ -23,7 +23,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import styles from './page.module.css';
-import { Cursor } from '@/components/motion/Cursor';
 
 gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
 
@@ -568,7 +567,6 @@ export default function LandingPage() {
 
   return (
     <div className={styles.page} ref={pageRef}>
-      <Cursor />
       <div className={styles.grain} aria-hidden="true" />
 
       {/* ── PRELOADER ── */}

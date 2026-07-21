@@ -5,24 +5,21 @@
 .subtitle { font-size:0.875rem; color:var(--text-secondary); margin-top:var(--space-1); }
 
 /* Stats */
-.statsGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-5); margin-bottom:var(--space-6); }
-.statCard { position:relative; overflow:hidden; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:var(--space-5); text-align:center; transition:all var(--duration-fast) var(--ease-out); }
-.statCard:hover { background:var(--glass-bg-hover); border-color:var(--glass-border-hover); transform:translateY(-2px); }
-/* one-shot diagonal sheen sweep on hover */
-.statCard::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg, transparent 42%, hsla(0,0%,100%,0.06) 50%, transparent 58%); transform:translateX(-130%); transition:transform 0.7s var(--ease-out); pointer-events:none; }
-.statCard:hover::after { transform:translateX(130%); }
+.statsGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:var(--space-6); overflow:hidden; border:1px solid var(--border-color); border-radius:var(--radius-lg); background:var(--surface); box-shadow:var(--shadow-xs); }
+.statCard { position:relative; background:transparent; border-right:1px solid var(--border-color); padding:var(--space-5); text-align:left; transition:background var(--duration-fast) var(--ease-out); }
+.statCard:last-child { border-right:0; }
+.statCard:hover { background:var(--surface-hover); }
 
 @media (prefers-reduced-motion: reduce) {
   .statCard::after { display:none; }
 }
-.statIcon { width:40px; height:40px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-3); }
+.statIcon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; margin:0 0 var(--space-3); }
 .statValue { font-size:1.5rem; font-weight:800; color:var(--text-primary); font-family:var(--font-mono); }
 .statLabel { font-size:0.78rem; color:var(--text-tertiary); margin-top:var(--space-1); }
 
 /* Charts */
 .chartsGrid { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5); }
-.chartCard { background:var(--glass-bg); backdrop-filter:blur(var(--glass-blur)); -webkit-backdrop-filter:blur(var(--glass-blur)); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:var(--space-5); position:relative; overflow:hidden; }
-.chartCard::before { content:''; position:absolute; inset:0; background:var(--glass-highlight); pointer-events:none; }
+.chartCard { background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:var(--space-5); position:relative; overflow:hidden; box-shadow:var(--shadow-xs); }
 .chartTitle { display:flex; align-items:center; gap:var(--space-2); font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:var(--space-5); }
 
 /* Weak Topics */
@@ -47,5 +44,5 @@
 .riskTotal { display:flex; justify-content:space-between; margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--glass-border); font-size:0.85rem; color:var(--text-secondary); }
 .riskTotal strong { color:var(--text-primary); font-family:var(--font-mono); }
 
-@media (max-width:1024px) { .chartsGrid { grid-template-columns:1fr; } .statsGrid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:1024px) { .chartsGrid { grid-template-columns:1fr; } .statsGrid { grid-template-columns:repeat(2,1fr); } .statCard:nth-child(2) { border-right:0; } .statCard:nth-child(-n + 2) { border-bottom:1px solid var(--border-color); } }
 @media (max-width:768px) { .page { padding:var(--space-4); } }

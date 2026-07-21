@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { Flag, X } from 'lucide-react';
 import styles from './page.module.css';
+import { Select } from '@/components/ui/Select';
 
 export function ReportContent({ submissionId }: { submissionId: string }) {
   const [open, setOpen] = useState(false);
@@ -42,13 +43,18 @@ export function ReportContent({ submissionId }: { submissionId: string }) {
           <button className={styles.reportClose} type="button" onClick={() => setOpen(false)} aria-label="Close report form"><X size={14} /></button>
           <strong>Send for private owner review</strong>
           <p>Use this for privacy, inappropriate content, copyright, or corrupted/incorrect submission data.</p>
-          <select value={category} onChange={(event) => setCategory(event.target.value)}>
-            <option value="privacy">Student privacy</option>
-            <option value="incorrect_content">Incorrect or corrupted content</option>
-            <option value="inappropriate">Inappropriate content</option>
-            <option value="copyright">Copyright concern</option>
-            <option value="other">Other</option>
-          </select>
+          <Select
+            value={category}
+            onValueChange={setCategory}
+            ariaLabel="Report category"
+            options={[
+              { value: 'privacy', label: 'Student privacy' },
+              { value: 'incorrect_content', label: 'Incorrect or corrupted content' },
+              { value: 'inappropriate', label: 'Inappropriate content' },
+              { value: 'copyright', label: 'Copyright concern' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
           <textarea value={reason} onChange={(event) => setReason(event.target.value)} minLength={10} maxLength={1000} required placeholder="Explain what the owner should review" />
           <button className={styles.reportSubmit} type="submit" disabled={status === 'sending' || status === 'sent'}>{status === 'sending' ? 'Sending...' : status === 'sent' ? 'Reported' : 'Submit report'}</button>
           {message && <span className={status === 'error' ? styles.reportError : styles.reportSuccess}>{message}</span>}

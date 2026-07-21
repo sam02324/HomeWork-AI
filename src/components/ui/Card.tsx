@@ -15,7 +15,7 @@ interface CardProps extends Omit<HTMLMotionProps<'div'>, 'ref' | 'children'> {
 export function Card({ hover = true, glass = true, className, children, ...props }: CardProps) {
   return (
     <motion.div
-      whileHover={hover ? { y: -4, boxShadow: 'var(--shadow-lg)' } : undefined}
+      whileHover={hover ? { y: -2, boxShadow: 'var(--shadow-md)' } : undefined}
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={`${styles.card} ${glass ? styles.glass : ''} ${className ?? ''}`}
       {...props}

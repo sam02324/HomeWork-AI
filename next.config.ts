@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Keep local browser QA hydrated when the dev server is reached by loopback IP.
+  allowedDevOrigins: ["127.0.0.1"],
   experimental: {
     cpus: 4, // Limit workers to avoid OOM on Railway's 32-core shared runner
     workerThreads: false,
