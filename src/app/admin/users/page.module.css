@@ -38,7 +38,11 @@
   border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--warning) 8%, transparent);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal);
 }
+
+.unassignedNote:hover { transform: translateY(-3px); box-shadow: var(--surface-shadow-hover); }
 
 .unassignedNote strong,
 .unassignedNote span {
@@ -59,13 +63,9 @@
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
+  gap: var(--space-4);
   margin-bottom: var(--space-6);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  perspective: 1100px;
 }
 
 .summaryCard {
@@ -75,11 +75,14 @@
   gap: 2px var(--space-3);
   min-height: 108px;
   padding: var(--space-4);
-  border-right: 1px solid var(--border-color);
-  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-gradient);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal), background var(--duration-fast);
 }
 
-.summaryCard:last-child { border-right: 0; }
+.summaryCard:hover { transform: translateY(-5px) rotateX(1deg); border-color: var(--glass-border-hover); background: var(--surface-gradient-hover); box-shadow: var(--surface-shadow-hover); }
 
 .summaryIcon {
   grid-row: 1 / span 2;
@@ -106,8 +109,8 @@
   overflow: hidden;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  background: var(--surface-gradient);
+  box-shadow: var(--surface-shadow);
 }
 
 .filters {
@@ -229,11 +232,12 @@
 }
 
 .tableScroll tbody tr {
-  transition: background 160ms ease;
+  transition: background 160ms ease, box-shadow 200ms ease;
 }
 
 .tableScroll tbody tr:hover {
   background: var(--glass-bg);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .identity {
@@ -433,9 +437,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .summaryCard:nth-child(2) { border-right: 0; }
-  .summaryCard:nth-child(-n + 2) { border-bottom: 1px solid var(--border-color); }
-
   .filters {
     grid-template-columns: 1fr 1fr;
   }
@@ -455,9 +456,6 @@
   .filters {
     grid-template-columns: 1fr;
   }
-
-  .summaryCard { border-right: 0; border-bottom: 1px solid var(--border-color); }
-  .summaryCard:last-child { border-bottom: 0; }
 
   .searchField {
     grid-column: auto;

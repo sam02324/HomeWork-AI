@@ -5,10 +5,9 @@
 .subtitle { font-size:0.875rem; color:var(--text-secondary); margin-top:var(--space-1); }
 
 /* Stats */
-.statsGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:var(--space-6); overflow:hidden; border:1px solid var(--border-color); border-radius:var(--radius-lg); background:var(--surface); box-shadow:var(--shadow-xs); }
-.statCard { position:relative; background:transparent; border-right:1px solid var(--border-color); padding:var(--space-5); text-align:left; transition:background var(--duration-fast) var(--ease-out); }
-.statCard:last-child { border-right:0; }
-.statCard:hover { background:var(--surface-hover); }
+.statsGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-4); margin-bottom:var(--space-6); perspective:1100px; }
+.statCard { position:relative; overflow:hidden; padding:var(--space-5); text-align:left; border:1px solid var(--glass-border); border-radius:var(--radius-lg); background:var(--surface-gradient); box-shadow:var(--surface-shadow); transform-style:preserve-3d; transition:transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal), background var(--duration-fast); }
+.statCard:hover { transform:translateY(-5px) rotateX(1deg); border-color:var(--glass-border-hover); background:var(--surface-gradient-hover); box-shadow:var(--surface-shadow-hover); }
 
 @media (prefers-reduced-motion: reduce) {
   .statCard::after { display:none; }
@@ -19,7 +18,8 @@
 
 /* Charts */
 .chartsGrid { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5); }
-.chartCard { background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:var(--space-5); position:relative; overflow:hidden; box-shadow:var(--shadow-xs); }
+.chartCard { background:var(--surface-gradient); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:var(--space-5); position:relative; overflow:hidden; box-shadow:var(--surface-shadow); transition:transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal); }
+.chartCard:hover { transform:translateY(-3px); border-color:var(--glass-border-hover); box-shadow:var(--surface-shadow-hover); }
 .chartTitle { display:flex; align-items:center; gap:var(--space-2); font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:var(--space-5); }
 
 /* Weak Topics */
@@ -44,5 +44,5 @@
 .riskTotal { display:flex; justify-content:space-between; margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--glass-border); font-size:0.85rem; color:var(--text-secondary); }
 .riskTotal strong { color:var(--text-primary); font-family:var(--font-mono); }
 
-@media (max-width:1024px) { .chartsGrid { grid-template-columns:1fr; } .statsGrid { grid-template-columns:repeat(2,1fr); } .statCard:nth-child(2) { border-right:0; } .statCard:nth-child(-n + 2) { border-bottom:1px solid var(--border-color); } }
+@media (max-width:1024px) { .chartsGrid { grid-template-columns:1fr; } .statsGrid { grid-template-columns:repeat(2,1fr); } }
 @media (max-width:768px) { .page { padding:var(--space-4); } }

@@ -131,13 +131,16 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-6);
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal);
 }
+
+.scoreCard:hover { transform: translateY(-4px) rotateX(1deg); border-color: var(--glass-border-hover); box-shadow: var(--surface-shadow-hover); }
 
 .scoreRing {
   position: relative;
@@ -182,12 +185,13 @@
 
 /* ── Override panel ── */
 .overridePanel {
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   padding: var(--space-4) var(--space-5);
+  box-shadow: var(--surface-shadow);
 }
 
 .overrideFields {
@@ -273,13 +277,13 @@
   min-height: clamp(440px, 58vh, 680px);
   display: flex;
   flex-direction: column;
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--surface-shadow);
 }
 
 .chatHeader {
@@ -357,7 +361,11 @@
   flex-direction: column;
   gap: var(--space-4);
   animation: fadeInUp var(--duration-slow) var(--ease-out) both;
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal);
 }
+
+.feedbackCard:hover { transform: translateY(-3px); border-color: var(--glass-border-hover); box-shadow: var(--surface-shadow-hover); }
 
 .feedbackTag {
   font-family: var(--font-mono);

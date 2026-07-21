@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { requireAdminLayout } from '@/lib/admin/auth';
 import { AdminNav } from './admin-nav';
+import { PageTransition } from '@/components/motion/PageTransition';
 import styles from './layout.module.css';
 
 export const metadata: Metadata = {
@@ -55,7 +56,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             Role verified server-side
           </div>
         </header>
-        <main className={styles.content}>{children}</main>
+        <main className={styles.content}>
+          <PageTransition className={styles.pageTransition}>{children}</PageTransition>
+        </main>
       </div>
     </div>
   );

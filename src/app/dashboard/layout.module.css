@@ -423,11 +423,17 @@
 .content {
   flex: 1;
   overflow-y: auto;
+  perspective: 1400px;
 }
 
 .content > * {
   width: min(100%, var(--content-max));
   margin-inline: auto;
+}
+
+.pageTransition {
+  min-height: 100%;
+  transform-origin: 50% 0;
 }
 
 /* ═══ RESPONSIVE ═══ */

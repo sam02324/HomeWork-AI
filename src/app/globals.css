@@ -93,6 +93,10 @@ html {
   --surface: hsl(0, 0%, 7%);
   --surface-raised: hsl(0, 0%, 9%);
   --surface-hover: hsl(0, 0%, 11%);
+  --surface-gradient: linear-gradient(145deg, hsl(0, 0%, 10%), hsl(0, 0%, 6%));
+  --surface-gradient-hover: linear-gradient(145deg, hsl(0, 0%, 12%), hsl(0, 0%, 7%));
+  --surface-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  --surface-shadow-hover: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 28px hsla(350, 80%, 55%, 0.06);
   --border-color: rgba(255, 255, 255, 0.09);
   --control-bg: hsl(0, 0%, 10%);
   --control-bg-hover: hsl(0, 0%, 12%);
@@ -179,6 +183,10 @@ html {
   --surface: hsl(0, 0%, 100%);
   --surface-raised: hsl(30, 8%, 98%);
   --surface-hover: hsl(30, 7%, 95%);
+  --surface-gradient: linear-gradient(145deg, hsl(0, 0%, 100%), hsl(30, 8%, 97%));
+  --surface-gradient-hover: linear-gradient(145deg, hsl(0, 0%, 100%), hsl(30, 8%, 95%));
+  --surface-shadow: 0 10px 28px rgba(38, 28, 22, 0.07);
+  --surface-shadow-hover: 0 18px 42px rgba(38, 28, 22, 0.12), 0 0 24px hsla(350, 80%, 48%, 0.05);
   --border-color: rgba(20, 16, 14, 0.09);
   --control-bg: hsl(30, 8%, 98%);
   --control-bg-hover: hsl(30, 7%, 95%);
@@ -440,6 +448,16 @@ ul, ol {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes softPulse {
+  0%, 100% { opacity: 0.62; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
 /* ===== ANIMATION UTILITIES ===== */
 .animate-fade-in {
   animation: fadeIn var(--duration-normal) var(--ease-out) both;
@@ -473,6 +491,15 @@ ul, ol {
 .stagger-children > *:nth-child(8) { animation-delay: 420ms; }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .stagger-children > * {
     animation: none;
   }

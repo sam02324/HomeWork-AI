@@ -208,25 +208,24 @@
 .statsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0;
+  gap: var(--space-4);
   margin-bottom: 40px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  perspective: 1100px;
 }
 
 .statCard {
-  background: transparent;
-  border-right: 1px solid var(--border-color);
+  background: var(--surface-gradient);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal), background var(--duration-fast);
 }
 
-.statCard:last-child { border-right: 0; }
+.statCard:hover { transform: translateY(-5px) rotateX(1deg); border-color: var(--glass-border-hover); background: var(--surface-gradient-hover); box-shadow: var(--surface-shadow-hover); }
 
 .statLabel {
   font-size: 0.85rem;
@@ -243,19 +242,17 @@
 }
 
 .submissionsSection {
-  background: var(--surface);
-  border: 1px solid var(--border-color);
+  background: var(--surface-gradient);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--surface-shadow);
 }
 
 @media (max-width: 900px) {
   .header { flex-direction: column; gap: var(--space-5); }
   .headerRight { width: 100%; flex-wrap: wrap; }
   .statsRow { grid-template-columns: repeat(2, 1fr); }
-  .statCard:nth-child(2) { border-right: 0; }
-  .statCard:nth-child(-n + 2) { border-bottom: 1px solid var(--border-color); }
 }
 
 @media (max-width: 640px) {

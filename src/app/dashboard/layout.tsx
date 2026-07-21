@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -25,6 +26,7 @@ import styles from './layout.module.css';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CommandPalette } from '@/components/CommandPalette';
 import { Tilt } from '@/components/motion/Tilt';
+import { PageTransition } from '@/components/motion/PageTransition';
 import { isAdminRole } from '@/lib/auth/roles';
 import { useTheme } from '@/components/providers/ThemeProvider';
 
@@ -100,7 +102,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Icon size={18} />
                   <span>{item.label}</span>
                   {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
-                  {active && <div className={styles.navIndicator} />}
+                  {active && (
+                    <motion.span
+                      className={styles.navIndicator}
+                      layoutId="dashboard-nav-indicator"
+                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    />
+                  )}
                 </Link>
               );
             })}
@@ -196,7 +204,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Content */}
           <main className={styles.content}>
-            {children}
+            <PageTransition className={styles.pageTransition}>{children}</PageTransition>
           </main>
           
           <CommandPalette open={searchOpen} setOpen={setSearchOpen} />

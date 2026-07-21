@@ -42,7 +42,7 @@
 }
 .primary:hover:not(:disabled) {
   background: var(--accent-hover);
-  box-shadow: var(--accent-glow);
+  box-shadow: 0 10px 26px hsla(350, 80%, 45%, 0.24), var(--accent-glow);
 }
 
 .secondary {

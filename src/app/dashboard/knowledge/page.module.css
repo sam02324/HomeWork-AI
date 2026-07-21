@@ -10,9 +10,10 @@
   align-items: center;
   text-align: center;
   padding: var(--space-16) var(--space-8);
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
+  box-shadow: var(--surface-shadow);
 }
 
 .illustration {
@@ -75,16 +76,18 @@
   position: relative;
   overflow: hidden;
   padding: var(--space-5);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   text-align: center;
-  transition: all var(--duration-fast) var(--ease-out);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-normal);
 }
 .featureCard:hover {
-  background: var(--glass-bg-hover);
+  background: var(--surface-gradient-hover);
   border-color: var(--glass-border-hover);
-  transform: translateY(-2px);
+  transform: translateY(-5px) rotateX(1deg);
+  box-shadow: var(--surface-shadow-hover);
 }
 
 /* one-shot diagonal sheen sweep on hover (not a loop) */

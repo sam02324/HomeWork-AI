@@ -43,9 +43,12 @@
   padding: var(--space-6);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
-  background: var(--glass-bg);
-  box-shadow: var(--glass-shadow);
+  background: var(--surface-gradient);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal);
 }
+
+.identityCard:hover { transform: translateY(-4px) rotateX(1deg); border-color: var(--glass-border-hover); box-shadow: var(--surface-shadow-hover); }
 
 .identityCard > span,
 .identityCard > strong,
@@ -86,24 +89,23 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
+  gap: var(--space-4);
   margin-bottom: var(--space-10);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  perspective: 1100px;
 }
 
 .checkCard {
   position: relative;
   min-height: 180px;
   padding: var(--space-6);
-  border-right: 1px solid var(--border-color);
-  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-gradient);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal), background var(--duration-fast);
 }
 
-.checkCard:last-child { border-right: 0; }
+.checkCard:hover { transform: translateY(-5px) rotateX(1deg); border-color: var(--glass-border-hover); background: var(--surface-gradient-hover); box-shadow: var(--surface-shadow-hover); }
 
 .icon {
   width: 42px;
@@ -141,7 +143,8 @@
   padding: clamp(28px, 5vw, 56px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--surface-gradient);
+  box-shadow: var(--surface-shadow);
 }
 
 .roadmap h2 {
@@ -176,7 +179,10 @@
   color: var(--text-secondary);
   background: var(--glass-bg);
   font-size: 0.82rem;
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), background var(--duration-fast);
 }
+
+.roadmap li:hover { transform: translateX(5px); border-color: var(--glass-border-hover); background: var(--glass-bg-hover); }
 
 .roadmap li span {
   color: var(--accent-text);
@@ -193,9 +199,6 @@
   .grid {
     grid-template-columns: 1fr;
   }
-
-  .checkCard { border-right: 0; border-bottom: 1px solid var(--border-color); }
-  .checkCard:last-child { border-bottom: 0; }
 
   .checkCard {
     min-height: 0;

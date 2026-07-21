@@ -279,11 +279,12 @@
 
 /* ── Templates ── */
 .templates {
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   margin-bottom: var(--space-6);
+  box-shadow: var(--surface-shadow);
 }
 
 .templatesHeader {
@@ -388,11 +389,12 @@
 }
 
 .criterionCard {
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: all var(--duration-fast) var(--ease-out);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal), background var(--duration-fast);
   /* newly added criteria pop in instead of appearing instantly */
   animation: criterionIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -403,6 +405,9 @@
 }
 .criterionCard:hover {
   border-color: var(--glass-border-hover);
+  background: var(--surface-gradient-hover);
+  box-shadow: var(--surface-shadow-hover);
+  transform: translateY(-3px);
 }
 
 .criterionHeader {
@@ -605,11 +610,14 @@
 }
 
 .reviewCard {
-  background: var(--glass-bg);
+  background: var(--surface-gradient);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
+  box-shadow: var(--surface-shadow);
+  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-fast), box-shadow var(--duration-normal);
 }
+.reviewCard:hover { transform: translateY(-3px); border-color: var(--glass-border-hover); box-shadow: var(--surface-shadow-hover); }
 .reviewCard h4 {
   font-size: 0.9rem;
   font-weight: 600;
@@ -850,6 +858,7 @@
 .sheetItem:hover {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
+  transform: translateX(3px);
 }
 .sheetItem.sheetItemActive {
   background: var(--accent-subtle);

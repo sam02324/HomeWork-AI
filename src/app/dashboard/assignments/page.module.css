@@ -14,7 +14,7 @@
 .searchInput { background:transparent; border:none; outline:none; color:var(--text-primary); font-size:0.85rem; width:100%; }
 .searchInput::placeholder { color:var(--text-tertiary); }
 .filterSelect { min-width:0; }
-.tableWrap { background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:visible; box-shadow:var(--shadow-xs); }
+.tableWrap { background:var(--surface-gradient); border:1px solid var(--glass-border); border-radius:var(--radius-lg); overflow:visible; box-shadow:var(--surface-shadow); }
 .table { width:100%; border-collapse:collapse; }
 .table th { text-align:left; padding:var(--space-3) var(--space-4); font-size:0.75rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--glass-border); background:rgba(255,255,255,0.02); }
 .table td { padding:var(--space-4); font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--glass-border); }

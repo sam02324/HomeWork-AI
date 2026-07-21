@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type HTMLMotionProps } from 'framer-motion';
+import { motion, useReducedMotion, type HTMLMotionProps } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import styles from './Button.module.css';
 
@@ -28,10 +28,13 @@ export function Button({
   className,
   ...props
 }: ButtonProps) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      whileHover={disabled || loading || reduceMotion ? undefined : { y: -1, scale: 1.01 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 20 }}
       className={`${styles.btn} ${styles[variant]} ${styles[size]} ${className ?? ''}`}
       disabled={disabled || loading}
       {...props}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   Bug,
   Flag,
@@ -50,6 +51,13 @@ export function AdminNav() {
             key={item.href}
             aria-current={isActive ? 'page' : undefined}
           >
+            {isActive && (
+              <motion.span
+                className={styles.navIndicator}
+                layoutId="admin-nav-indicator"
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              />
+            )}
             <Icon size={17} />
             <span>{item.label}</span>
           </Link>

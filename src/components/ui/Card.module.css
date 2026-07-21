@@ -1,11 +1,23 @@
 .card {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: var(--space-6);
   position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
 }
 
 .glass {
-  background: var(--surface-raised);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-xs);
+  background: var(--surface-gradient);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.065), transparent 44%);
+  pointer-events: none;
 }
