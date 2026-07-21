@@ -120,6 +120,64 @@ export const adminUserQuerySchema = z.object({
   limit: z.coerce.number().int().min(10).max(100).default(25),
 }).strict();
 
+export const adminUsageQuerySchema = z.object({
+  days: z.enum(['7', '30', '90']).default('30').transform(Number),
+}).strict();
+
+export const adminAccountQuerySchema = z.object({
+  q: z.string().trim().max(100).default(''),
+  status: z.enum(['all', 'active', 'suspended']).default('all'),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(10).max(100).default(25),
+}).strict();
+
+const adminActionReason = z.string().trim().min(5).max(500);
+
+export const adminAccountActionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('suspend'),
+    reason: adminActionReason,
+  }).strict(),
+  z.object({
+    action: z.literal('reinstate'),
+    reason: adminActionReason,
+  }).strict(),
+  z.object({
+    action: z.literal('adjust_credits'),
+    reason: adminActionReason,
+    delta: z.number().int().min(-100_000).max(100_000).refine((value) => value !== 0),
+  }).strict(),
+  z.object({
+    action: z.literal('set_quota'),
+    reason: adminActionReason,
+    monthlyQuota: z.number().int().min(0).max(100_000).nullable(),
+  }).strict(),
+  z.object({
+    action: z.literal('set_plan'),
+    reason: adminActionReason,
+    plan: z.enum(['unassigned', 'subscription', 'pay_per_submission']),
+  }).strict(),
+]);
+
+export const createContentReportSchema = z.object({
+  submissionId: z.string().uuid(),
+  category: z.enum(['privacy', 'incorrect_content', 'inappropriate', 'copyright', 'other']),
+  reason: z.string().trim().min(10).max(1000),
+}).strict();
+
+export const adminModerationQuerySchema = z.object({
+  status: z.enum(['all', 'open', 'resolved', 'dismissed']).default('open'),
+}).strict();
+
+export const adminModerationActionSchema = z.object({
+  action: z.enum(['remove', 'restore', 'resolve', 'dismiss']),
+  reason: z.string().trim().min(5).max(1000),
+}).strict();
+
+export const adminMonitoringTestSchema = z.object({
+  note: z.string().trim().max(100).default('Owner console diagnostic'),
+}).strict();
+
 /* ═══════════════════════════════════════
    Type Exports
    ═══════════════════════════════════════ */
@@ -133,3 +191,9 @@ export type CreateSubmission = z.infer<typeof createSubmissionSchema>;
 export type CreateGrade = z.infer<typeof createGradeSchema>;
 export type UpdateGrade = z.infer<typeof updateGradeSchema>;
 export type AdminUserQuery = z.infer<typeof adminUserQuerySchema>;
+export type AdminUsageQuery = z.infer<typeof adminUsageQuerySchema>;
+export type AdminAccountQuery = z.infer<typeof adminAccountQuerySchema>;
+export type AdminAccountAction = z.infer<typeof adminAccountActionSchema>;
+export type CreateContentReport = z.infer<typeof createContentReportSchema>;
+export type AdminModerationQuery = z.infer<typeof adminModerationQuerySchema>;
+export type AdminModerationAction = z.infer<typeof adminModerationActionSchema>;

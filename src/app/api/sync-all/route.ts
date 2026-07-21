@@ -8,6 +8,11 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import { google } from 'googleapis';
 import { PDFParse } from 'pdf-parse';
+import {
+  captureOperationalError,
+  getOperationalErrorCode,
+  recordSystemEvent,
+} from '@/lib/operations/system-events';
 
 function getR2Client() {
   return new S3Client({
@@ -286,6 +291,15 @@ export async function GET() {
 
   } catch (error) {
     // SEC-11: log internally, return a generic message.
+    const code = getOperationalErrorCode(error);
+    captureOperationalError(error, { category: 'sync', code });
+    await recordSystemEvent({
+      category: 'sync',
+      severity: 'error',
+      code,
+      message: 'Automatic Google Drive synchronization failed.',
+      userId,
+    });
     console.error('Sync-All error:', error);
     return NextResponse.json({ error: 'Sync failed. Please try again.' }, { status: 500 });
   }

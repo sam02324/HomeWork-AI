@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { classrooms, students, assignments, submissions, grades } from '@/db/schema';
-import { eq, and, sql, gte } from 'drizzle-orm';
+import { eq, and, sql, gte, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,8 @@ export async function GET() {
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
       .where(and(
         eq(assignments.teacherId, userId),
-        eq(submissions.status, 'pending')
+        eq(submissions.status, 'pending'),
+        isNull(submissions.removedAt)
       ));
 
     // Average score
@@ -43,7 +44,7 @@ export async function GET() {
       .from(grades)
       .innerJoin(submissions, eq(grades.submissionId, submissions.id))
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
-      .where(eq(assignments.teacherId, userId));
+      .where(and(eq(assignments.teacherId, userId), isNull(submissions.removedAt)));
 
     // Graded this week
     const oneWeekAgo = new Date();
@@ -56,7 +57,8 @@ export async function GET() {
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
       .where(and(
         eq(assignments.teacherId, userId),
-        gte(grades.gradedAt, oneWeekAgo)
+        gte(grades.gradedAt, oneWeekAgo),
+        isNull(submissions.removedAt)
       ));
 
     const gradedThisWeek = weekStats?.total || 0;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { assignments, submissions, classrooms } from '@/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
 import { updateAssignmentSchema } from '@/lib/validations';
 
@@ -30,7 +30,7 @@ export async function GET(_req: Request, { params }: Params) {
         pendingCount: sql<number>`COUNT(*) FILTER (WHERE ${submissions.status} = 'pending')::int`,
       })
       .from(submissions)
-      .where(eq(submissions.assignmentId, id));
+      .where(and(eq(submissions.assignmentId, id), isNull(submissions.removedAt)));
 
     return successResponse({
       ...assignment,

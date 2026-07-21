@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { assignments, submissions, grades } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, rateLimitGuard } from '@/lib/utils';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
@@ -46,7 +46,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // 2. Get Submission and Grade
     const submission = await db.query.submissions.findFirst({
-      where: and(eq(submissions.id, subId), eq(submissions.assignmentId, id)),
+      where: and(
+        eq(submissions.id, subId),
+        eq(submissions.assignmentId, id),
+        isNull(submissions.removedAt)
+      ),
     });
 
     if (!submission) return errorResponse('Submission not found', 404);

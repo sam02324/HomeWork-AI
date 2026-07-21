@@ -23,7 +23,7 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://*.clerk.accounts.dev https://api.anthropic.com https://*.neon.tech",
+      "connect-src 'self' https://*.clerk.accounts.dev https://api.anthropic.com https://*.neon.tech https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
       "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
       "object-src 'none'",
       "base-uri 'self'",

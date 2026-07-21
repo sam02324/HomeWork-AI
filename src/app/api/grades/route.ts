@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { grades, submissions } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
   getAuthUserId,
   errorResponse,
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   try {
     // Verify submission exists and belongs to the teacher's assignment.
     const submission = await db.query.submissions.findFirst({
-      where: eq(submissions.id, body.submissionId),
+      where: and(eq(submissions.id, body.submissionId), isNull(submissions.removedAt)),
       with: { assignment: true },
     });
 
@@ -38,15 +38,10 @@ export async function POST(request: Request) {
     const gradeLetter = getGradeLetter(percentage);
     const cleanNote = stripHtml(body.teacherNote);
 
-    // Transaction: grade write + submission status flip must stay consistent.
-    // NOTE (SEC-20): on the neon-http driver, db.transaction() is sent as Neon's
-    // batch API — one atomic HTTP round-trip. It commits or rolls back as a unit,
-    // but does NOT support interactive read-then-rollback (no conditional logic
-    // between statements based on intermediate reads). Keep the body a straight
-    // sequence of writes.
-    const result = await db.transaction(async (tx) => {
-      const [newGrade] = await tx
-        .insert(grades)
+    // Neon HTTP's callback transaction throws at runtime. batch() is its atomic
+    // transaction primitive, keeping both writes in one commit.
+    const [gradeRows] = await db.batch([
+      db.insert(grades)
         .values({
           submissionId: body.submissionId,
           totalScore: body.teacherOverrideScore.toString(),
@@ -73,17 +68,13 @@ export async function POST(request: Request) {
             reviewedByTeacher: true,
           },
         })
-        .returning();
-
-      await tx
-        .update(submissions)
+        .returning(),
+      db.update(submissions)
         .set({ status: 'graded' })
-        .where(eq(submissions.id, body.submissionId));
+        .where(eq(submissions.id, body.submissionId)),
+    ]);
 
-      return newGrade;
-    });
-
-    return successResponse(result, 201);
+    return successResponse(gradeRows[0], 201);
   } catch (error) {
     return handleApiError(error, 'POST /api/grades');
   }

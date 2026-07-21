@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { assignments, submissions } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, handleApiError } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
@@ -34,7 +34,7 @@ export async function GET(_req: Request, { params }: Params) {
 
     // Single query with relations — avoids N+1 over submissions.
     const rows = await db.query.submissions.findMany({
-      where: eq(submissions.assignmentId, id),
+      where: and(eq(submissions.assignmentId, id), isNull(submissions.removedAt)),
       with: { student: true, grade: true },
     });
 

@@ -64,33 +64,67 @@ frontend. Do not assign `admin` to any other user.
   `pay_per_submission`. Existing users remain `unassigned` until an owner action or
   billing integration explicitly changes them; the UI never guesses a plan.
 
-### Stage 3: usage and cost monitoring
+### Stage 3: usage and cost monitoring (implemented)
 
-- Add an immutable AI usage event per grading call with input/output tokens,
-  model, status, latency, and a price snapshot.
-- Derive daily/weekly totals and anomaly flags from that ledger.
-- Never estimate historical cost from today's model price.
+- `/admin/usage` and `/api/admin/usage` aggregate the immutable
+  `ai_usage_events` ledger by day, model, and user.
+- Every attempted Anthropic grading call records input/output tokens, result,
+  latency, model pricing, and USD/INR rate snapshots. Historical cost never
+  changes when the current price or exchange rate changes.
+- The seven-day user view flags at least 20 calls that also exceed three times
+  the active-user median. This is a review signal, not an automatic suspension.
 
-### Stage 4: system health
+### Stage 4: system health (implemented)
 
-- Add sanitized system/job events and health probes for Neon and Clerk.
-- Report pending/grading submission counts as backlog while grading remains an
-  in-request workflow; do not claim a separate queue exists.
+- `/admin/health` probes Neon and Clerk, verifies Anthropic/Google configuration,
+  and shows the sanitized `system_events` ledger.
+- Pending, grading, and failed submissions are explicitly labeled as an
+  in-request backlog. GradeAI does not currently run a separate job queue.
+- Grading and Google synchronization failures are captured without request
+  bodies, student work, secrets, or stack traces in the database event.
 
-### Stage 5: manual account actions
+### Stage 5: manual account actions (implemented)
 
-- Add suspension, credits/quota fields, and immutable admin audit events.
-- Re-check admin access inside every action and record actor, target, reason,
-  before/after values, and timestamp in one transaction.
+- `/admin/accounts` provides search, account details, read-only classroom and
+  assignment support views, plan changes, credits, quotas, and suspension.
+- Suspension calls Clerk `banUser`/`unbanUser`, then atomically batches local
+  state and an `admin_audit_events` row. A failed local commit attempts to
+  compensate the Clerk change.
+- The owner cannot suspend their own administrator account. Credit balances
+  cannot become negative. Every mutation requires a reason.
 
-### Stage 6: moderation
+### Stage 6: moderation (implemented)
 
-- Add teacher-created reports and a restricted review queue.
-- Use soft removal plus an audit trail; avoid copying student content into logs.
+- Teachers can report a submission from its review page through `/api/reports`.
+- `/admin/moderation` supports resolve, dismiss, soft remove, and restore.
+  Removed submissions are excluded from grading, analytics, exports, chat, and
+  teacher submission APIs without deleting the evidence or audit trail.
+- The owner UI shows at most an 800-character sanitized text preview. Student
+  content is never copied into audit, system-event, or Sentry payloads.
 
-### Stage 7: Sentry
+### Stage 7: Sentry (implemented)
 
-- Add server/client/edge error capture, release/environment tags, source maps,
-  and an admin monitoring summary after the event taxonomy in Stage 4 exists.
-- Alert rules and any Sentry-backed admin features will be scoped before this
-  stage so the app does not expose project credentials to the browser.
+- `@sentry/nextjs` initializes client, Node, edge, router transition, request,
+  and global React error capture. Production traces are sampled; replay and
+  application log capture are disabled.
+- Before-send hooks remove request bodies, cookies, headers, and user PII.
+- `/admin/monitoring` reports configuration state without returning DSNs or
+  tokens. Its protected diagnostic event is rate limited and audited.
+
+### Sentry deployment variables
+
+Create a Sentry Next.js project, then add these variables in Railway:
+
+```text
+NEXT_PUBLIC_SENTRY_DSN=public project DSN
+SENTRY_DSN=the same project DSN
+SENTRY_ORG=organization slug
+SENTRY_PROJECT=project slug
+SENTRY_AUTH_TOKEN=CI source-map upload token
+SENTRY_ENVIRONMENT=production
+```
+
+`SENTRY_AUTH_TOKEN` is server/build-only and must never use a `NEXT_PUBLIC_`
+prefix. Set `SENTRY_DASHBOARD_URL` only when the default organization issues URL
+is not correct. After deployment, open `/admin/monitoring` and send one
+diagnostic event to verify delivery and source mapping.

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { students, submissions, grades, assignments } from '@/db/schema';
-import { eq, sql, desc } from 'drizzle-orm';
+import { and, eq, sql, desc, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
@@ -45,7 +45,7 @@ export async function GET(_req: Request, { params }: Params) {
       .from(grades)
       .innerJoin(submissions, eq(grades.submissionId, submissions.id))
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
-      .where(eq(submissions.studentId, id))
+      .where(and(eq(submissions.studentId, id), isNull(submissions.removedAt)))
       .orderBy(desc(grades.gradedAt));
 
     // Calculate average score
@@ -62,7 +62,7 @@ export async function GET(_req: Request, { params }: Params) {
     const [subStats] = await db
       .select({ total: sql<number>`COUNT(*)::int` })
       .from(submissions)
-      .where(eq(submissions.studentId, id));
+      .where(and(eq(submissions.studentId, id), isNull(submissions.removedAt)));
 
     // Score trend (last 10)
     const scoreTrend = studentGrades.slice(0, 10).reverse().map((g) => ({

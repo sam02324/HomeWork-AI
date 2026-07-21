@@ -21,6 +21,11 @@ import { fetchSheetRows, downloadDriveFile, GoogleConnectionError } from '@/lib/
 import type { FormResponse } from '@/lib/google-sheets';
 import { randomUUID } from 'crypto';
 import { PDFParse } from 'pdf-parse';
+import {
+  captureOperationalError,
+  getOperationalErrorCode,
+  recordSystemEvent,
+} from '@/lib/operations/system-events';
 
 /* ═══════════════════════════════════════
    R2 Upload Helper (reuse from upload route)
@@ -343,6 +348,22 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
+    const code = getOperationalErrorCode(error);
+    captureOperationalError(error, {
+      category: 'sync',
+      code,
+      entityType: 'assignment',
+      entityId: body.assignmentId,
+    });
+    await recordSystemEvent({
+      category: 'sync',
+      severity: 'error',
+      code,
+      message: 'Google Sheet submission synchronization failed.',
+      userId,
+      entityType: 'assignment',
+      entityId: body.assignmentId,
+    });
     return handleApiError(error, 'POST /api/sync-submissions');
   }
 }

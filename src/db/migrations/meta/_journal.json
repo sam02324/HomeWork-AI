@@ -36,6 +36,13 @@
       "when": 1784641522764,
       "tag": "0004_admin_account_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784644277185,
+      "tag": "0005_admin_operations",
+      "breakpoints": true
     }
   ]
 }

@@ -3,8 +3,10 @@ import 'server-only';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { notFound, redirect } from 'next/navigation';
 import type { NextResponse } from 'next/server';
+import { db } from '@/db';
+import { users } from '@/db/schema';
 import { errorResponse } from '@/lib/utils';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isAdminRole, normalizeAppRole } from '@/lib/auth/roles';
 
 export interface AdminPrincipal {
   userId: string;
@@ -42,18 +44,47 @@ async function readAdminSession(): Promise<
 async function verifyAdminMetadata(userId: string): Promise<AdminPrincipal | null> {
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
+  const primaryEmail = user.emailAddresses.find(
+    (email) => email.id === user.primaryEmailAddressId
+  )?.emailAddress;
+  const email = primaryEmail ?? user.emailAddresses[0]?.emailAddress ?? '';
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'GradeAI owner';
+  const liveRole = normalizeAppRole(user.publicMetadata.role);
+
+  // Clerk remains the authorization source. This upsert only repairs reporting
+  // drift when a webhook was delayed or missed; the database can never grant access.
+  if (email) {
+    try {
+      await db.insert(users).values({
+        id: user.id,
+        name,
+        email,
+        avatarUrl: user.imageUrl || null,
+        role: liveRole,
+      }).onConflictDoUpdate({
+        target: users.id,
+        set: {
+          name,
+          email,
+          avatarUrl: user.imageUrl || null,
+          role: liveRole,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      // Keep the Clerk boundary usable during a database incident so the owner
+      // can still reach the health page and see the failed Neon probe.
+      console.error('Admin reporting-role reconciliation failed:', error);
+    }
+  }
 
   // The Backend API check makes role removal effective even with a stale session claim.
   if (!isAdminRole(user.publicMetadata.role)) return null;
 
-  const primaryEmail = user.emailAddresses.find(
-    (email) => email.id === user.primaryEmailAddressId
-  )?.emailAddress;
-
   return {
     userId: user.id,
-    name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'GradeAI owner',
-    email: primaryEmail ?? user.emailAddresses[0]?.emailAddress ?? '',
+    name,
+    email,
     imageUrl: user.imageUrl || null,
     role: 'admin',
   };

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissions, students, grades, assignments } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
@@ -57,7 +57,7 @@ export async function GET(_req: Request, { params }: Params) {
       .from(submissions)
       .innerJoin(students, eq(submissions.studentId, students.id))
       .leftJoin(grades, eq(submissions.id, grades.submissionId))
-      .where(eq(submissions.assignmentId, id))
+      .where(and(eq(submissions.assignmentId, id), isNull(submissions.removedAt)))
       .orderBy(desc(submissions.submittedAt))
       .limit(200); // BUG-8: cap response size for large classes
 

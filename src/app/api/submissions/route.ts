@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissions, assignments, students } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
 import { createSubmissionSchema } from '@/lib/validations';
 
@@ -25,7 +25,7 @@ export async function GET() {
       .from(submissions)
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
       .innerJoin(students, eq(submissions.studentId, students.id))
-      .where(eq(assignments.teacherId, userId));
+      .where(and(eq(assignments.teacherId, userId), isNull(submissions.removedAt)));
 
     return successResponse(result);
   } catch (error) {

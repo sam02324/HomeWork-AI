@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Bot, Save, Sparkles } from 'lucide-react';
 import { useAssignment, useAssignmentSubmissions } from '@/lib/api-client';
 import { Reveal } from '@/components/motion/Reveal';
+import { ReportContent } from './report-content';
 import styles from './page.module.css';
 
 interface ChatMessage {
@@ -235,6 +236,7 @@ export default function InteractiveReviewPage() {
           <p className="page-sub">
             {assignmentData.title} · Roll No: {submission.student?.rollNumber || 'N/A'}
           </p>
+          <ReportContent submissionId={subId} />
         </div>
 
         <div className={styles.scoreCard}>

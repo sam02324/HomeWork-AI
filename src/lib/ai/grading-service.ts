@@ -1,12 +1,18 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { db } from '@/db';
-import { grades, submissions, assignments } from '@/db/schema';
+import { aiUsageEvents, grades, submissions, assignments, systemEvents } from '@/db/schema';
 import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
 import { getGradeLetter, assertAllowedFileUrl } from '@/lib/utils';
 import { getEffectiveRubric } from './grading-rubric';
+import { createAiUsageEventValue } from '@/lib/operations/ai-usage';
+import {
+  captureOperationalError,
+  createSystemEventValue,
+  getOperationalErrorCode,
+} from '@/lib/operations/system-events';
 
 const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
@@ -100,6 +106,10 @@ export async function gradeSubmission(
 ): Promise<void> {
   const rubric = getEffectiveRubric(assignment);
   const anthropic = getClient();
+  const model = process.env.ANTHROPIC_MODEL || DEFAULT_ANTHROPIC_MODEL;
+  let aiCallStartedAt: number | null = null;
+  let inputTokens = 0;
+  let outputTokens = 0;
 
   // 1. Update submission status to 'grading'
   await db.update(submissions)
@@ -246,7 +256,7 @@ export async function gradeSubmission(
       throw new Error('Anthropic API Key is missing. Please add ANTHROPIC_API_KEY to your environment variables.');
     }
 
-    const model = process.env.ANTHROPIC_MODEL || DEFAULT_ANTHROPIC_MODEL;
+    aiCallStartedAt = Date.now();
     const response = await anthropic.messages.create({
       model,
       max_tokens: 4000,
@@ -263,7 +273,9 @@ export async function gradeSubmission(
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
       .map((block) => block.text)
       .join('');
-    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+    inputTokens = response.usage?.input_tokens || 0;
+    outputTokens = response.usage?.output_tokens || 0;
+    const tokensUsed = inputTokens + outputTokens;
 
     // Extract JSON from response (handle markdown code blocks)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -285,23 +297,11 @@ export async function gradeSubmission(
     // Upsert (SEC-8 / BUG-3): re-grading an errored submission overwrites the
     // existing row instead of crashing on the submissionId UNIQUE constraint.
     // Teacher override fields are intentionally left untouched.
-    await db.insert(grades).values({
-      submissionId: submission.id,
-      totalScore: result.totalScore.toString(),
-      maxScore: assignment.maxScore,
-      gradeLetter,
-      feedback: result.feedback,
-      criteriaScores: result.criteriaScores,
-      strengths: result.strengths,
-      improvements: result.improvements,
-      aiModel: model,
-      aiTokensUsed: tokensUsed,
-      aiDetectionScore,
-      aiDetectionFlag,
-      aiRationale: result.aiRationale,
-    }).onConflictDoUpdate({
-      target: grades.submissionId,
-      set: {
+    // Neon HTTP has no callback transactions; batch() is the driver's atomic
+    // transaction primitive, so grade, status, and usage ledger commit together.
+    await db.batch([
+      db.insert(grades).values({
+        submissionId: submission.id,
         totalScore: result.totalScore.toString(),
         maxScore: assignment.maxScore,
         gradeLetter,
@@ -314,20 +314,89 @@ export async function gradeSubmission(
         aiDetectionScore,
         aiDetectionFlag,
         aiRationale: result.aiRationale,
-        gradedAt: new Date(),
-      },
-    });
-
-    // 9. Update submission status to 'graded'
-    await db.update(submissions)
-      .set({ status: 'graded' })
-      .where(eq(submissions.id, submission.id));
+      }).onConflictDoUpdate({
+        target: grades.submissionId,
+        set: {
+          totalScore: result.totalScore.toString(),
+          maxScore: assignment.maxScore,
+          gradeLetter,
+          feedback: result.feedback,
+          criteriaScores: result.criteriaScores,
+          strengths: result.strengths,
+          improvements: result.improvements,
+          aiModel: model,
+          aiTokensUsed: tokensUsed,
+          aiDetectionScore,
+          aiDetectionFlag,
+          aiRationale: result.aiRationale,
+          gradedAt: new Date(),
+        },
+      }),
+      db.update(submissions)
+        .set({ status: 'graded' })
+        .where(eq(submissions.id, submission.id)),
+      db.insert(aiUsageEvents).values(createAiUsageEventValue({
+        userId: assignment.teacherId,
+        assignmentId: assignment.id,
+        submissionId: submission.id,
+        model,
+        status: 'success',
+        inputTokens,
+        outputTokens,
+        latencyMs: Date.now() - aiCallStartedAt,
+      })),
+    ]);
 
   } catch (error) {
-    // Mark submission as error
-    await db.update(submissions)
-      .set({ status: 'error' })
-      .where(eq(submissions.id, submission.id));
+    const errorCode = getOperationalErrorCode(error);
+    const event = createSystemEventValue({
+      category: 'grading',
+      severity: 'error',
+      code: errorCode,
+      message: getSafeGradingError(error),
+      userId: assignment.teacherId,
+      entityType: 'submission',
+      entityId: submission.id,
+      metadata: { assignmentId: assignment.id, model },
+    });
+
+    captureOperationalError(error, {
+      category: 'grading',
+      code: errorCode,
+      entityType: 'submission',
+      entityId: submission.id,
+    });
+
+    try {
+      const statusUpdate = db.update(submissions)
+        .set({ status: 'error' })
+        .where(eq(submissions.id, submission.id));
+
+      if (aiCallStartedAt !== null) {
+        await db.batch([
+          statusUpdate,
+          db.insert(aiUsageEvents).values(createAiUsageEventValue({
+            userId: assignment.teacherId,
+            assignmentId: assignment.id,
+            submissionId: submission.id,
+            model,
+            status: 'error',
+            inputTokens,
+            outputTokens,
+            latencyMs: Date.now() - aiCallStartedAt,
+            errorCode,
+          })),
+          db.insert(systemEvents).values(event),
+        ]);
+      } else {
+        await db.batch([
+          statusUpdate,
+          db.insert(systemEvents).values(event),
+        ]);
+      }
+    } catch (recordingError) {
+      console.error(`Failed to persist grading failure state for ${submission.id}:`, recordingError);
+    }
 
     console.error(`Grading failed for submission ${submission.id}:`, error);
     throw error;
@@ -390,7 +459,7 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<Grading
 
   // Get pending submissions
   const pendingSubmissions = await db.query.submissions.findMany({
-    where: eq(submissions.assignmentId, assignmentId),
+    where: and(eq(submissions.assignmentId, assignmentId), isNull(submissions.removedAt)),
   });
 
   const toGrade = pendingSubmissions.filter((s) => s.status === 'pending' || s.status === 'error');
@@ -438,7 +507,7 @@ export async function gradeAllSubmissions(assignmentId: string): Promise<Grading
  */
 async function finalizeAssignmentStatus(assignmentId: string): Promise<void> {
   const current = await db.query.submissions.findMany({
-    where: eq(submissions.assignmentId, assignmentId),
+    where: and(eq(submissions.assignmentId, assignmentId), isNull(submissions.removedAt)),
   });
 
   const fullyGraded =

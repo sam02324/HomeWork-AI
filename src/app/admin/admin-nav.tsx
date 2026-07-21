@@ -16,11 +16,11 @@ import styles from './layout.module.css';
 const ADMIN_NAV = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard, available: true },
   { href: '/admin/users', label: 'Users', icon: Users, available: true },
-  { href: '/admin/usage', label: 'Usage & costs', icon: Gauge, available: false },
-  { href: '/admin/health', label: 'System health', icon: HeartPulse, available: false },
-  { href: '/admin/accounts', label: 'Account actions', icon: UserCog, available: false },
-  { href: '/admin/moderation', label: 'Moderation', icon: Flag, available: false },
-  { href: '/admin/monitoring', label: 'Sentry', icon: Bug, available: false },
+  { href: '/admin/usage', label: 'Usage & costs', icon: Gauge, available: true },
+  { href: '/admin/health', label: 'System health', icon: HeartPulse, available: true },
+  { href: '/admin/accounts', label: 'Account actions', icon: UserCog, available: true },
+  { href: '/admin/moderation', label: 'Moderation', icon: Flag, available: true },
+  { href: '/admin/monitoring', label: 'Sentry', icon: Bug, available: true },
 ];
 
 export function AdminNav() {
