@@ -3,6 +3,7 @@ import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { normalizeAppRole } from '@/lib/auth/roles';
 
 /** POST /api/webhooks/clerk — Sync Clerk user events to database */
 export async function POST(request: NextRequest) {
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
         const data = event.data;
         const email = data.email_addresses?.[0]?.email_address || '';
         const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || 'User';
+        const role = normalizeAppRole(data.public_metadata?.role);
 
         await db
           .insert(users)
@@ -34,7 +36,7 @@ export async function POST(request: NextRequest) {
             email,
             name,
             avatarUrl: data.image_url || null,
-            role: 'teacher', // Default role
+            role,
           })
           .onConflictDoUpdate({
             target: users.id,
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
               email,
               name,
               avatarUrl: data.image_url || null,
+              role,
               updatedAt: new Date(),
             },
           });

@@ -19,12 +19,14 @@ import {
   X,
   ChevronRight,
   LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CommandPalette } from '@/components/CommandPalette';
 import { Cursor } from '@/components/motion/Cursor';
 import { Tilt } from '@/components/motion/Tilt';
+import { isAdminRole } from '@/lib/auth/roles';
 
 /* ═══ Theme Context ═══ */
 const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
@@ -39,12 +41,16 @@ const NAV_ITEMS = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
+const ADMIN_NAV_ITEM = { href: '/admin', label: 'Owner Console', icon: ShieldCheck, badge: 'Admin' };
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const { user } = useUser();
   const { signOut } = useClerk();
+  const isAdmin = isAdminRole(user?.publicMetadata.role);
+  const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
   // Search/Command palette state
   const [searchOpen, setSearchOpen] = useState(false);
@@ -93,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <nav className={styles.nav}>
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
               return (
@@ -117,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className={styles.userAvatar}>{initials}</div>
               <div className={styles.userInfo}>
                 <div className={styles.userName}>{fullName}</div>
-                <div className={styles.userRole}>Teacher</div>
+                <div className={styles.userRole}>{isAdmin ? 'Owner admin' : 'Teacher'}</div>
               </div>
               <button
                 onClick={() => signOut({ redirectUrl: '/' })}

@@ -3,6 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { normalizeAppRole } from '@/lib/auth/roles';
 
 /* ═══════════════════════════════════════
    Auth
@@ -30,7 +31,7 @@ export async function getAuthUserId(): Promise<string | NextResponse> {
         id: userId,
         email: clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@clerk.dev`,
         name: [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(' ') || 'Teacher',
-        role: 'teacher',
+        role: normalizeAppRole(clerkUser?.publicMetadata.role),
       }).onConflictDoNothing();
     }
   } catch (err) {

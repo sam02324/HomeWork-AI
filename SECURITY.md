@@ -1,23 +1,19 @@
 # Security Notes
 
-## Access model (SEC-18 — open item, product decision needed)
+## Access model (SEC-18)
 
-Every authenticated Clerk user is auto-provisioned as a **`teacher`** on first
-request (`getAuthUserId()` in `src/lib/utils.ts`, and the Clerk webhook in
-`src/app/api/webhooks/clerk/route.ts`). There is currently **no** admin/student
-role enforcement: anyone who can sign up gets a full teacher workspace.
+Every authenticated Clerk user is auto-provisioned as a **`teacher`** unless
+their Clerk public metadata contains a recognized role. Admin access uses Clerk
+`publicMetadata.role = "admin"` plus a custom session claim; it never relies on
+the local database role or a hardcoded email/user ID.
 
-This is intentional for the current single-tenant / invite-gated deployment, but
-it is **not** a substitute for an authorization model. Before opening signup
-broadly, decide and implement:
+The `/admin` layout and every admin page enforce the session role. Every admin
+page and `/api/admin/*` route also reads the current Clerk Backend user and
+re-checks public metadata, making stale claims insufficient after revocation.
+See `docs/admin-panel.md` for the owner setup and enforcement contract.
 
-- Who is allowed to become a `teacher` (invite/allowlist, domain restriction, or
-  admin approval).
-- Whether `student`/`admin` roles are needed, and gate routes accordingly.
-- An admin surface for role management.
-
-All data-access routes are already scoped by `teacherId`, so one teacher cannot
-read another's data — but the provisioning policy itself is the open question.
+Teacher data-access routes remain scoped by `teacherId`. Signup policy for who
+may become a teacher is still a separate product decision before broad access.
 
 ## Rate limiting (SEC-22 — accepted limitation)
 
