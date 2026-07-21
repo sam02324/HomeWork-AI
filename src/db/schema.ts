@@ -17,6 +17,11 @@ import { relations } from 'drizzle-orm';
    ═══════════════════════════════════════ */
 
 export const userRoleEnum = pgEnum('user_role', ['teacher', 'student', 'admin']);
+export const accountPlanEnum = pgEnum('account_plan', [
+  'unassigned',
+  'subscription',
+  'pay_per_submission',
+]);
 export const assignmentStatusEnum = pgEnum('assignment_status', ['draft', 'published', 'grading', 'graded']);
 export const submissionTypeEnum = pgEnum('submission_type', ['any', 'pdf', 'image', 'text']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'grading', 'graded', 'error']);
@@ -31,11 +36,15 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
   role: userRoleEnum('role').notNull().default('teacher'),
+  accountPlan: accountPlanEnum('account_plan').notNull().default('unassigned'),
   orgName: text('org_name'),
   avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  accountPlanIdx: index('users_account_plan_idx').on(table.accountPlan),
+  roleIdx: index('users_role_idx').on(table.role),
+}));
 
 /** Classrooms */
 export const classrooms = pgTable('classrooms', {

@@ -112,6 +112,14 @@ export const assignmentQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+export const adminUserQuerySchema = z.object({
+  q: z.string().trim().max(100).default(''),
+  plan: z.enum(['all', 'unassigned', 'subscription', 'pay_per_submission']).default('all'),
+  role: z.enum(['all', 'teacher', 'student', 'admin']).default('all'),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(10).max(100).default(25),
+}).strict();
+
 /* ═══════════════════════════════════════
    Type Exports
    ═══════════════════════════════════════ */
@@ -124,3 +132,4 @@ export type UpdateAssignment = z.infer<typeof updateAssignmentSchema>;
 export type CreateSubmission = z.infer<typeof createSubmissionSchema>;
 export type CreateGrade = z.infer<typeof createGradeSchema>;
 export type UpdateGrade = z.infer<typeof updateGradeSchema>;
+export type AdminUserQuery = z.infer<typeof adminUserQuerySchema>;

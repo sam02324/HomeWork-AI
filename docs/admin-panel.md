@@ -51,12 +51,18 @@ frontend. Do not assign `admin` to any other user.
 
 ## Build roadmap
 
-### Stage 2: user and account overview
+### Stage 2: user and account overview (implemented)
 
-- Add explicit account-plan fields; no plan is inferred from UI copy.
-- Add a paginated admin users API with search/filter validation.
-- Aggregate classroom, student, and assignment counts with grouped queries.
-- Show Clerk creation/last-active timestamps without exposing Clerk metadata.
+- `/admin/users` lists every Clerk identity with signup and last-active timestamps.
+- `/api/admin/users` independently enforces the admin role and returns the standard
+  response envelope.
+- Search, plan/role filters, and pagination are validated by
+  `adminUserQuerySchema`; unknown query keys are rejected by the API.
+- Clerk is the identity/activity source. Neon provides the explicit account plan
+  plus grouped classroom, student, and assignment counts.
+- `users.account_plan` is one of `unassigned`, `subscription`, or
+  `pay_per_submission`. Existing users remain `unassigned` until an owner action or
+  billing integration explicitly changes them; the UI never guesses a plan.
 
 ### Stage 3: usage and cost monitoring
 

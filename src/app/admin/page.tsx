@@ -7,6 +7,7 @@ import {
   LockKeyhole,
   ServerCog,
   ShieldCheck,
+  Users,
 } from 'lucide-react';
 import { requireAdminPage } from '@/lib/admin/auth';
 import styles from './page.module.css';
@@ -30,7 +31,6 @@ const SECURITY_CHECKS = [
 ];
 
 const NEXT_STAGES = [
-  'User and account overview',
   'Usage and cost monitoring',
   'System health',
   'Manual account actions and audit log',
@@ -45,7 +45,7 @@ export default async function AdminPage() {
     <div className={styles.page}>
       <section className={styles.hero}>
         <div>
-          <span className={styles.kicker}><LockKeyhole size={14} /> Stage 1 complete</span>
+          <span className={styles.kicker}><LockKeyhole size={14} /> Stages 1 and 2 live</span>
           <h1>Admin control center</h1>
           <p>
             A separate owner-only surface for operating GradeAI. Every page and API
@@ -79,20 +79,19 @@ export default async function AdminPage() {
       <section className={styles.roadmap}>
         <div>
           <span className={styles.sectionLabel}>Build sequence</span>
-          <h2>Security boundary first. Operations next.</h2>
+          <h2>Security boundary set. User operations online.</h2>
           <p>
-            Later stages remain disabled until their database models and server APIs are
-            implemented. This prevents placeholder controls from implying capabilities that
-            do not exist yet.
+            The user overview now merges live Clerk identities with GradeAI account totals.
+            Later stages remain disabled until their database models and server APIs exist.
           </p>
-          <Link href="/api/admin/session" className={styles.verifyLink}>
-            Verify admin API guard <ArrowRight size={15} />
+          <Link href="/admin/users" className={styles.verifyLink}>
+            <Users size={15} /> Open user overview <ArrowRight size={15} />
           </Link>
         </div>
         <ol>
           {NEXT_STAGES.map((stage, index) => (
             <li key={stage}>
-              <span>{String(index + 2).padStart(2, '0')}</span>
+              <span>{String(index + 3).padStart(2, '0')}</span>
               {stage}
             </li>
           ))}

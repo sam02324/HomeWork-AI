@@ -22,6 +22,20 @@
       "when": 1780940707146,
       "tag": "0002_silent_nick_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781178824941,
+      "tag": "0003_add_fk_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784641522764,
+      "tag": "0004_admin_account_plan",
+      "breakpoints": true
     }
   ]
 }

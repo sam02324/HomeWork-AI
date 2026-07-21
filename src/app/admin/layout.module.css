@@ -78,6 +78,7 @@
   gap: 3px;
 }
 
+.navLink,
 .navActive,
 .navDisabled {
   display: flex;
@@ -87,6 +88,17 @@
   padding: 0 var(--space-3);
   border-radius: var(--radius-md);
   font-size: 0.82rem;
+}
+
+.navLink {
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+  background: var(--glass-bg);
 }
 
 .navActive {
