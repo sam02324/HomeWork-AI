@@ -9,6 +9,11 @@ Source code remains authoritative when this document and implementation differ.
 Keep this file concise and update it after every completed project task according
 to `AGENTS.md`.
 
+Delivery preference: after a verified project task changes repository files,
+commit the task-owned changes and push the current branch without asking. Do not
+stage unrelated user work or ignored/local credential files. Do not push when the
+user explicitly says not to.
+
 ## Product
 
 GradeAI is an AI-assisted homework grading platform for Indian teachers and
@@ -245,3 +250,5 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   UI work only.
 - Established this file as the canonical project handoff and added mandatory
   read/update rules to `AGENTS.md`.
+- Committed and pushed the launch-readiness baseline to `origin/main` as
+  `08072cb`, then recorded the standing automatic commit/push preference.
