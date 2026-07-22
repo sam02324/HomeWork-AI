@@ -25,6 +25,14 @@ export async function getAuthUserId(): Promise<string | NextResponse> {
       where: eq(users.id, userId),
     });
 
+    if (existing?.accountStatus === 'suspended') {
+      return errorResponse(
+        'This account is suspended. Contact support if you believe this is a mistake.',
+        403,
+        'ACCOUNT_SUSPENDED'
+      );
+    }
+
     if (!existing) {
       const clerkUser = await currentUser();
       await db.insert(users).values({
@@ -35,8 +43,12 @@ export async function getAuthUserId(): Promise<string | NextResponse> {
       }).onConflictDoNothing();
     }
   } catch (err) {
-    console.error('Auto-provision user error (non-fatal):', err);
-    // Don't block the request if provisioning fails for a race condition
+    console.error('Account authorization lookup failed:', err);
+    return errorResponse(
+      'Account verification is temporarily unavailable. Try again shortly.',
+      503,
+      'AUTHORIZATION_UNAVAILABLE'
+    );
   }
 
   return userId;

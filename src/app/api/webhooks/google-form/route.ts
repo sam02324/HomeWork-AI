@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { db } from '@/db';
 import { assignments, submissions, students, classrooms, users } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { downloadDriveFile } from '@/lib/google-sheets';
-import { randomUUID, timingSafeEqual } from 'crypto';
+import { timingSafeEqual } from 'crypto';
+import { uploadSubmissionBuffer } from '@/lib/storage/r2';
 
 /** Constant-time string compare (SEC-16). Returns false on length mismatch. */
 function safeEqual(a: string, b: string): boolean {
@@ -33,35 +33,18 @@ interface WebhookPayload {
   }>;
 }
 
-function getR2Client() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
-}
-
 async function uploadBufferToR2(
   buffer: Buffer,
   mimeType: string,
   originalName: string,
   teacherId: string
 ): Promise<string> {
-  const ext = (originalName.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'bin';
-  const filename = `submissions/${teacherId}/${randomUUID()}.${ext}`;
-
-  const s3 = getR2Client();
-  await s3.send(new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME!,
-    Key: filename,
-    Body: buffer,
-    ContentType: mimeType,
-  }));
-
-  return `${process.env.R2_PUBLIC_URL}/${filename}`;
+  return uploadSubmissionBuffer({
+    buffer,
+    mimeType,
+    originalName,
+    ownerId: teacherId,
+  });
 }
 
 export async function POST(request: Request) {

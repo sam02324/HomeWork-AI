@@ -1,51 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GradeAI
 
-## Getting Started
+GradeAI is a teacher-reviewed homework grading MVP for Indian teachers and coaching institutes. Teachers can import Google Form responses or upload text, PDF, and image submissions, generate rubric-based draft grades, review or override results, and monitor student performance.
 
-First, run the development server:
+AI output is a draft. The teacher remains the final decision-maker.
+
+## Stack
+
+- Next.js 16 and React 19
+- Clerk authentication
+- Neon PostgreSQL and Drizzle ORM
+- Anthropic Claude
+- Google Drive, Sheets, and Forms APIs
+- Cloudflare R2 through the AWS S3-compatible SDK
+- TanStack Query and Zustand
+- Framer Motion, GSAP, Recharts, and CSS Modules
+- Sentry monitoring
+
+## Local setup
+
+Requirements:
+
+- Node.js 22 recommended; Next.js requires Node.js 20.9 or newer.
+- A Neon PostgreSQL database.
+- Clerk development credentials.
+- Google OAuth web-client credentials.
+- Anthropic and Cloudflare R2 credentials.
+
+Install and configure:
 
 ```bash
+npm ci
+cp .env.example .env.local
+npm run db:push
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-## Google OAuth Deployment
+Never commit `.env.local`, `keys.txt`, Google credential JSON, or provider tokens. The repository audit checks tracked files without printing secret values:
 
-Google Drive and Sheets integration requires a stable public callback URL.
+```bash
+npm run audit:repo
+```
 
-1. Set `NEXT_PUBLIC_APP_URL` in the deployed service, for example:
-   `https://your-service.up.railway.app`
-2. Set `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` for the same service.
-3. In Google Cloud Console, add this exact **Authorized redirect URI** to the Web OAuth client:
-   `https://your-service.up.railway.app/api/auth/google/callback`
-4. Set `TOKEN_ENCRYPTION_KEY` to a stable 64-character hexadecimal secret. Generate it with
-   `openssl rand -hex 32`. Do not change it after teachers have connected Google accounts,
-   otherwise their stored OAuth tokens can no longer be read.
-5. Redeploy after changing Railway variables, then reconnect Google from GradeAI settings.
+## Verification
 
-For local development, use `http://localhost:3000` and add
-`http://localhost:3000/api/auth/google/callback` to the same OAuth client.
+Run the complete repository verification gate:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run verify
+```
 
-## Learn More
+Individual checks:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm audit --omit=dev --audit-level=high
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Validate a local copy of the production environment contract:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run audit:launch
+```
 
-## Deploy on Vercel
+The launch audit reports variable names and configuration defects only. It never prints values.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database changes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Generate and review a migration:
+
+```bash
+npm run db:generate
+```
+
+Apply schema changes to the configured database:
+
+```bash
+npm run db:push
+```
+
+Do not run an unreviewed schema push against production. Take a backup or Neon branch first and verify forward migration and recovery.
+
+## Google OAuth deployment
+
+1. Set `NEXT_PUBLIC_APP_URL` to the exact HTTPS production origin without a trailing path.
+2. Add `${NEXT_PUBLIC_APP_URL}/api/auth/google/callback` as an authorized redirect URI in the matching Google OAuth web client.
+3. Set `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` in Railway.
+4. Set `TOKEN_ENCRYPTION_KEY` to one stable 64-character hexadecimal value generated with `openssl rand -hex 32`.
+5. Redeploy, then disconnect and reconnect Google when credentials, deployment account, or the encryption key changes.
+
+Changing `TOKEN_ENCRYPTION_KEY` makes existing encrypted Google tokens unreadable.
+
+## Railway deployment
+
+The app runs as a standard Next.js Node server:
+
+```text
+Build command: npm run build
+Start command: npm start
+```
+
+Before deploying:
+
+1. Run `npm run verify` locally.
+2. Run `npm run audit:launch` against the intended production variables.
+3. Confirm the latest database migration is applied.
+4. Verify Clerk, Google, Anthropic, R2, and Sentry are using the production projects.
+5. Deploy a release candidate and complete the smoke journey in `docs/launch/2026-08-beta-readiness.md`.
+
+## Documentation
+
+- [August beta readiness](docs/launch/2026-08-beta-readiness.md)
+- [Admin panel](docs/admin-panel.md)
+- [Security notes](SECURITY.md)
+- [Mobile, launch, and long-term roadmap](docs/GRADEAI_PRODUCT_MOBILE_AND_30_YEAR_ROADMAP.md)
+
+## Current release posture
+
+GradeAI should be operated as an invite-only beta until the P0 gates in the beta-readiness document are complete. In particular, current request-bound grading and public R2 object delivery are not the intended broad-launch architecture.

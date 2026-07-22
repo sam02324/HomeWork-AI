@@ -4,26 +4,14 @@ import { db } from '@/db';
 import { assignments, submissions, students, classrooms, googleTokens } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { getOAuthClientForUser, downloadDriveFile, fetchSheetRows } from '@/lib/google-sheets';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { randomUUID } from 'crypto';
 import { google } from 'googleapis';
 import { PDFParse } from 'pdf-parse';
+import { uploadSubmissionBuffer } from '@/lib/storage/r2';
 import {
   captureOperationalError,
   getOperationalErrorCode,
   recordSystemEvent,
 } from '@/lib/operations/system-events';
-
-function getR2Client() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
-}
 
 async function uploadBufferToR2(
   buffer: Buffer,
@@ -31,21 +19,12 @@ async function uploadBufferToR2(
   originalName: string,
   teacherId: string
 ): Promise<string> {
-  const ext = (originalName.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'bin';
-  const filename = `submissions/${teacherId}/${randomUUID()}.${ext}`;
-
-  const s3 = getR2Client();
-  const bucketName = process.env.R2_BUCKET_NAME || 'gradeai-uploads';
-  const publicUrl = process.env.R2_PUBLIC_URL || 'https://pub-e8ac62539691450290f9818cb9c462ff.r2.dev';
-
-  await s3.send(new PutObjectCommand({
-    Bucket: bucketName,
-    Key: filename,
-    Body: buffer,
-    ContentType: mimeType,
-  }));
-
-  return `${publicUrl}/${filename}`;
+  return uploadSubmissionBuffer({
+    buffer,
+    mimeType,
+    originalName,
+    ownerId: teacherId,
+  });
 }
 
 const FOLDER_ID_RE = /^[a-zA-Z0-9_-]+$/;

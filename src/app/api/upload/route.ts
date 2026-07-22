@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard } from '@/lib/utils';
-import { randomUUID } from 'crypto';
+import { uploadSubmissionBuffer } from '@/lib/storage/r2';
 
 /**
  * Sniff the real MIME type from a file's magic bytes (SEC-14). Returns null
@@ -37,17 +36,6 @@ function detectMimeType(buf: Buffer): string | null {
     }
   }
   return null;
-}
-
-function getR2Client() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
 }
 
 /** POST /api/upload — Upload file to Cloudflare R2 */
@@ -95,23 +83,12 @@ export async function POST(request: Request) {
       return errorResponse('File content does not match its declared type', 400);
     }
 
-    // Generate unique filename (extension sanitized — it comes from the client)
-    const ext = (file.name.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'bin';
-    const filename = `submissions/${userId}/${randomUUID()}.${ext}`;
-
-    // Upload to R2
-    const s3 = getR2Client();
-    const bucketName = process.env.R2_BUCKET_NAME || 'gradeai-uploads';
-    const publicUrl = process.env.R2_PUBLIC_URL || 'https://pub-e8ac62539691450290f9818cb9c462ff.r2.dev';
-
-    await s3.send(new PutObjectCommand({
-      Bucket: bucketName,
-      Key: filename,
-      Body: buffer,
-      ContentType: file.type,
-    }));
-
-    const fileUrl = `${publicUrl}/${filename}`;
+    const fileUrl = await uploadSubmissionBuffer({
+      buffer,
+      mimeType: file.type,
+      originalName: file.name,
+      ownerId: userId,
+    });
 
     return successResponse({
       url: fileUrl,

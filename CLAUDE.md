@@ -1,1 +1,247 @@
 @AGENTS.md
+
+# GradeAI Persistent Project Context
+
+Last updated: 2026-07-22
+
+This is the canonical handoff for GradeAI. Read it before changing the project.
+Source code remains authoritative when this document and implementation differ.
+Keep this file concise and update it after every completed project task according
+to `AGENTS.md`.
+
+## Product
+
+GradeAI is an AI-assisted homework grading platform for Indian teachers and
+coaching institutes. Teachers create classrooms and rubric-based assignments,
+collect text/PDF/image submissions or sync Google Form responses, run AI grading,
+review criterion feedback, override scores, export results, and inspect student
+analytics. AI output is advisory; the teacher owns the final grade.
+
+Current release target: invite-only beta for 10-20 teachers, with five active
+pilot teachers. Do not enable paid plans until billing, entitlements, quotas, and
+usage accounting are enforced server-side.
+
+## Non-negotiable stack
+
+- Next.js 16 App Router, React 19, TypeScript strict mode
+- Clerk v7 authentication and metadata-based roles
+- Neon PostgreSQL through Drizzle ORM 0.45
+- Anthropic Claude through AI SDK v6 and `@ai-sdk/anthropic`
+- Cloudflare R2 through the AWS S3 SDK
+- Google Drive, Sheets, Forms, and OAuth through `googleapis`
+- TanStack React Query v5 and Zustand
+- Framer Motion v12 plus GSAP for selected marketing motion
+- Recharts v3
+- React Hook Form and Zod v4
+- CSS Modules and CSS custom properties; never introduce Tailwind
+- Sentry Next.js SDK
+- Railway production deployment
+
+Do not reintroduce MiMo or another grading provider without an explicit product
+decision and a scored benchmark against the approved Anthropic baseline.
+
+## Repository map
+
+- `src/app/page.tsx`: public marketing page
+- `src/app/dashboard/`: teacher product shell, classrooms, assignments, review,
+  analytics, settings, knowledge placeholder, and student details
+- `src/app/admin/`: owner-only operations console
+- `src/app/api/`: teacher, integration, webhook, grading, reporting, and admin APIs
+- `src/components/ui/`: shared Button, Card, Badge, Select, Modal, Toast, Skeleton,
+  and EmptyState primitives
+- `src/components/motion/`: reusable page, reveal, cursor, and tilt motion
+- `src/components/layout/`: dashboard sidebar and topbar
+- `src/db/schema.ts`: complete Drizzle schema
+- `src/lib/ai/`: rubric construction, prompts, and grading service
+- `src/lib/admin/`: admin authorization and operations queries
+- `src/lib/operations/`: AI usage and sanitized system-event ledgers
+- `src/lib/storage/r2.ts`: required R2 configuration and upload helper
+- `src/lib/google-sheets.ts`: Google clients, token refresh, and Sheets access
+- `src/lib/validations.ts`: strict request schemas
+- `src/proxy.ts`: Clerk route protection
+- `next.config.ts`: global security headers and Sentry build integration
+- `docs/admin-panel.md`: admin stages and Clerk/Sentry setup
+- `docs/launch/2026-08-beta-readiness.md`: current launch evidence and owner checklist
+- `docs/GRADEAI_PRODUCT_MOBILE_AND_30_YEAR_ROADMAP.md`: mobile and long-term plan
+
+## Data model
+
+Primary tables:
+
+- `users`: Clerk ID, profile, role, account plan/status, credits and quotas
+- `classrooms`: teacher-owned subject/grade groups
+- `students`: classroom-scoped learners with roll number/contact fields
+- `assignments`: teacher/classroom ownership, rubric, grading settings, status,
+  Google Sheet linkage, due date, and submission type
+- `submissions`: assignment/student content or file reference, sync identifiers,
+  moderation state, and grading status
+- `grades`: one grade per submission, criterion scores, feedback, model/token
+  metadata, AI-detection fields, chat history, and teacher override/review
+- `google_tokens`: encrypted OAuth tokens and sync-folder preferences per user
+- `ai_usage_events`: immutable model usage/cost ledger
+- `system_events`: sanitized operational failures and health events
+- `admin_audit_events`: immutable owner action trail
+- `content_reports`: teacher reports and moderation state
+
+Frequently queried ownership and foreign-key columns are indexed in the schema.
+Schema changes require a Drizzle migration and a rollback/compatibility review.
+
+## Authorization and trust boundaries
+
+- `src/proxy.ts` protects all non-public routes through Clerk.
+- Public routes are limited to landing/auth, webhooks, `robots.txt`, and
+  `sitemap.xml`.
+- Teacher APIs must call `getAuthUserId()` and independently verify resource
+  ownership in SQL; frontend visibility is never authorization.
+- `getAuthUserId()` rejects suspended local accounts and fails closed when the
+  account database check is unavailable.
+- Admin access comes only from Clerk `publicMetadata.role === "admin"` and is
+  rechecked server-side by every admin page and API. The local role never grants
+  admin access.
+- Admins cannot suspend their own account. Mutations require a reason and create
+  audit events.
+- API errors use sanitized messages; no stack traces, tokens, request bodies, or
+  student work may enter responses, system events, audit logs, or Sentry.
+- Global CSP, HSTS, frame denial, nosniff, referrer, and permissions headers are
+  configured in `next.config.ts`, including Clerk-generated redirects.
+
+## Core workflows
+
+### Grading
+
+`POST /api/assignments/[id]/grade` validates ownership and request input, guards
+against duplicate active grading, extracts text from supported text/PDF/image
+content, builds a rubric, calls the configured Anthropic model, records usage,
+upserts the grade, and updates item/assignment status. Teacher overrides remain
+the final source shown to users.
+
+Known constraint: grading still runs inside the HTTP request. Durable persisted
+jobs, idempotency keys, bounded workers, retries, abandoned-job recovery, and a
+reliable progress endpoint are required before meaningful production volume.
+
+### Google sync
+
+OAuth uses state validation and encrypted token storage. Sync discovers Forms,
+Sheets, and Drive files, maps rows to students/submissions, and deduplicates by
+Google response/file identifiers. Refresh failures require reauthorization and
+must not expose Google error payloads. `GET /api/sync-all` is still state-changing
+and must become an idempotent POST.
+
+### Files
+
+Uploads accept PDF, PNG, and JPEG up to 10 MB. R2 configuration is required and
+has no fallback account, bucket, or host. Current records still use permanent
+public URLs; private objects plus authorized short-lived signed downloads are a
+P0 launch requirement.
+
+### Admin operations
+
+The `/admin` console includes users, plans/credits/suspension, read-only support
+views, usage/cost monitoring, system health, moderation, audit history, and a
+sanitized Sentry diagnostic. Details and Clerk session-claim setup live in
+`docs/admin-panel.md`.
+
+## API and validation conventions
+
+- Success: `{ success: true, data: ... }`
+- Error: `{ success: false, error: string, code: string }`
+- State-changing and query payloads use strict Zod schemas; unknown keys fail.
+- Use 400 validation, 401 unauthenticated, 403 forbidden, 404 missing, 409
+  conflict, 429 throttled, 500 unexpected failure, and 503 unavailable.
+- Multi-record writes that must remain consistent use a transaction or atomic
+  Neon batch supported by the serverless driver.
+- Expensive routes are rate limited. The current in-memory limiter is acceptable
+  only for a single-instance beta and must move to a shared store before scaling.
+- List endpoints should paginate and avoid N+1 queries.
+
+## UI and design rules
+
+- Dark charcoal default, crimson rose primary, amber secondary, warm light theme.
+- CSS Modules and existing variables in `src/app/globals.css` only.
+- Preserve restrained depth and motion: card lift/tilt, staggered entrances,
+  spring press states, animated modal/toast transitions, and reduced-motion
+  support. Avoid dense repeated card grids and decorative motion that obstructs
+  grading work.
+- Use the shared UI components before creating page-specific controls.
+- Do not publish fabricated testimonials, usage statistics, customer names, or
+  model-provider branding.
+- Desktop web is current. Mobile should share database/API/contracts/design
+  tokens, not React DOM components; see the long-term roadmap.
+
+## Environment and deployment
+
+Variable names and validation rules live in `.env.example` and the launch
+readiness document. Never commit `.env*`, credential JSON, `keys.txt`, DSNs,
+tokens, private keys, or production values. `NEXT_PUBLIC_` is allowed only for
+values intentionally exposed to browsers.
+
+Production origin: `https://homework-ai-production-1917.up.railway.app` until a
+product domain is configured. GitHub `main` deploys through Railway. Before
+diagnosing a queued Railway deployment as a code failure, inspect whether all
+build stages are still `Not started` because of an upstream GitHub incident.
+
+## Verification contract
+
+Run before declaring repository changes complete:
+
+```text
+npm run audit:repo
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm audit --omit=dev --audit-level=high
+```
+
+For auth/header/routing changes, also run the production server locally and smoke
+test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
+`/sitemap.xml` with redirects disabled.
+
+## Current release state
+
+- Branch: `main`; remote: `origin` (`sam02324/HomeWork-AI`).
+- Next.js is pinned to 16.2.11; production dependency audit reports zero known
+  vulnerabilities at the 2026-07-22 verification point.
+- Unit baseline: 14 passing tests covering central auth, strict validation, R2
+  configuration/key construction, and rubric behavior.
+- GitHub Actions gates repository audit, lint, typecheck, tests, production
+  dependency audit, and build.
+- Local production smoke passes for public pages, protected redirects, generated
+  metadata routes, security headers, and removal of fabricated/model branding.
+- A local change set reaches live Railway only after commit, push, and a
+  successful Railway deployment. Verify the deployed commit separately.
+
+## Known launch blockers
+
+1. Durable background grading execution and item-level recovery/progress.
+2. Private R2 objects with authorized signed upload/download and retention cleanup.
+3. Playwright coverage for auth isolation, core grading, Google reconnect,
+   duplicate clicks, overrides, admin denial, and account wipe.
+4. Reviewed privacy, terms, acceptable-use, AI disclosure, retention/deletion,
+   support/grievance, and refund documents before payment.
+5. Verified Neon backup restoration and recorded recovery ownership/time.
+6. External owner checks: rotate exposed historical tokens, verify Railway/Clerk/
+   Google/Sentry variables, complete a fresh non-admin journey, and produce a
+   teacher-scored multi-format benchmark.
+
+## Recent verified changes
+
+### 2026-07-22 - Launch-readiness baseline
+
+- Added fail-closed account authorization and suspended-user enforcement.
+- Centralized required R2 configuration and removed hardcoded public-host fallbacks.
+- Made mutation schemas strict and added 14 critical unit tests plus CI.
+- Added repository/environment audits, production security headers, canonical
+  metadata, `robots.txt`, `sitemap.xml`, and a real deployment README.
+- Patched Next.js and production transitives. Repository audit, lint, TypeScript,
+  tests, production dependency audit, build, and local production smoke passed.
+- Fixed Clerk protection accidentally intercepting generated SEO routes, rebuilt,
+  and confirmed both routes return 200 while dashboard/admin/API remain protected.
+
+### 2026-07-22 - Persistent context workflow
+
+- Confirmed no separate whole-project Claude handoff existed; the previous
+  `CLAUDE.md` only imported `AGENTS.md` and `.claude/polish-scoreboard.md` covered
+  UI work only.
+- Established this file as the canonical project handoff and added mandatory
+  read/update rules to `AGENTS.md`.
