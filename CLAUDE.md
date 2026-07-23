@@ -2,7 +2,7 @@
 
 # GradeAI Persistent Project Context
 
-Last updated: 2026-07-22
+Last updated: 2026-07-23
 
 This is the canonical handoff for GradeAI. Read it before changing the project.
 Source code remains authoritative when this document and implementation differ.
@@ -191,6 +191,7 @@ Run before declaring repository changes complete:
 
 ```text
 npm run audit:repo
+npm run db:check
 npm run lint
 npm run typecheck
 npm test
@@ -213,6 +214,8 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   dependency audit, and build.
 - Local production smoke passes for public pages, protected redirects, generated
   metadata routes, security headers, and removal of fabricated/model branding.
+- A 2026-07-23 Neon point-in-time recovery branch reproduced all 11 application
+  tables and expected data. Eight orphan/duplicate integrity checks returned zero.
 - A local change set reaches live Railway only after commit, push, and a
   successful Railway deployment. Verify the deployed commit separately.
 
@@ -224,12 +227,27 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
    duplicate clicks, overrides, admin denial, and account wipe.
 4. Reviewed privacy, terms, acceptable-use, AI disclosure, retention/deletion,
    support/grievance, and refund documents before payment.
-5. Verified Neon backup restoration and recorded recovery ownership/time.
+5. Reconcile Neon's 2-entry migration ledger with the repository's 6-entry
+   journal, then verify a clean `db:migrate` replay on an isolated branch.
 6. External owner checks: rotate exposed historical tokens, verify Railway/Clerk/
    Google/Sentry variables, complete a fresh non-admin journey, and produce a
    teacher-scored multi-format benchmark.
 
 ## Recent verified changes
+
+### 2026-07-23 - Neon point-in-time recovery drill
+
+- Created `restore-drill-2026-07-23` from `production` at 10:55 IST with
+  one-day auto-deletion. Branch creation took 0.68 seconds; production was not
+  modified.
+- Confirmed 11 GradeAI tables, representative row counts, and zero failures
+  across eight relationship/duplicate checks on the recovery branch.
+- Confirmed `drizzle.__drizzle_migrations` exists, but found only 2 ledger rows
+  versus 6 repository journal entries. The latest ledger timestamp matches
+  migration `0005`; earlier schema was most likely applied with `db:push`.
+- Added `db:check` to verification/CI, added `db:migrate`, and restricted
+  `db:push` documentation to disposable local databases. Ledger reconciliation
+  remains required before running migrations against production.
 
 ### 2026-07-22 - Launch-readiness baseline
 

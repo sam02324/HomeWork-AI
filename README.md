@@ -31,6 +31,7 @@ Install and configure:
 ```bash
 npm ci
 cp .env.example .env.local
+# Local/disposable database only:
 npm run db:push
 npm run dev
 ```
@@ -54,6 +55,7 @@ npm run verify
 Individual checks:
 
 ```bash
+npm run db:check
 npm run lint
 npm run typecheck
 npm test
@@ -75,15 +77,21 @@ Generate and review a migration:
 
 ```bash
 npm run db:generate
+npm run db:check
 ```
 
-Apply schema changes to the configured database:
+Apply reviewed migrations to the configured persistent database:
 
 ```bash
-npm run db:push
+npm run db:migrate
 ```
 
-Do not run an unreviewed schema push against production. Take a backup or Neon branch first and verify forward migration and recovery.
+Use `npm run db:push` only for disposable local development databases. Never use
+schema push against production: it can update the schema without creating a
+complete Drizzle migration ledger. Before the first production `db:migrate`,
+confirm Neon `drizzle.__drizzle_migrations` matches
+`src/db/migrations/meta/_journal.json`. Take a Neon recovery branch first and
+verify forward migration and recovery.
 
 ## Google OAuth deployment
 
@@ -108,7 +116,8 @@ Before deploying:
 
 1. Run `npm run verify` locally.
 2. Run `npm run audit:launch` against the intended production variables.
-3. Confirm the latest database migration is applied.
+3. Confirm `npm run db:check` passes and the production migration ledger matches
+   the repository journal before applying `npm run db:migrate`.
 4. Verify Clerk, Google, Anthropic, R2, and Sentry are using the production projects.
 5. Deploy a release candidate and complete the smoke journey in `docs/launch/2026-08-beta-readiness.md`.
 

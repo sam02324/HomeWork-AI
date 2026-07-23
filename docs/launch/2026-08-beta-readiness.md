@@ -24,6 +24,7 @@ Repository baseline before Day 0 work: `97ee826` on `main`.
 | Development dependency audit | Accepted for beta | Four moderate alerts remain in Drizzle Kit's development-only legacy loader chain; current Drizzle Kit still depends on it |
 | Local production smoke | Pass | Landing 200; dashboard/admin/API redirect unauthenticated users; CSP, DENY, and nosniff present |
 | Live Railway public smoke | Pass on previous deployment | Landing 200; no `Powered by Claude` or fabricated Priya content; protected routes redirect to Clerk |
+| Neon point-in-time recovery | Pass with migration caveat | Isolated 10:55 IST branch created in 0.68s; 11 tables readable; 8 integrity checks returned zero; production untouched |
 
 The live Railway result describes the commit deployed at audit time. Verify this change set again after a successful Railway deployment; a Git push alone does not prove production is current.
 
@@ -109,7 +110,9 @@ Production-specific assertions:
 
 - Clerk: production paths, allowed origins, webhook endpoint, admin metadata, and session claim.
 - Google: consent screen, verified domain, minimum scopes, and exact callback URI.
-- Neon: backup/restore or branch creation works and the latest migrations exist.
+- Neon: point-in-time branch recovery and data integrity passed on 2026-07-23.
+  Migration ledger reconciliation remains open: Neon has 2 ledger rows while the
+  repository journal has 6 entries.
 - R2: identify whether every existing submission object is public; do not assume obscurity protects it.
 - Sentry: send one sanitized diagnostic and confirm source mapping.
 
@@ -192,12 +195,27 @@ Publish reviewed versions of:
 
 Use qualified Indian privacy counsel for DPDP and children's/student-data obligations. Repository code cannot certify legal compliance.
 
-### P0.5 Backup and restore evidence
+### P0.5 Backup and restore evidence (recovery passed; ledger reconciliation open)
 
-- Create a production backup or Neon branch.
-- Restore into an isolated environment.
-- run migrations and verify row counts/relations.
-- record recovery time and owner.
+Completed on 2026-07-23:
+
+- Created point-in-time branch `restore-drill-2026-07-23` from `production` at
+  10:55 IST with one-day auto-deletion; production was not modified.
+- Neon reported a 0.68-second fork. Schema/data validation finished within two
+  minutes in the isolated SQL editor.
+- Verified all 11 expected GradeAI tables. Recovery counts were 2 users,
+  1 classroom, 1 student, 1 assignment, 3 submissions, and 2 grades.
+- Verified zero orphaned classrooms, students, assignments, submissions, grades,
+  and zero duplicate grades across eight integrity checks.
+- Verified `drizzle.__drizzle_migrations` exists.
+
+Remaining before this P0 closes:
+
+- Reconcile 2 Neon migration ledger rows with 6 entries in
+  `src/db/migrations/meta/_journal.json`. Existing schema is current, but earlier
+  changes were most likely applied through `db:push` without ledger entries.
+- After reconciliation, run `npm run db:migrate` against an isolated recovery
+  branch and confirm it is a no-op before enabling production migrations.
 
 ## P1 for the first beta week
 

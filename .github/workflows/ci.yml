@@ -39,6 +39,9 @@ jobs:
       - name: Audit tracked repository content
         run: npm run audit:repo
 
+      - name: Validate migration journal
+        run: npm run db:check
+
       - name: Lint
         run: npm run lint
 

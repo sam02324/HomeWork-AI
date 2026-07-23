@@ -12,8 +12,10 @@
     "test:watch": "vitest",
     "audit:repo": "node scripts/launch-audit.mjs --repository-only",
     "audit:launch": "node scripts/launch-audit.mjs --production",
-    "verify": "npm run audit:repo && npm run lint && npm run typecheck && npm test && npm run build",
+    "verify": "npm run audit:repo && npm run db:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "db:check": "drizzle-kit check",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
