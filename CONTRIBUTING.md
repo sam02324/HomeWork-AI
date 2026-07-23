@@ -11,7 +11,8 @@ Read these in order before making a non-trivial change:
 2. [CLAUDE.md](CLAUDE.md) for the current verified handoff and launch blockers.
 3. [README.md](README.md) for setup, deployment, and database commands.
 4. [Documentation index](docs/README.md) for architecture and operational guides.
-5. The source files involved in the change. Source and migrations are authoritative.
+5. [Agent team](docs/agents/README.md) when work is delegated across AI roles.
+6. The source files involved in the change. Source and migrations are authoritative.
 
 ## Local setup
 

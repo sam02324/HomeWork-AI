@@ -12,6 +12,7 @@ to it elsewhere.
 4. [Repository guide](architecture/REPOSITORY_GUIDE.md)
 5. [Major request flows](architecture/REQUEST_FLOWS.md)
 6. [File placement rules](architecture/FILE_PLACEMENT.md)
+7. [Agent team operating model](agents/README.md)
 
 ## Canonical documents
 
@@ -24,6 +25,7 @@ to it elsewhere.
 | Repository structure and runtime boundaries | [Repository guide](architecture/REPOSITORY_GUIDE.md) |
 | Authentication, grading, sync, upload, and admin flows | [Request flows](architecture/REQUEST_FLOWS.md) |
 | Where new code and docs belong | [File placement](architecture/FILE_PLACEMENT.md) |
+| AI role contracts, delegation, and handoffs | [Agent team](agents/README.md) |
 | Admin authorization and operations | [Admin panel](admin-panel.md) |
 | Beta gates, evidence, and owner actions | [August beta readiness](launch/2026-08-beta-readiness.md) |
 | Product, mobile, and long-term direction | [Product roadmap](GRADEAI_PRODUCT_MOBILE_AND_30_YEAR_ROADMAP.md) |

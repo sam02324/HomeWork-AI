@@ -68,6 +68,8 @@ decision and a scored benchmark against the approved Anthropic baseline.
 - `CONTRIBUTING.md`: setup, change workflow, security boundaries, migrations,
   verification, PR expectations, and first-day onboarding
 - `docs/README.md`: canonical developer-documentation index
+- `docs/agents/`: AI team operating model, role contracts, reusable prompts,
+  work-order/handoff templates, and launch task board
 - `docs/architecture/`: repository guide, implemented request flows, and file
   placement rules
 - `docs/admin-panel.md`: admin stages and Clerk/Sentry setup
@@ -221,6 +223,10 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
 - Developer onboarding now includes repository/request-flow/file-placement guides,
   contribution rules, CODEOWNERS, a security-aware PR template, editor standards,
   and automated local-document-link validation.
+- Agent-run work now uses one lead/integrator plus bounded Product/UX, Frontend,
+  Backend/Data, AI Quality, Security/Privacy, QA/Release, and DevOps/SRE contracts.
+  Delegation requires disjoint write sets, structured handoffs, and owner gates
+  for production, data, credential, billing, legal, and grading-policy actions.
 - Local production smoke passes for public pages, protected redirects, generated
   metadata routes, security headers, and removal of fabricated/model branding.
 - A 2026-07-23 Neon point-in-time recovery branch reproduced all 11 application
@@ -254,6 +260,20 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   ownership boundary. Avoid repository-wide cosmetic moves.
 
 ## Recent verified changes
+
+### 2026-07-23 - Agent employee team operating model
+
+- Used independent engineering-operations and privacy/release reviewers to
+  pressure-test the team structure without overlapping repository edits.
+- Added a lead/integrator and seven specialist role contracts, reusable prompts,
+  explicit command and approval boundaries, work-order and handoff templates,
+  and a P0 launch task board under `docs/agents/`.
+- Integrated bounded subagent delegation into `AGENTS.md`, contributor onboarding,
+  documentation navigation, and file-placement rules. The lead remains the sole
+  integration, verification, commit, and push owner.
+- `npm run verify` passed repository and Drizzle audits, 28-document link checks,
+  lint, TypeScript, 14 tests, and the 31-page production build. Production
+  dependency audit reported zero vulnerabilities.
 
 ### 2026-07-23 - Developer onboarding and repository organization
 

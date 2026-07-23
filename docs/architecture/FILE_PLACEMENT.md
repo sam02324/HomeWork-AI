@@ -32,6 +32,7 @@ or abstraction until the code has a concrete cross-feature responsibility.
 | Ambient type | `types/` | Only declarations that cannot live beside their owner |
 | Operational script | `scripts/` | No embedded credentials or production data; document destructive behavior |
 | Durable architecture doc | `docs/architecture/` | Current system boundaries and decisions |
+| Agent role or workflow doc | `docs/agents/` | Team contracts, prompts, work orders, handoffs, and task board |
 | Dated release evidence | `docs/launch/` | Verification evidence, owner steps, and launch gates |
 
 ## Route handler shape
