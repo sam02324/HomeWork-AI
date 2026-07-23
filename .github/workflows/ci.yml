@@ -42,6 +42,9 @@ jobs:
       - name: Validate migration journal
         run: npm run db:check
 
+      - name: Validate documentation links
+        run: npm run docs:check
+
       - name: Lint
         run: npm run lint
 

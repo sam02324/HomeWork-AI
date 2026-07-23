@@ -123,6 +123,11 @@ Before deploying:
 
 ## Documentation
 
+- [Developer documentation index](docs/README.md)
+- [Contribution workflow](CONTRIBUTING.md)
+- [Repository guide](docs/architecture/REPOSITORY_GUIDE.md)
+- [Major request flows](docs/architecture/REQUEST_FLOWS.md)
+- [File placement rules](docs/architecture/FILE_PLACEMENT.md)
 - [August beta readiness](docs/launch/2026-08-beta-readiness.md)
 - [Admin panel](docs/admin-panel.md)
 - [Security notes](SECURITY.md)

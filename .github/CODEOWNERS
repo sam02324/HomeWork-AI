@@ -1,0 +1,12 @@
+# The product owner reviews every change until stable module ownership is assigned.
+* @sam02324
+
+# Security-sensitive surfaces always require owner review.
+/src/app/api/ @sam02324
+/src/db/ @sam02324
+/src/lib/admin/ @sam02324
+/src/lib/ai/ @sam02324
+/src/lib/auth/ @sam02324
+/src/lib/crypto.ts @sam02324
+/src/proxy.ts @sam02324
+/next.config.ts @sam02324

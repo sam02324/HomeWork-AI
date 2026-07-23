@@ -65,6 +65,11 @@ decision and a scored benchmark against the approved Anthropic baseline.
 - `src/lib/validations.ts`: strict request schemas
 - `src/proxy.ts`: Clerk route protection
 - `next.config.ts`: global security headers and Sentry build integration
+- `CONTRIBUTING.md`: setup, change workflow, security boundaries, migrations,
+  verification, PR expectations, and first-day onboarding
+- `docs/README.md`: canonical developer-documentation index
+- `docs/architecture/`: repository guide, implemented request flows, and file
+  placement rules
 - `docs/admin-panel.md`: admin stages and Clerk/Sentry setup
 - `docs/launch/2026-08-beta-readiness.md`: current launch evidence and owner checklist
 - `docs/GRADEAI_PRODUCT_MOBILE_AND_30_YEAR_ROADMAP.md`: mobile and long-term plan
@@ -192,6 +197,7 @@ Run before declaring repository changes complete:
 ```text
 npm run audit:repo
 npm run db:check
+npm run docs:check
 npm run lint
 npm run typecheck
 npm test
@@ -212,6 +218,9 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   configuration/key construction, and rubric behavior.
 - GitHub Actions gates repository audit, lint, typecheck, tests, production
   dependency audit, and build.
+- Developer onboarding now includes repository/request-flow/file-placement guides,
+  contribution rules, CODEOWNERS, a security-aware PR template, editor standards,
+  and automated local-document-link validation.
 - Local production smoke passes for public pages, protected redirects, generated
   metadata routes, security headers, and removal of fabricated/model branding.
 - A 2026-07-23 Neon point-in-time recovery branch reproduced all 11 application
@@ -233,7 +242,30 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
    Google/Sentry variables, complete a fresh non-admin journey, and produce a
    teacher-scored multi-format benchmark.
 
+## Organization follow-ups
+
+- Split `src/lib/api-client.ts` by domain only when query-key and response-envelope
+  tests can protect the move; it currently mixes classroom, assignment, student,
+  submission, analytics, Google, upload, and grading hooks.
+- Centralize repeated teacher ownership predicates into focused domain access
+  helpers only with cross-account denial tests. Do not weaken route-level checks.
+- Gradually extract the largest route/page modules (`src/app/page.tsx`, assignment
+  creation, and assignment detail) when a feature change supplies a tested
+  ownership boundary. Avoid repository-wide cosmetic moves.
+
 ## Recent verified changes
+
+### 2026-07-23 - Developer onboarding and repository organization
+
+- Used a dedicated repository-organization subagent with a documentation-only
+  write scope, then reviewed its output against the source tree.
+- Added `CONTRIBUTING.md`, a documentation index, repository map, implemented
+  request-flow guide, and explicit file-placement rules for new hires.
+- Added `.editorconfig`, `.gitattributes`, CODEOWNERS, and a PR template covering
+  auth, privacy, migrations, AI grading, deployment, and verification risk.
+- Added `npm run docs:check` and included it in local verification and CI.
+- Preserved existing runtime paths; the audit found no benefit in a mass file
+  move and identified incremental module-boundary work instead.
 
 ### 2026-07-23 - Neon point-in-time recovery drill
 
