@@ -26,6 +26,7 @@ to it elsewhere.
 | Authentication, grading, sync, upload, and admin flows | [Request flows](architecture/REQUEST_FLOWS.md) |
 | Where new code and docs belong | [File placement](architecture/FILE_PLACEMENT.md) |
 | AI role contracts, delegation, and handoffs | [Agent team](agents/README.md) |
+| Reviewed skill candidates for each AI role | [Agent skill matrix](agents/SKILL_MATRIX.md) |
 | Admin authorization and operations | [Admin panel](admin-panel.md) |
 | Beta gates, evidence, and owner actions | [August beta readiness](launch/2026-08-beta-readiness.md) |
 | Product, mobile, and long-term direction | [Product roadmap](GRADEAI_PRODUCT_MOBILE_AND_30_YEAR_ROADMAP.md) |

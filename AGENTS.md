@@ -33,6 +33,12 @@ research, signed-in Chrome workflows, live-site inspection, or browser evidence
 to Nora when those capabilities materially help. Browser use is not mandatory
 when local source, a connector, an API, or a CLI is the better surface.
 
+Before adding or invoking a third-party skill, consult
+`docs/agents/SKILL_MATRIX.md`. Research does not authorize installation. Inspect
+the complete skill, scripts, hooks, manifests, network use, telemetry, and tool
+permissions; pin the reviewed revision; and preserve GradeAI's owner gates. A
+skill may improve a role's method but never expands that role's authority.
+
 Before delegation:
 
 1. State the dependency graph and the immediate critical-path step the lead will

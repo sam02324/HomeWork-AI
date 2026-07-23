@@ -230,6 +230,10 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   decision for every task.
   Delegation requires disjoint write sets, structured handoffs, and owner gates
   for production, data, credential, billing, legal, and grading-policy actions.
+- `docs/agents/SKILL_MATRIX.md` records the reviewed role-by-role skill shortlist
+  and pre-install supply-chain gate. Research alone does not authorize an
+  installation, and no external skill is currently approved to expand a role's
+  authority.
 - Local production smoke passes for public pages, protected redirects, generated
   metadata routes, security headers, and removal of fabricated/model branding.
 - A 2026-07-23 Neon point-in-time recovery branch reproduced all 11 application
@@ -263,6 +267,21 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   ownership boundary. Avoid repository-wide cosmetic moves.
 
 ## Recent verified changes
+
+### 2026-07-23 - Agent skill research and adoption gate
+
+- Nora used read-only Chrome research to evaluate current skill candidates for
+  Kelly, Maya, Theo, Arjun, Iris, Sana, Quinn, Rowan, and Nora; research tabs were
+  closed and no skill, permission, or external account was changed.
+- Kelly reviewed primary sources and added `docs/agents/SKILL_MATRIX.md` with
+  built-in, ready-for-review, local-adaptation, watch, and rejected categories.
+- Added a pre-install gate covering complete content review, scripts/hooks/MCP,
+  permissions, telemetry, revision pinning, static/manual review, disposable
+  testing, and denial of production credentials by default.
+- `npm run verify` passed repository and Drizzle audits, 30-document link checks,
+  lint, TypeScript, 14 tests, and the 31-page production build. The production
+  dependency audit initially received a transient npm advisory-service 503;
+  registry ping succeeded and the immediate rerun reported zero vulnerabilities.
 
 ### 2026-07-23 - Browser research agent and automatic task routing
 

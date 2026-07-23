@@ -39,7 +39,8 @@ using a safer purpose-built connector, API, or CLI.
 
 The detailed command chain, approval gates, and definition of done are in the
 [operating model](OPERATING_MODEL.md). Role boundaries are in [roles](ROLES.md),
-and prioritized work is tracked in the [task board](TASK_BOARD.md).
+prioritized work is tracked in the [task board](TASK_BOARD.md), and external
+capabilities are governed by the [skill matrix](SKILL_MATRIX.md).
 
 For a future task, the owner can simply say `Use the GradeAI team for <outcome>`
 or `Start GAI-002`. Kelly will create the work order, choose the minimum roles,
