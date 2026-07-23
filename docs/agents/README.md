@@ -10,25 +10,25 @@ and remains accountable for the integrated result.
 | Role | Primary responsibility | Prompt |
 | --- | --- | --- |
 | Owner | Product authority, production approval, policy, budget, and external communication | Human role |
-| Lead and integrator | Plan, delegate, resolve conflicts, verify, document, commit, and push | [Lead prompt](prompts/lead.md) |
-| Product and UX | Teacher workflows, truthful product behavior, accessibility, and design quality | [Product and UX prompt](prompts/product-ux.md) |
-| Frontend | Next.js UI, CSS Modules, shared components, responsive behavior, and motion | [Frontend prompt](prompts/frontend.md) |
-| Backend and data | APIs, authorization, validation, Drizzle, migrations, and provider boundaries | [Backend and data prompt](prompts/backend-data.md) |
-| AI quality | Rubrics, grading accuracy, benchmarks, model usage, and cost evidence | [AI quality prompt](prompts/ai-quality.md) |
-| Security and privacy | Tenant isolation, student-data minimization, abuse cases, and control review | [Security and privacy prompt](prompts/security-privacy.md) |
-| QA and release | Tests, regression evidence, launch gates, and release qualification | [QA and release prompt](prompts/qa-release.md) |
-| DevOps and SRE | Railway, Neon, R2, Google, Sentry, observability, and recovery runbooks | [DevOps and SRE prompt](prompts/devops-sre.md) |
+| Kelly - Lead and integrator | Plan, delegate, resolve conflicts, verify, document, commit, and push | [Kelly's prompt](prompts/lead.md) |
+| Maya - Product and UX | Teacher workflows, truthful product behavior, accessibility, and design quality | [Maya's prompt](prompts/product-ux.md) |
+| Theo - Frontend | Next.js UI, CSS Modules, shared components, responsive behavior, and motion | [Theo's prompt](prompts/frontend.md) |
+| Arjun - Backend and data | APIs, authorization, validation, Drizzle, migrations, and provider boundaries | [Arjun's prompt](prompts/backend-data.md) |
+| Iris - AI quality | Rubrics, grading accuracy, benchmarks, model usage, and cost evidence | [Iris's prompt](prompts/ai-quality.md) |
+| Sana - Security and privacy | Tenant isolation, student-data minimization, abuse cases, and control review | [Sana's prompt](prompts/security-privacy.md) |
+| Quinn - QA and release | Tests, regression evidence, launch gates, and release qualification | [Quinn's prompt](prompts/qa-release.md) |
+| Rowan - DevOps and SRE | Railway, Neon, R2, Google, Sentry, observability, and recovery runbooks | [Rowan's prompt](prompts/devops-sre.md) |
 
 ## Start a task
 
 1. Read `AGENTS.md`, `CLAUDE.md`, and the relevant architecture or launch docs.
 2. Create a [work order](templates/WORK_ORDER.md) with one outcome, acceptance
    evidence, dependencies, and an explicit write set.
-3. The lead identifies the critical path and keeps the immediate blocking work
+3. Kelly identifies the critical path and keeps the immediate blocking work
    local. Independent sidecars may be delegated to specialists.
 4. Specialists return a [handoff](templates/HANDOFF.md). They do not silently
    expand scope, commit, push, deploy, or operate production.
-5. The lead reviews the diff, runs the required verification, updates canonical
+5. Kelly reviews the diff, runs the required verification, updates canonical
    documentation, and owns the final commit and push.
 
 The detailed command chain, approval gates, and definition of done are in the
@@ -36,7 +36,7 @@ The detailed command chain, approval gates, and definition of done are in the
 and prioritized work is tracked in the [task board](TASK_BOARD.md).
 
 For a future task, the owner can simply say `Use the GradeAI team for <outcome>`
-or `Start GAI-002`. The lead will create the work order, choose the minimum roles,
+or `Start GAI-002`. Kelly will create the work order, choose the minimum roles,
 run integration and verification, update the board, and deliver the verified
 change. No role remains active after its bounded assignment is complete.
 

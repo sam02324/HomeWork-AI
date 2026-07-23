@@ -223,8 +223,9 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
 - Developer onboarding now includes repository/request-flow/file-placement guides,
   contribution rules, CODEOWNERS, a security-aware PR template, editor standards,
   and automated local-document-link validation.
-- Agent-run work now uses one lead/integrator plus bounded Product/UX, Frontend,
-  Backend/Data, AI Quality, Security/Privacy, QA/Release, and DevOps/SRE contracts.
+- Agent-run work now uses Kelly as lead/integrator, with bounded Maya (Product/UX),
+  Theo (Frontend), Arjun (Backend/Data), Iris (AI Quality), Sana
+  (Security/Privacy), Quinn (QA/Release), and Rowan (DevOps/SRE) contracts.
   Delegation requires disjoint write sets, structured handoffs, and owner gates
   for production, data, credential, billing, legal, and grading-policy actions.
 - Local production smoke passes for public pages, protected redirects, generated
@@ -260,6 +261,15 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   ownership boundary. Avoid repository-wide cosmetic moves.
 
 ## Recent verified changes
+
+### 2026-07-23 - Named GradeAI agent roster
+
+- Assigned persistent, role-qualified identities across the team documentation,
+  prompts, operating model, and launch task board: Kelly, Maya, Theo, Arjun,
+  Iris, Sana, Quinn, and Rowan.
+- `npm run verify` passed repository and Drizzle audits, 28-document link checks,
+  lint, TypeScript, 14 tests, and the 31-page production build. Production
+  dependency audit reported zero vulnerabilities.
 
 ### 2026-07-23 - Agent employee team operating model
 

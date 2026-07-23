@@ -34,7 +34,7 @@ Before delegation:
    write set using `docs/agents/templates/WORK_ORDER.md`.
 3. Keep shared contracts and integration files under one writer at a time.
 
-The lead remains the sole integrator: review every handoff and diff, run final
+Kelly, the lead, remains the sole integrator: review every handoff and diff, run final
 verification, update `CLAUDE.md`, and own staging, commit, and push. Specialists
 must not silently expand scope, revert unrelated changes, commit, push, deploy,
 or operate production.

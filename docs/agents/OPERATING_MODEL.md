@@ -3,12 +3,12 @@
 ## Command chain
 
 1. **Owner:** sets product intent and approves high-impact decisions.
-2. **Lead and integrator:** converts intent into work orders, owns the dependency
+2. **Kelly - Lead and integrator:** converts intent into work orders, owns the dependency
    graph, assigns specialists, integrates changes, and signs off on evidence.
 3. **Specialists:** execute bounded work within an assigned write set and return
    a structured handoff.
 
-No specialist overrides the lead's scope, and no agent overrides an owner
+No specialist overrides Kelly's scope, and no agent overrides an owner
 approval gate.
 
 ## Delegation model

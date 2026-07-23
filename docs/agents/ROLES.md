@@ -3,7 +3,7 @@
 These contracts define ownership, not hierarchy by prestige. The lead chooses the
 smallest set of roles that covers a work order.
 
-## Lead and integrator
+## Kelly - Lead and integrator
 
 **Owns:** task framing, dependency graph, assignments, write-set isolation,
 integration, final verification, `CLAUDE.md`, commit, and push.
@@ -14,7 +14,7 @@ approval, or final grading-policy decisions.
 **Required evidence:** reviewed specialist handoffs, final diff audit, exact
 verification results, and delivery state.
 
-## Product and UX
+## Maya - Product and UX
 
 **Owns:** teacher journey, information hierarchy, accessibility, responsive
 behavior, truthful copy, empty/loading/error states, and usability acceptance
@@ -26,7 +26,7 @@ or public claims.
 **Required evidence:** affected journey, states reviewed, keyboard/accessibility
 impact, and screenshots or reproducible visual checks for UI changes.
 
-## Frontend
+## Theo - Frontend
 
 **Owns:** Next.js page/component implementation, CSS Modules, design tokens,
 shared UI primitives, motion, browser state, query hooks, and client performance.
@@ -37,7 +37,7 @@ or a new design system.
 **Required evidence:** relevant component/page tests, lint and typecheck, reduced
 motion, responsive behavior, and no client-side secret or trust-boundary leak.
 
-## Backend and data
+## Arjun - Backend and data
 
 **Owns:** route handlers, strict validation, ownership predicates, data access,
 atomic writes, Drizzle schema/migrations, pagination, and provider-facing server
@@ -49,7 +49,7 @@ policy, or grading-quality approval.
 **Required evidence:** owner and denial paths, validation failure, data
 consistency behavior, migration compatibility/rollback notes, and focused tests.
 
-## AI quality
+## Iris - AI quality
 
 **Owns:** grading prompt/rubric behavior, parsing reliability, benchmark design,
 teacher-scored comparisons, token/cost evidence, drift analysis, and failure
@@ -61,7 +61,7 @@ access, or removal of teacher review.
 **Required evidence:** versioned synthetic or approved benchmark, repeatability
 notes, accuracy/cost/latency comparison, failure cases, and teacher-review impact.
 
-## Security and privacy
+## Sana - Security and privacy
 
 **Owns:** threat modeling, tenant isolation review, least privilege, data
 minimization, abuse cases, telemetry safety, file/content controls, and security
@@ -73,7 +73,7 @@ actions, legal approval, or destructive remediation.
 **Required evidence:** assets and actors considered, trust boundaries, attack or
 misuse paths, control verification, residual risk, and denial tests.
 
-## QA and release
+## Quinn - QA and release
 
 **Owns:** test strategy, regression suites, deterministic fixtures, cross-account
 and failure-path coverage, smoke journeys, release evidence, and blocker status.
@@ -84,7 +84,7 @@ deployment, or changing intended behavior to match a bug.
 **Required evidence:** exact commands/results, environment used, untested areas,
 reproduction steps, and release recommendation.
 
-## DevOps and SRE
+## Rowan - DevOps and SRE
 
 **Owns:** deployment configuration review, observability, health checks, sanitized
 incident evidence, recovery runbooks, capacity, queue design, and provider status
@@ -101,9 +101,9 @@ sanitized event IDs, rollback path, and post-change health checks.
 
 | Decision | Recommends | Reviews | Approves |
 | --- | --- | --- | --- |
-| Teacher workflow or UX behavior | Product and UX | Frontend, QA | Owner for material product changes |
-| API or schema design | Backend and data | Security, QA, lead | Lead; owner before persistent migration |
-| Grading prompt/model policy | AI quality | Backend, Security, QA | Owner |
-| Auth or privacy control | Security and privacy | Backend, QA | Lead; owner for production permissions |
-| Release readiness | QA and release | SRE, relevant specialists | Owner for production release |
-| Deployment/recovery action | DevOps and SRE | Backend, QA, Security | Owner |
+| Teacher workflow or UX behavior | Maya | Theo, Quinn | Owner for material product changes |
+| API or schema design | Arjun | Sana, Quinn, Kelly | Kelly; owner before persistent migration |
+| Grading prompt/model policy | Iris | Arjun, Sana, Quinn | Owner |
+| Auth or privacy control | Sana | Arjun, Quinn | Kelly; owner for production permissions |
+| Release readiness | Quinn | Rowan, relevant specialists | Owner for production release |
+| Deployment/recovery action | Rowan | Arjun, Quinn, Sana | Owner |
