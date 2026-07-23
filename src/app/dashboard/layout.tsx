@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -55,12 +54,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const fullName = user?.fullName || user?.firstName || 'Teacher';
   const initials = fullName.substring(0, 2).toUpperCase();
-
-  // Zero-setup background auto-sync
-  useEffect(() => {
-    // Fire and forget, no need to await or block UI
-    fetch('/api/sync-all').catch(err => console.error('Background sync failed:', err));
-  }, []);
 
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === '/dashboard';

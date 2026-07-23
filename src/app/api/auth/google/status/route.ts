@@ -8,6 +8,7 @@ import { googleTokens } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
 import { google } from 'googleapis';
+import { decryptOrLegacy } from '@/lib/crypto';
 
 export async function GET() {
   const userId = await getAuthUserId();
@@ -41,8 +42,9 @@ export async function DELETE() {
           process.env.GOOGLE_OAUTH_CLIENT_ID,
           process.env.GOOGLE_OAUTH_CLIENT_SECRET
         );
-        oauth2Client.setCredentials({ access_token: token.accessToken });
-        await oauth2Client.revokeToken(token.accessToken);
+        const accessToken = decryptOrLegacy(token.accessToken);
+        oauth2Client.setCredentials({ access_token: accessToken });
+        await oauth2Client.revokeToken(accessToken);
       } catch {
         // Revocation may fail if token is already expired — that's ok
       }

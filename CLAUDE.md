@@ -133,11 +133,14 @@ reliable progress endpoint are required before meaningful production volume.
 
 ### Google sync
 
-OAuth uses state validation and encrypted token storage. Sync discovers Forms,
-Sheets, and Drive files, maps rows to students/submissions, and deduplicates by
-Google response/file identifiers. Refresh failures require reauthorization and
-must not expose Google error payloads. `GET /api/sync-all` is still state-changing
-and must become an idempotent POST.
+OAuth uses state validation and encrypted token storage per teacher. Teacher-facing
+sheet discovery, sync, and Drive downloads require that teacher's OAuth connection;
+there is no shared service-account fallback. Assignment creation accepts an
+accessible Sheet selected from Google or a validated Sheets URL/ID. Sync maps rows
+to students/submissions and deduplicates by Google response/file identifiers.
+Refresh failures require reauthorization and must not expose Google error payloads.
+`GET /api/sync-all` is still state-changing and must become an idempotent POST; it
+is no longer triggered automatically when the dashboard mounts.
 
 ### Files
 
@@ -216,8 +219,8 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
 - Branch: `main`; remote: `origin` (`sam02324/HomeWork-AI`).
 - Next.js is pinned to 16.2.11; production dependency audit reports zero known
   vulnerabilities at the 2026-07-22 verification point.
-- Unit baseline: 14 passing tests covering central auth, strict validation, R2
-  configuration/key construction, and rubric behavior.
+- Unit baseline: 17 passing tests covering central auth, strict validation, R2
+  configuration/key construction, rubric behavior, and Google Sheet URL/ID parsing.
 - GitHub Actions gates repository audit, lint, typecheck, tests, production
   dependency audit, and build.
 - Developer onboarding now includes repository/request-flow/file-placement guides,
@@ -267,6 +270,20 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   ownership boundary. Avoid repository-wide cosmetic moves.
 
 ## Recent verified changes
+
+### 2026-07-23 - Teacher-owned Google Sheet connection
+
+- Removed the service-account fallback from teacher sheet discovery, submission
+  sync, Drive downloads, and grading-time file retrieval. Unconnected or expired
+  accounts now receive an actionable reconnect response.
+- Assignment creation now checks Google connection state, explains read-only
+  access, lists only the connected teacher's Sheets, and accepts a validated full
+  Sheets URL or ID. Obsolete service-account sharing instructions were removed.
+- Fixed Google disconnect to revoke the decrypted access token and removed the
+  dashboard-mount request that silently invoked the state-changing sync-all route.
+- Lint, TypeScript, 17 tests, and the 31-page production build passed. Local UI
+  navigation was blocked by a Clerk `127.0.0.1` to `localhost` development-origin
+  mismatch; compilation and production build completed successfully.
 
 ### 2026-07-23 - Agent skill research and adoption gate
 

@@ -10,7 +10,6 @@
  */
 
 import { google } from 'googleapis';
-import type { JWT } from 'googleapis-common';
 import { createHash } from 'node:crypto';
 import { decrypt, encrypt } from '@/lib/crypto';
 
@@ -87,49 +86,6 @@ function decryptStoredGoogleToken(value: string): string {
    ═══════════════════════════════════════ */
 
 /**
- * Creates a Google JWT auth client from the service account key
- * stored in the GOOGLE_SERVICE_ACCOUNT_KEY environment variable.
- *
- * The env var should contain the full JSON key as a string.
- */
-function getGoogleAuth(): JWT {
-  const keyEnv = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-
-  if (!keyEnv) {
-    throw new Error(
-      'Missing GOOGLE_SERVICE_ACCOUNT_KEY environment variable. ' +
-      'Set it to the full JSON content of your service account key file.'
-    );
-  }
-
-  let credentials: {
-    client_email: string;
-    private_key: string;
-    project_id?: string;
-  };
-
-  try {
-    credentials = JSON.parse(keyEnv);
-  } catch {
-    throw new Error(
-      'GOOGLE_SERVICE_ACCOUNT_KEY is not valid JSON. ' +
-      'Make sure you pasted the entire JSON key file content.'
-    );
-  }
-
-  const auth = new google.auth.JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
-    scopes: [
-      'https://www.googleapis.com/auth/spreadsheets.readonly',
-      'https://www.googleapis.com/auth/drive.readonly',
-    ],
-  });
-
-  return auth;
-}
-
-/**
  * Creates an OAuth2 client using a teacher's stored tokens.
  * Automatically refreshes the access token if it's expired.
  */
@@ -143,7 +99,10 @@ export async function getOAuthClientForUser(userId: string) {
   });
 
   if (!token) {
-    throw new Error('Google account not connected. Please connect your Google account first.');
+    throw new GoogleConnectionError(
+      'Connect your Google account to choose and sync a spreadsheet.',
+      'GOOGLE_RECONNECT_REQUIRED'
+    );
   }
 
   const oauth2Client = new google.auth.OAuth2(
@@ -207,19 +166,16 @@ export interface SharedSpreadsheet {
 }
 
 /**
- * Lists all Google Sheets that have been shared with the service account.
- * This lets professors simply share their form-response sheet with the
- * service account email, and it will appear in the picker automatically —
- * no need to copy/paste spreadsheet IDs.
+ * Lists Google Sheets accessible to the connected teacher account.
  *
  * @param pageSize - Max results per page (default 50)
  * @returns Array of SharedSpreadsheet metadata
  */
 export async function listSharedSpreadsheets(
   pageSize = 50,
-  userId?: string
+  userId: string
 ): Promise<SharedSpreadsheet[]> {
-  const auth = userId ? await getOAuthClientForUser(userId) : getGoogleAuth();
+  const auth = await getOAuthClientForUser(userId);
   const drive = google.drive({ version: 'v3', auth });
 
   const results: SharedSpreadsheet[] = [];
@@ -270,9 +226,9 @@ export async function listSharedSpreadsheets(
  */
 export async function fetchSheetRows(
   spreadsheetId: string,
-  userId?: string
+  userId: string
 ): Promise<FormResponse[]> {
-  const auth = userId ? await getOAuthClientForUser(userId) : getGoogleAuth();
+  const auth = await getOAuthClientForUser(userId);
   const sheets = google.sheets({ version: 'v4', auth });
 
   // Fetch the entire first sheet
@@ -341,14 +297,13 @@ export async function fetchSheetRows(
 /**
  * Downloads a file from Google Drive by its file ID.
  *
- * The service account must have at least Viewer access to the file
- * (share the Drive folder containing form uploads with the service account).
+ * The connected teacher account must have access to the file.
  *
  * @param fileId - The Google Drive file ID
  * @returns DriveFile with buffer, mimeType, and name
  */
-export async function downloadDriveFile(fileId: string, userId?: string): Promise<DriveFile> {
-  const auth = userId ? await getOAuthClientForUser(userId) : getGoogleAuth();
+export async function downloadDriveFile(fileId: string, userId: string): Promise<DriveFile> {
+  const auth = await getOAuthClientForUser(userId);
   const drive = google.drive({ version: 'v3', auth });
 
   // First, get file metadata to know the name and MIME type

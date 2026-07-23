@@ -391,7 +391,7 @@ interface SharedSpreadsheet {
   webViewLink: string | null;
 }
 
-/** Fetches all Google Sheets the teacher has access to (via OAuth or service account) */
+/** Fetches Google Sheets accessible to the connected teacher account. */
 export function useGoogleSheets(enabled = true) {
   return useQuery<SharedSpreadsheet[]>({
     queryKey: ['google-sheets'],

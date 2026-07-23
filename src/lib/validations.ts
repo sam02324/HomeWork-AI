@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseGoogleSpreadsheetId } from '@/lib/google-sheet-id';
 
 /* ═══════════════════════════════════════
    Classroom Schemas
@@ -57,7 +58,14 @@ export const createAssignmentSchema = z.object({
   gradingInstructions: z.string().max(5000).optional().nullable(),
   referenceAnswers: z.string().max(10000).optional().nullable(),
   strictness: z.number().int().min(1).max(5).default(3),
-  spreadsheetId: z.string().max(200).optional().nullable(),
+  spreadsheetId: z.string().max(300).transform((value, ctx) => {
+    const id = parseGoogleSpreadsheetId(value);
+    if (!id) {
+      ctx.addIssue({ code: 'custom', message: 'Enter a valid Google Sheets URL or spreadsheet ID' });
+      return z.NEVER;
+    }
+    return id;
+  }).optional().nullable(),
 }).strict();
 
 export const updateAssignmentSchema = createAssignmentSchema.partial().extend({

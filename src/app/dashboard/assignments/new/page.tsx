@@ -19,10 +19,17 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
-import { useClassrooms, useCreateAssignment, useUploadFile, useGoogleSheets } from '@/lib/api-client';
+import {
+  useClassrooms,
+  useCreateAssignment,
+  useUploadFile,
+  useGoogleSheets,
+  useGoogleAuthStatus,
+} from '@/lib/api-client';
 import { Reveal } from '@/components/motion/Reveal';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { parseGoogleSpreadsheetId } from '@/lib/google-sheet-id';
 
 /* ───── types ───── */
 interface RubricCriterion {
@@ -119,7 +126,10 @@ export default function NewAssignmentPage() {
   const [sheetPickerMode, setSheetPickerMode] = useState<'browse' | 'manual'>('browse');
 
   /* Google Sheets discovery */
-  const { data: googleSheets, isLoading: sheetsLoading } = useGoogleSheets();
+  const { data: googleStatus, isLoading: googleStatusLoading } = useGoogleAuthStatus();
+  const { data: googleSheets, isLoading: sheetsLoading, isError: sheetsError } = useGoogleSheets(
+    googleStatus?.connected === true
+  );
 
   /* step 2 state */
   const [criteria, setCriteria] = useState<RubricCriterion[]>([defaultCriterion()]);
@@ -208,6 +218,15 @@ export default function NewAssignmentPage() {
 
   async function handlePublish() {
     try {
+      const normalizedSpreadsheetId = spreadsheetId
+        ? parseGoogleSpreadsheetId(spreadsheetId)
+        : undefined;
+
+      if (spreadsheetId && !normalizedSpreadsheetId) {
+        setSheetPickerMode('manual');
+        return;
+      }
+
       await createAssignment.mutateAsync({
         classroomId: classId,
         title,
@@ -221,7 +240,7 @@ export default function NewAssignmentPage() {
         gradingInstructions: gradingInstructions || undefined,
         referenceAnswers: referenceAnswers || undefined,
         strictness,
-        spreadsheetId: spreadsheetId || undefined,
+        spreadsheetId: normalizedSpreadsheetId,
       });
       router.push('/dashboard/assignments');
     } catch (error) {
@@ -363,32 +382,55 @@ export default function NewAssignmentPage() {
               <div className={styles.formGroup}>
                 <label className={styles.label}>Google Spreadsheet</label>
 
-                {/* Mode toggle */}
+                {googleStatusLoading ? (
+                  <Skeleton height={112} />
+                ) : !googleStatus?.connected ? (
+                  <div className={styles.googleConnectCard}>
+                    <div>
+                      <strong>Connect your Google account</strong>
+                      <span>GradeAI uses read-only access to list your Sheets and import Form responses.</span>
+                    </div>
+                    <a className={styles.googleConnectButton} href="/api/auth/google">
+                      Connect Google
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                <div className={styles.googleAccountRow}>
+                  <span>Connected as {googleStatus.googleEmail}</span>
+                  <Link href="/dashboard/settings">Manage connection</Link>
+                </div>
                 <div className={styles.sheetPickerToggle}>
                   <button
                     type="button"
                     className={`${styles.pickerToggleBtn} ${sheetPickerMode === 'browse' ? styles.pickerToggleActive : ''}`}
                     onClick={() => setSheetPickerMode('browse')}
                   >
-                    Browse Shared Sheets
+                    Choose from Google
                   </button>
                   <button
                     type="button"
                     className={`${styles.pickerToggleBtn} ${sheetPickerMode === 'manual' ? styles.pickerToggleActive : ''}`}
                     onClick={() => setSheetPickerMode('manual')}
                   >
-                    Paste ID Manually
+                    Paste URL or ID
                   </button>
                 </div>
 
                 {sheetPickerMode === 'browse' ? (
                   <div className={styles.sheetList}>
                     {sheetsLoading ? (
-                      <div className={styles.sheetListLoading}>Scanning shared Google Sheets...</div>
+                      <div className={styles.sheetListLoading}>Loading your Google Sheets...</div>
+                    ) : sheetsError ? (
+                      <div className={styles.sheetListEmpty}>
+                        <p>Google connection needs attention.</p>
+                        <span>Reconnect in Settings, then return here.</span>
+                        <Link href="/dashboard/settings">Open Settings</Link>
+                      </div>
                     ) : !googleSheets || googleSheets.length === 0 ? (
                       <div className={styles.sheetListEmpty}>
-                        <p>No shared Google Sheets found.</p>
-                        <span>Share your Google Form response sheet with the service account email, then refresh.</span>
+                        <p>No Google Sheets found.</p>
+                        <span>Link your Google Form to a response Sheet, then refresh this page.</span>
                       </div>
                     ) : (
                       googleSheets.map((sheet) => (
@@ -401,7 +443,7 @@ export default function NewAssignmentPage() {
                           <div className={styles.sheetItemInfo}>
                             <strong>{sheet.name}</strong>
                             <span>
-                              {sheet.ownerEmail ? `Shared by ${sheet.ownerEmail}` : 'Shared sheet'}
+                              {sheet.ownerEmail ? `Owned by ${sheet.ownerEmail}` : 'Accessible sheet'}
                               {' · '}
                               {sheet.modifiedTime ? new Date(sheet.modifiedTime).toLocaleDateString() : ''}
                             </span>
@@ -417,13 +459,15 @@ export default function NewAssignmentPage() {
                   <>
                     <input
                       className={styles.input}
-                      placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                      placeholder="Paste the complete Google Sheets URL or spreadsheet ID"
                       value={spreadsheetId}
                       onChange={(e) => setSpreadsheetId(e.target.value)}
                     />
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 4 }}>
-                      From the Google Sheet URL: docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit
+                      The connected Google account must be able to open this spreadsheet.
                     </span>
+                  </>
+                )}
                   </>
                 )}
               </div>

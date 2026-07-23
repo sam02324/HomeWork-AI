@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { assignments, submissions, students, googleTokens } from '@/db/schema';
+import { assignments, submissions, students } from '@/db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, handleApiError, rateLimitGuard, parseBody } from '@/lib/utils';
 import { syncSubmissionsSchema } from '@/lib/validations';
@@ -150,24 +150,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Fetch all rows from the linked Google Sheet
-    // Check if user has OAuth tokens
-    const tokenRecord = await db.query.googleTokens.findFirst({
-      where: eq(googleTokens.userId, userId),
-    });
-    const oauthUserId = tokenRecord ? userId : undefined;
-
+    // 2. Fetch rows using only this teacher's OAuth connection.
     let rows: FormResponse[];
     try {
-      rows = await fetchSheetRows(assignment.spreadsheetId, oauthUserId);
+      rows = await fetchSheetRows(assignment.spreadsheetId, userId);
     } catch (err) {
       console.error('Failed to fetch Google Sheet:', err);
       if (err instanceof GoogleConnectionError) {
         return errorResponse(err.message, 401, err.code);
       }
       return errorResponse(
-        'Failed to read Google Sheet. Make sure the Spreadsheet ID is correct ' +
-        'and the service account has access.',
+        'Failed to read Google Sheet. Confirm the connected Google account can open it.',
         502
       );
     }
@@ -242,7 +235,7 @@ export async function POST(request: Request) {
 
         if (row.driveFileId) {
           try {
-            const driveFile = await downloadDriveFile(row.driveFileId, oauthUserId);
+            const driveFile = await downloadDriveFile(row.driveFileId, userId);
             fileType = driveFile.mimeType;
 
             // Extract text if it's a PDF

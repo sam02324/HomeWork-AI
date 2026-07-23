@@ -145,14 +145,10 @@ export async function gradeSubmission(
         });
 
         if (assignmentRecord) {
-          // Check if teacher has OAuth tokens
-          const { googleTokens } = await import('@/db/schema');
-          const tokenRecord = await db.query.googleTokens.findFirst({
-            where: eq(googleTokens.userId, assignmentRecord.teacherId),
-          });
-          const oauthUserId = tokenRecord ? assignmentRecord.teacherId : undefined;
-
-          const driveFile = await downloadDriveFile(submission.googleDriveFileId, oauthUserId);
+          const driveFile = await downloadDriveFile(
+            submission.googleDriveFileId,
+            assignmentRecord.teacherId
+          );
           resolvedFileType = driveFile.mimeType;
           resolvedFileBuffer = driveFile.buffer;
 

@@ -774,6 +774,53 @@
 }
 
 /* ── Google Sheet Picker ── */
+.googleConnectCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+}
+
+.googleConnectCard div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.googleConnectCard span,
+.googleAccountRow {
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+}
+
+.googleConnectButton {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.googleAccountRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.googleAccountRow a,
+.sheetListEmpty a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .sheetPickerToggle {
   display: flex;
   gap: 0;
