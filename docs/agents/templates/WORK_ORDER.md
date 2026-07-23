@@ -9,6 +9,8 @@ One observable user, operator, or engineering result.
 - Relevant request:
 - Canonical docs:
 - Source paths inspected:
+- Current internet or browser evidence required:
+- Target URL/environment, if applicable:
 
 ## Scope
 
@@ -49,6 +51,7 @@ One observable user, operator, or engineering result.
 - Migration/deployment impact:
 - Cost/model impact:
 - Human approval required:
+- Browser authentication or gated interaction required:
 
 ## Handoff destination
 

@@ -26,6 +26,13 @@ GradeAI's reusable team contracts live in `docs/agents/`. For non-trivial work
 with genuinely independent workstreams, the lead may use the specialist roles
 defined there as subagents. Keep trivial or tightly coupled work with one agent.
 
+For every user task, Kelly first makes a routing decision and selects the minimum
+team needed. Kelly handles trivial and critical-path work directly, assigns
+implementation to the matching domain specialists, and assigns current web
+research, signed-in Chrome workflows, live-site inspection, or browser evidence
+to Nora when those capabilities materially help. Browser use is not mandatory
+when local source, a connector, an API, or a CLI is the better surface.
+
 Before delegation:
 
 1. State the dependency graph and the immediate critical-path step the lead will

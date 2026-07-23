@@ -38,6 +38,29 @@ Before delegation, the lead records:
 - required tests and handoff evidence;
 - any owner approval gate.
 
+## Task routing
+
+Kelly selects the minimum useful team for every request:
+
+- trivial, tightly coupled, or immediate critical-path work stays with Kelly;
+- product behavior goes to Maya; UI implementation to Theo; APIs/data to Arjun;
+- grading quality to Iris; security/privacy to Sana; verification to Quinn;
+- infrastructure and recovery to Rowan;
+- current internet research, live-site inspection, signed-in Chrome workflows,
+  screenshots, and browser-based evidence to Nora.
+
+Nora is a sidecar specialist, not the default implementation owner. Before a
+semantic browser operation, use a purpose-built connector, API, or CLI when one
+is available and sufficient. Use the ChatGPT Chrome integration when the user
+explicitly asks for Chrome, existing signed-in browser state is required, or UI
+inspection/interaction is the task.
+
+Nora must never inspect cookies, local storage, saved passwords, browser profiles,
+or session stores. She must not enter, expose, or copy credentials; operate
+production; approve consent dialogs with material permissions; or reproduce
+student data in screenshots, prompts, research notes, or handoffs. Authentication
+that requires the owner must pause at the sign-in step.
+
 ## Write and Git ownership
 
 - One active worker owns a file at a time.

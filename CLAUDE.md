@@ -225,7 +225,9 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   and automated local-document-link validation.
 - Agent-run work now uses Kelly as lead/integrator, with bounded Maya (Product/UX),
   Theo (Frontend), Arjun (Backend/Data), Iris (AI Quality), Sana
-  (Security/Privacy), Quinn (QA/Release), and Rowan (DevOps/SRE) contracts.
+  (Security/Privacy), Quinn (QA/Release), Rowan (DevOps/SRE), and Nora (Browser
+  Research and Verification) contracts. Kelly makes a minimum-team routing
+  decision for every task.
   Delegation requires disjoint write sets, structured handoffs, and owner gates
   for production, data, credential, billing, legal, and grading-policy actions.
 - Local production smoke passes for public pages, protected redirects, generated
@@ -261,6 +263,19 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   ownership boundary. Avoid repository-wide cosmetic moves.
 
 ## Recent verified changes
+
+### 2026-07-23 - Browser research agent and automatic task routing
+
+- Added Nora as the browser research and verification specialist for current
+  primary-source research, live UI inspection, and signed-in Chrome workflows.
+- Added a mandatory per-task routing decision for Kelly while preserving local
+  source, connector, API, and CLI preference when browser control is unnecessary.
+- Verified the ChatGPT Chrome integration connects successfully without claiming,
+  opening, or modifying any tab. Added explicit credential, student-data,
+  permission, authentication, and production-action boundaries.
+- `npm run verify` passed repository and Drizzle audits, 29-document link checks,
+  lint, TypeScript, 14 tests, and the 31-page production build. Production
+  dependency audit reported zero vulnerabilities.
 
 ### 2026-07-23 - Named GradeAI agent roster
 

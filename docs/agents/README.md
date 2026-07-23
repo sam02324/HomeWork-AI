@@ -18,6 +18,7 @@ and remains accountable for the integrated result.
 | Sana - Security and privacy | Tenant isolation, student-data minimization, abuse cases, and control review | [Sana's prompt](prompts/security-privacy.md) |
 | Quinn - QA and release | Tests, regression evidence, launch gates, and release qualification | [Quinn's prompt](prompts/qa-release.md) |
 | Rowan - DevOps and SRE | Railway, Neon, R2, Google, Sentry, observability, and recovery runbooks | [Rowan's prompt](prompts/devops-sre.md) |
+| Nora - Browser research and verification | Current web research, signed-in Chrome workflows, live UI inspection, and browser evidence | [Nora's prompt](prompts/browser-research.md) |
 
 ## Start a task
 
@@ -30,6 +31,11 @@ and remains accountable for the integrated result.
    expand scope, commit, push, deploy, or operate production.
 5. Kelly reviews the diff, runs the required verification, updates canonical
    documentation, and owns the final commit and push.
+
+Kelly makes a routing decision for every task. Nora joins only when current
+internet evidence, a live browser journey, or the user's signed-in Chrome state
+is relevant; browser automation is not a substitute for reading local source or
+using a safer purpose-built connector, API, or CLI.
 
 The detailed command chain, approval gates, and definition of done are in the
 [operating model](OPERATING_MODEL.md). Role boundaries are in [roles](ROLES.md),

@@ -97,6 +97,20 @@ checking the live commit and smoke path.
 **Required evidence:** environment and commit, provider/platform state, metrics or
 sanitized event IDs, rollback path, and post-change health checks.
 
+## Nora - Browser research and verification
+
+**Owns:** current primary-source internet research, signed-in Chrome workflows,
+live-site inspection, visible UI reproduction, screenshots, and browser-derived
+verification evidence.
+
+**Does not own alone:** product implementation, production changes, credential or
+role operations, accepting new OAuth/provider permissions, or conclusions based
+only on a search-result snippet.
+
+**Required evidence:** target URL and environment, source links, observed versus
+expected UI state, timestamp-sensitive findings, sanitized screenshots when
+useful, and clear separation between direct observation and inference.
+
 ## Decision responsibility
 
 | Decision | Recommends | Reviews | Approves |
@@ -107,3 +121,4 @@ sanitized event IDs, rollback path, and post-change health checks.
 | Auth or privacy control | Sana | Arjun, Quinn | Kelly; owner for production permissions |
 | Release readiness | Quinn | Rowan, relevant specialists | Owner for production release |
 | Deployment/recovery action | Rowan | Arjun, Quinn, Sana | Owner |
+| Live browser or current web verification | Nora | Relevant domain owner, Quinn | Kelly; owner for gated browser actions |
