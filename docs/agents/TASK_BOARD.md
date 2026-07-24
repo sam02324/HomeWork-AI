@@ -4,14 +4,14 @@ This board turns current launch blockers into bounded team work. Status reflects
 repository evidence, not optimism. The owner selects the next work order; the
 lead decomposes it before assigning specialists.
 
-**Recommended first assignment:** `GAI-002`. Private submission delivery closes
-an immediate tenant-isolation and student-data exposure risk. Its work order must
-keep production bucket policy and existing-object migration behind the owner gate.
+**Recommended next repository assignment:** `GAI-001`. The repository half of
+`GAI-002` is implemented; production bucket policy, legacy-object migration, and
+live provider evidence remain behind the owner gate.
 
 | ID | Priority | Workstream | Lead role | Supporting roles | Status | Acceptance evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | GAI-001 | P0 | Durable grading jobs, idempotency, recovery, and item progress | Arjun - Backend and data | Iris, Quinn, Rowan, Sana | Ready | Duplicate-click denial, persisted jobs, bounded retries, abandoned-job recovery, progress API, load/failure tests |
-| GAI-002 | P0 | Private R2 objects and authorized signed downloads | Arjun - Backend and data | Sana, Quinn, Rowan | Ready | Private bucket policy, tenant-scoped short-lived downloads, retention cleanup, cross-account denial tests |
+| GAI-002 | P0 | Private R2 objects and authorized signed downloads | Arjun - Backend and data | Sana, Quinn, Rowan | Owner gate | Repository: opaque references, bounded uploads, tenant-scoped short-lived downloads, cleanup hooks, and denial tests. Owner: migrate legacy URLs, disable public bucket delivery, and capture deployed provider evidence |
 | GAI-003 | P0 | Critical Playwright journeys | Quinn - QA and release | Theo, Arjun, Sana, Nora | Ready | Auth isolation, grading, reconnect, duplicate click, override, admin denial, and account-wipe journeys in CI |
 | GAI-004 | P0 | Migration-ledger reconciliation | Arjun - Backend and data | Rowan, Quinn, Sana | Owner gate | Isolated Neon replay, ledger/repository alignment, rollback evidence; owner approval before persistent changes |
 | GAI-005 | P0 | Legal, support, and teacher-facing AI disclosures | Maya - Product and UX | Sana, Quinn | Owner gate | Reviewed privacy, terms, acceptable use, retention/deletion, grievance, refund, and AI-assistance documents |

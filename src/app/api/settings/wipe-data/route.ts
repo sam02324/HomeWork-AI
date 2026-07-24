@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { classrooms, assignments } from '@/db/schema';
+import { classrooms, assignments, submissions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, rateLimitGuard } from '@/lib/utils';
+import { deleteManagedSubmissionReferences } from '@/lib/storage/submission-files';
 
 const CONFIRM_PHRASE = 'DELETE ALL MY DATA';
 
@@ -26,6 +27,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    const ownedFiles = await db
+      .select({ fileReference: submissions.fileUrl })
+      .from(submissions)
+      .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+      .where(eq(assignments.teacherId, userId));
+
+    await deleteManagedSubmissionReferences(ownedFiles.map((row) => row.fileReference));
+
     // Delete all assignments
     await db.delete(assignments).where(eq(assignments.teacherId, userId));
     // Delete all classrooms (this cascades to students and their submissions)

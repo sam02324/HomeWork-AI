@@ -155,12 +155,38 @@ Account suspension also updates Clerk, with compensation attempted if the local
 write fails. Moderation soft-removes submissions and preserves evidence. See
 [admin-panel.md](../admin-panel.md) for the complete owner setup and feature map.
 
+## Submission file path
+
+```text
+POST /api/upload
+  -> authenticated teacher plus rate limit
+  -> MIME, size, and file-signature validation
+  -> private R2 object under a tenant-derived opaque scope
+  -> return an r2: object reference, never a public object URL
+
+GET /api/submissions/:id/file
+  -> authenticated teacher
+  -> submission/assignment ownership join
+  -> short-lived R2 download signature or private Google Drive stream
+  -> no-store response
+```
+
+List and detail APIs replace stored object references with the application file
+route. Recognized legacy R2 URLs are owner-checked and re-signed; arbitrary
+external URLs are rejected. Hard submission, assignment, classroom, account-wipe,
+and Clerk user-deletion paths remove managed objects before deleting database
+rows. Object storage and Neon cannot share a transaction, so deletion deliberately
+fails before the database delete when R2 cleanup fails; reconciliation tooling is
+still required for infrastructure-level partial failures.
+
 ## Provider webhooks
 
 `src/app/api/webhooks/` is public at the route-protection layer so providers can
-reach it. Each handler must authenticate the provider request before processing
-data, use conflict-safe writes for retries, and return sanitized responses. A new
-webhook is not complete until replay and invalid-signature behavior are tested.
+reach it. The active Clerk endpoint verifies the Svix signature before processing
+data, uses conflict-safe writes for retries, and returns sanitized responses. The
+legacy shared-secret Google Form webhook returns `410`; teacher imports now use the
+authenticated Google OAuth sync flow. A new webhook is not complete until replay
+and invalid-signature behavior are tested.
 
 ## Error and telemetry path
 

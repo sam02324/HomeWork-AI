@@ -4,6 +4,11 @@ import { submissions, assignments, students } from '@/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
 import { createSubmissionSchema } from '@/lib/validations';
+import { assertOwnedSubmissionReference, isManagedSubmissionReference } from '@/lib/storage/r2';
+import {
+  assertOwnedLegacySubmissionUrl,
+  getSubmissionFileAccessPath,
+} from '@/lib/storage/submission-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +69,18 @@ export async function POST(request: Request) {
     });
     if (!student) return errorResponse('Student not found in this classroom', 404);
 
+    if (body.fileUrl) {
+      try {
+        if (isManagedSubmissionReference(body.fileUrl)) {
+          assertOwnedSubmissionReference(body.fileUrl, userId);
+        } else {
+          assertOwnedLegacySubmissionUrl(body.fileUrl, userId);
+        }
+      } catch {
+        return errorResponse('Invalid submission file reference', 400, 'INVALID_FILE_REFERENCE');
+      }
+    }
+
     const [submission] = await db.insert(submissions).values({
       assignmentId: body.assignmentId,
       studentId: body.studentId,
@@ -73,7 +90,14 @@ export async function POST(request: Request) {
       status: 'pending',
     }).returning();
 
-    return successResponse(submission, 201);
+    return successResponse({
+      ...submission,
+      fileUrl: getSubmissionFileAccessPath({
+        submissionId: submission.id,
+        fileReference: submission.fileUrl,
+        googleDriveFileId: submission.googleDriveFileId,
+      }),
+    }, 201);
   } catch (error) {
     console.error('POST /api/submissions error:', error);
     return errorResponse('Failed to create submission', 500);

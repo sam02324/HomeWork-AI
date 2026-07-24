@@ -3,6 +3,7 @@ import {
   createAssignmentSchema,
   createClassroomSchema,
   createGradeSchema,
+  createSubmissionSchema,
   createStudentSchema,
   syncSubmissionsSchema,
   updateAssignmentSchema,
@@ -71,5 +72,26 @@ describe('state-changing request schemas', () => {
     }).success).toBe(true);
 
     expect(syncSubmissionsSchema.safeParse({ assignmentId: classroomId }).success).toBe(true);
+  });
+
+  it('accepts opaque managed file references and rejects malformed references', () => {
+    const base = {
+      assignmentId: classroomId,
+      studentId: submissionId,
+      fileType: 'application/pdf',
+    };
+
+    expect(createSubmissionSchema.safeParse({
+      ...base,
+      fileUrl: 'r2:submissions/0123456789abcdef0123456789abcdef/123e4567-e89b-42d3-a456-426614174000',
+    }).success).toBe(true);
+    expect(createSubmissionSchema.safeParse({
+      ...base,
+      fileUrl: 'r2:submissions/other-user/../../student.pdf',
+    }).success).toBe(false);
+    expect(createSubmissionSchema.safeParse({
+      ...base,
+      fileUrl: 'http://files.example.com/student.pdf',
+    }).success).toBe(false);
   });
 });

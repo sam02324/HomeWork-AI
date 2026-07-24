@@ -43,13 +43,27 @@ The live Railway result describes the commit deployed at audit time. Verify this
 - Canonical/Open Graph/Twitter metadata, `robots.txt`, and `sitemap.xml` were added.
 - The boilerplate README was replaced with the real setup and deployment runbook.
 
+## Private-file evidence - 2026-07-24
+
+- New PDF, PNG, and JPEG uploads are bounded to 10 MB, signature-checked, stored
+  privately, and represented by opaque `r2:` references rather than public URLs.
+- Submission list/detail responses expose only an authenticated application file
+  route. That route performs a teacher-ownership join before issuing a 60-second
+  R2 signature or streaming a teacher-authorized Google Drive file.
+- Managed objects are cleaned up on submission, assignment, classroom, account
+  wipe, and Clerk user-deletion paths. Duplicate references are removed once.
+- The unauthenticated shared-secret Google Form webhook was retired with `410`;
+  Google imports use the supported teacher OAuth sync flow.
+- Focused storage, upload, validation, file-authorization, cleanup, and retired-
+  webhook tests pass locally. Full release verification is recorded in
+  `CLAUDE.md` after this change set completes.
+
 ## Local environment audit result
 
 `npm run audit:launch` currently identifies these local defects:
 
 - `CLERK_WEBHOOK_SECRET` contains a placeholder.
 - `TOKEN_ENCRYPTION_KEY` is missing.
-- `WEBHOOK_SECRET` is missing.
 - `SENTRY_AUTH_TOKEN` is missing.
 - `NEXT_PUBLIC_APP_URL` is HTTP, which is correct for local development but not production.
 
@@ -82,12 +96,10 @@ GOOGLE_OAUTH_CLIENT_SECRET
 TOKEN_ENCRYPTION_KEY
 ANTHROPIC_API_KEY
 ANTHROPIC_MODEL
-WEBHOOK_SECRET
 R2_ACCOUNT_ID
 R2_ACCESS_KEY_ID
 R2_SECRET_ACCESS_KEY
 R2_BUCKET_NAME
-R2_PUBLIC_URL
 NEXT_PUBLIC_SENTRY_DSN
 SENTRY_DSN
 SENTRY_ORG
@@ -95,6 +107,10 @@ SENTRY_PROJECT
 SENTRY_AUTH_TOKEN
 SENTRY_ENVIRONMENT
 ```
+
+`R2_PUBLIC_URL` is transitional metadata only when existing database rows still
+contain URLs from the former public bucket. Leave it unset for a new installation
+and remove it after those rows are migrated to opaque references.
 
 Production-specific assertions:
 
@@ -113,7 +129,9 @@ Production-specific assertions:
 - Neon: point-in-time branch recovery and data integrity passed on 2026-07-23.
   Migration ledger reconciliation remains open: Neon has 2 ledger rows while the
   repository journal has 6 entries.
-- R2: identify whether every existing submission object is public; do not assume obscurity protects it.
+- R2: inventory legacy public objects, migrate their database references, disable
+  public delivery, and verify an authorized signed download plus a cross-account
+  denial against the deployed build.
 - Sentry: send one sanitized diagnostic and confirm source mapping.
 
 ### 4. Complete the fresh-account smoke journey
@@ -129,7 +147,7 @@ Use a non-admin Google/Clerk account that has never used GradeAI:
 - [ ] List Drive folders and Sheets.
 - [ ] Sync three responses from one Sheet.
 - [ ] Sync again and confirm zero duplicate submissions.
-- [ ] Upload valid PDF, JPEG/PNG, and text files.
+- [ ] Submit valid text and upload valid PDF, JPEG, and PNG files.
 - [ ] Confirm invalid/oversized files fail clearly.
 - [ ] Grade all pending submissions.
 - [ ] Review one result and override its score.
@@ -161,13 +179,19 @@ Current grading runs inside the request. Before inviting meaningful volume, acce
 
 ### P0.2 Private student files
 
-The current database stores public R2 URLs. Before broad access:
+Repository implementation completed on 2026-07-24: new uploads use opaque object
+references, the server upload is strictly bounded, downloads are short-lived and
+tenant-authorized, API responses hide stored references, and hard-delete paths
+clean up managed objects.
 
-- make the bucket private.
-- store object keys rather than permanent public URLs.
-- authorize and issue short-lived signed downloads.
-- use direct signed uploads or a strictly bounded server upload.
-- define retention and account-deletion cleanup.
+This P0 remains open behind the owner gate until production evidence confirms:
+
+- every legacy public object and database URL has been inventoried and migrated.
+- R2 public delivery is disabled after the migration compatibility window.
+- the deployed build passes authorized download, cross-account denial, deletion,
+  and account-wipe checks against real provider configuration.
+- an orphan reconciliation and retention process covers storage/database failures
+  that cannot participate in one transaction.
 
 ### P0.3 Critical browser tests
 

@@ -3,6 +3,10 @@ import { db } from '@/db';
 import { submissions } from '@/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
+import {
+  deleteManagedSubmissionReferences,
+  getSubmissionFileAccessPath,
+} from '@/lib/storage/submission-files';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -30,7 +34,14 @@ export async function GET(_req: Request, { params }: Params) {
       return errorResponse('Not authorized', 403);
     }
 
-    return successResponse(submission);
+    return successResponse({
+      ...submission,
+      fileUrl: getSubmissionFileAccessPath({
+        submissionId: submission.id,
+        fileReference: submission.fileUrl,
+        googleDriveFileId: submission.googleDriveFileId,
+      }),
+    });
   } catch (error) {
     console.error('GET /api/submissions/[id] error:', error);
     return errorResponse('Failed to fetch submission', 500);
@@ -55,6 +66,7 @@ export async function DELETE(_req: Request, { params }: Params) {
       return errorResponse('Not authorized', 403);
     }
 
+    await deleteManagedSubmissionReferences([submission.fileUrl]);
     await db.delete(submissions).where(eq(submissions.id, id));
 
     return successResponse({ message: 'Submission deleted' });

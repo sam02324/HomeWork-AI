@@ -5,9 +5,15 @@ import { aiUsageEvents, grades, submissions, assignments, systemEvents } from '@
 import type { Assignment, Submission, CriterionScore, RubricCriteria } from '@/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { buildSystemPrompt, buildGradingMessage, buildVisionGradingMessage } from './prompts';
-import { getGradeLetter, assertAllowedFileUrl } from '@/lib/utils';
+import { getGradeLetter } from '@/lib/utils';
 import { getEffectiveRubric } from './grading-rubric';
 import { createAiUsageEventValue } from '@/lib/operations/ai-usage';
+import {
+  assertOwnedSubmissionReference,
+  downloadSubmissionObject,
+  normalizeSubmissionReference,
+} from '@/lib/storage/r2';
+import { assertAllowedLegacySubmissionUrl } from '@/lib/storage/submission-files';
 import {
   captureOperationalError,
   createSystemEventValue,
@@ -15,6 +21,7 @@ import {
 } from '@/lib/operations/system-events';
 
 const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
+const MAX_SUBMISSION_FILE_BYTES = 10 * 1024 * 1024;
 
 /* ═══════════════════════════════════════
    Claude Client (singleton)
@@ -149,6 +156,9 @@ export async function gradeSubmission(
             submission.googleDriveFileId,
             assignmentRecord.teacherId
           );
+          if (driveFile.buffer.byteLength > MAX_SUBMISSION_FILE_BYTES) {
+            throw new Error('Google Drive submission exceeds the size limit');
+          }
           resolvedFileType = driveFile.mimeType;
           resolvedFileBuffer = driveFile.buffer;
 
@@ -176,6 +186,62 @@ export async function gradeSubmission(
       }
     }
 
+    if (!resolvedTextContent && !resolvedFileBuffer && submission.fileUrl) {
+      try {
+        const managedReference = normalizeSubmissionReference(submission.fileUrl);
+        if (managedReference) {
+          assertOwnedSubmissionReference(managedReference, assignment.teacherId);
+          const storedObject = await downloadSubmissionObject(managedReference);
+          resolvedFileBuffer = storedObject.buffer;
+          resolvedFileType = storedObject.contentType || submission.fileType || null;
+        } else {
+          assertAllowedLegacySubmissionUrl(submission.fileUrl);
+          const response = await fetch(submission.fileUrl, {
+            cache: 'no-store',
+            redirect: 'error',
+          });
+          if (!response.ok) throw new Error('Stored submission file download failed');
+
+          const declaredLength = Number(response.headers.get('content-length') || '0');
+          if (declaredLength > MAX_SUBMISSION_FILE_BYTES) {
+            throw new Error('Stored submission file exceeds the size limit');
+          }
+
+          const buffer = Buffer.from(await response.arrayBuffer());
+          if (buffer.byteLength > MAX_SUBMISSION_FILE_BYTES) {
+            throw new Error('Stored submission file exceeds the size limit');
+          }
+
+          resolvedFileBuffer = buffer;
+          resolvedFileType = response.headers.get('content-type') || submission.fileType;
+        }
+
+        if (resolvedFileType === 'text/plain') {
+          resolvedTextContent = resolvedFileBuffer.toString('utf8').trim();
+        } else if (resolvedFileType === 'application/pdf') {
+          let parser: InstanceType<(typeof import('pdf-parse'))['PDFParse']> | null = null;
+          try {
+            const { PDFParse } = await import('pdf-parse');
+            parser = new PDFParse({ data: new Uint8Array(resolvedFileBuffer) });
+            const pdfData = await parser.getText();
+            resolvedTextContent = pdfData.text.trim();
+          } catch (pdfError) {
+            console.error(`PDF parse error during grading for submission ${submission.id}:`, pdfError);
+          } finally {
+            await parser?.destroy();
+          }
+        }
+
+        if (resolvedTextContent) {
+          await db.update(submissions)
+            .set({ textContent: resolvedTextContent, fileType: resolvedFileType })
+            .where(eq(submissions.id, submission.id));
+        }
+      } catch (fileError) {
+        console.error(`Failed to load stored file for submission ${submission.id}:`, fileError);
+      }
+    }
+
     if (resolvedTextContent) {
       // Text submission
       userContent = buildGradingMessage(resolvedTextContent);
@@ -186,32 +252,6 @@ export async function gradeSubmission(
       if (resolvedFileType === 'image/png') mediaType = 'image/png';
       else if (resolvedFileType === 'image/gif') mediaType = 'image/gif';
       else if (resolvedFileType === 'image/webp') mediaType = 'image/webp';
-
-      userContent = [
-        {
-          type: 'image' as const,
-          source: {
-            type: 'base64' as const,
-            media_type: mediaType,
-            data: base64,
-          },
-        },
-        {
-          type: 'text' as const,
-          text: buildVisionGradingMessage(),
-        },
-      ];
-    } else if (submission.fileUrl && (submission.fileType === 'image' || submission.fileType?.startsWith('image/'))) {
-      // Fetch image from URL and convert to base64 (origin-restricted — SEC-7b)
-      assertAllowedFileUrl(submission.fileUrl);
-      const response = await fetch(submission.fileUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString('base64');
-
-      let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
-      if (submission.fileType === 'image/png') mediaType = 'image/png';
-      else if (submission.fileType === 'image/gif') mediaType = 'image/gif';
-      else if (submission.fileType === 'image/webp') mediaType = 'image/webp';
 
       userContent = [
         {

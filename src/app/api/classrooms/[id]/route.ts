@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { classrooms } from '@/db/schema';
+import { assignments, classrooms, submissions } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody, handleApiError, stripHtml } from '@/lib/utils';
 import { updateClassroomSchema } from '@/lib/validations';
+import { deleteManagedSubmissionReferences } from '@/lib/storage/submission-files';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -65,6 +66,15 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
 
   try {
+    const ownedFiles = await db
+      .select({ fileReference: submissions.fileUrl })
+      .from(submissions)
+      .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+      .innerJoin(classrooms, eq(assignments.classroomId, classrooms.id))
+      .where(and(eq(classrooms.id, id), eq(classrooms.teacherId, userId)));
+
+    await deleteManagedSubmissionReferences(ownedFiles.map((row) => row.fileReference));
+
     const [deleted] = await db.delete(classrooms)
       .where(and(eq(classrooms.id, id), eq(classrooms.teacherId, userId)))
       .returning();

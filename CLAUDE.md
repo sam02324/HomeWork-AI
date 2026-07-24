@@ -2,7 +2,7 @@
 
 # GradeAI Persistent Project Context
 
-Last updated: 2026-07-23
+Last updated: 2026-07-24
 
 This is the canonical handoff for GradeAI. Read it before changing the project.
 Source code remains authoritative when this document and implementation differ.
@@ -60,7 +60,10 @@ decision and a scored benchmark against the approved Anthropic baseline.
 - `src/lib/ai/`: rubric construction, prompts, and grading service
 - `src/lib/admin/`: admin authorization and operations queries
 - `src/lib/operations/`: AI usage and sanitized system-event ledgers
-- `src/lib/storage/r2.ts`: required R2 configuration and upload helper
+- `src/lib/storage/r2.ts`: private R2 references, bounded upload/download, signing,
+  legacy normalization, and deletion helpers
+- `src/lib/storage/submission-files.ts`: authorized application file paths,
+  legacy URL checks, and batched cleanup
 - `src/lib/google-sheets.ts`: Google clients, token refresh, and Sheets access
 - `src/lib/validations.ts`: strict request schemas
 - `src/proxy.ts`: Clerk route protection
@@ -218,9 +221,10 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
 
 - Branch: `main`; remote: `origin` (`sam02324/HomeWork-AI`).
 - Next.js is pinned to 16.2.11; production dependency audit reports zero known
-  vulnerabilities at the 2026-07-22 verification point.
-- Unit baseline: 17 passing tests covering central auth, strict validation, R2
-  configuration/key construction, rubric behavior, and Google Sheet URL/ID parsing.
+  vulnerabilities at the 2026-07-24 verification point.
+- Unit baseline: 54 passing tests across nine files covering central auth, strict
+  validation, private R2 storage, file authorization, upload integrity, cleanup,
+  rubric behavior, Google Sheet parsing, and retired webhook behavior.
 - GitHub Actions gates repository audit, lint, typecheck, tests, production
   dependency audit, and build.
 - Developer onboarding now includes repository/request-flow/file-placement guides,
@@ -239,6 +243,10 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   authority.
 - Local production smoke passes for public pages, protected redirects, generated
   metadata routes, security headers, and removal of fabricated/model branding.
+- New submission uploads persist opaque tenant-scoped R2 references. File responses
+  expose only an authenticated application route that verifies assignment ownership
+  before a short-lived R2 redirect or private Google Drive stream. Hard-delete paths
+  clean up managed objects before database cascades.
 - A 2026-07-23 Neon point-in-time recovery branch reproduced all 11 application
   tables and expected data. Eight orphan/duplicate integrity checks returned zero.
 - A local change set reaches live Railway only after commit, push, and a
@@ -247,7 +255,9 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
 ## Known launch blockers
 
 1. Durable background grading execution and item-level recovery/progress.
-2. Private R2 objects with authorized signed upload/download and retention cleanup.
+2. Private-file repository work is complete. The owner must migrate legacy public
+   references, disable R2 public delivery, capture deployed authorization/deletion
+   evidence, and establish orphan reconciliation before this P0 closes.
 3. Playwright coverage for auth isolation, core grading, Google reconnect,
    duplicate clicks, overrides, admin denial, and account wipe.
 4. Reviewed privacy, terms, acceptable-use, AI disclosure, retention/deletion,
@@ -270,6 +280,26 @@ test `/`, `/dashboard`, `/admin`, an authenticated API route, `/robots.txt`, and
   ownership boundary. Avoid repository-wide cosmetic moves.
 
 ## Recent verified changes
+
+### 2026-07-24 - Private submission file delivery
+
+- Replaced permanent public upload URLs with opaque `r2:` references and a bounded
+  PDF/PNG/JPEG server upload that checks size, declared MIME, and magic bytes.
+- Added an authenticated submission file route with an ownership join, 60-second
+  R2 signatures, private Google Drive streaming, no-store headers, active-content
+  download fallback, and cross-account 404 behavior.
+- Hid stored references from submission APIs, added owner checks at submission
+  creation, loaded private files directly during grading, and cleaned managed
+  objects on submission, assignment, classroom, account-wipe, and Clerk deletion.
+- Retired the shared-secret Google Form webhook with `410`; teacher imports remain
+  available through the authenticated Google OAuth sync flow. Reference answer
+  files are now read locally as bounded text instead of creating orphan uploads.
+- `audit:repo` passed 5 checks; Drizzle validation and links across 30 Markdown
+  files passed; ESLint and strict TypeScript passed; 54 tests across 9 files passed;
+  the Next.js 16.2.11 production build generated 30 pages; and the production
+  dependency audit reported zero vulnerabilities.
+- Production bucket policy and legacy-object migration were not changed. They
+  remain explicit owner-gated actions before broad access.
 
 ### 2026-07-23 - Teacher-owned Google Sheet connection
 

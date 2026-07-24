@@ -22,7 +22,6 @@ import styles from './page.module.css';
 import {
   useClassrooms,
   useCreateAssignment,
-  useUploadFile,
   useGoogleSheets,
   useGoogleAuthStatus,
 } from '@/lib/api-client';
@@ -110,7 +109,6 @@ export default function NewAssignmentPage() {
   const router = useRouter();
   const { data: classrooms, isLoading: classroomsLoading } = useClassrooms();
   const createAssignment = useCreateAssignment();
-  const uploadFile = useUploadFile();
   const [step, setStep] = useState(0);
 
   /* step 1 state */
@@ -139,6 +137,8 @@ export default function NewAssignmentPage() {
   const [referenceAnswers, setReferenceAnswers] = useState('');
   const [gradingInstructions, setGradingInstructions] = useState('');
   const [referenceFiles, setReferenceFiles] = useState<string[]>([]);
+  const [referenceFileError, setReferenceFileError] = useState<string | null>(null);
+  const [isReadingReference, setIsReadingReference] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   /* ── rubric helpers ── */
@@ -171,11 +171,32 @@ export default function NewAssignmentPage() {
   }
 
   async function processFile(file: File) {
+    setReferenceFileError(null);
+    if (file.type !== 'text/plain' || file.size > 10_000) {
+      setReferenceFileError('Use a plain-text reference file up to 10KB, or paste the answer key above.');
+      return;
+    }
+
+    setIsReadingReference(true);
     try {
-      const res = await uploadFile.mutateAsync(file);
-      setReferenceFiles(prev => [...prev, res.filename]);
-    } catch (error) {
-      console.error('Failed to upload', error);
+      const text = (await file.text()).trim();
+      if (!text) {
+        setReferenceFileError('The selected reference file is empty.');
+        return;
+      }
+      const nextReference = referenceAnswers
+        ? `${referenceAnswers}\n\n--- ${file.name} ---\n${text}`
+        : text;
+      if (nextReference.length > 10_000) {
+        setReferenceFileError('The combined reference answer must stay under 10,000 characters.');
+        return;
+      }
+      setReferenceAnswers(nextReference);
+      setReferenceFiles((current) => [...current, file.name]);
+    } catch {
+      setReferenceFileError('The reference file could not be read. Paste its contents above instead.');
+    } finally {
+      setIsReadingReference(false);
     }
   }
 
@@ -676,15 +697,15 @@ export default function NewAssignmentPage() {
               >
                 <div className={styles.uploadContent}>
                   <Upload size={24} />
-                  <p>Drag & drop PDFs, images, or click to browse</p>
-                  <span>Answer keys, marking schemes, sample solutions</span>
+                  <p>Drag & drop a text file, or click to browse</p>
+                  <span>Reference text is copied into the answer key above; files are not retained.</span>
                 </div>
                 <input 
                   type="file" 
                   style={{ display: 'none' }} 
                   onChange={handleAddReferenceFile}
-                  accept=".pdf,image/*,text/plain" 
-                  disabled={uploadFile.isPending}
+                  accept=".txt,text/plain"
+                  disabled={isReadingReference}
                 />
               </label>
               {referenceFiles.length > 0 && (
@@ -697,7 +718,8 @@ export default function NewAssignmentPage() {
                   ))}
                 </div>
               )}
-              {uploadFile.isPending && <span style={{ marginLeft: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Uploading...</span>}
+              {isReadingReference && <span style={{ marginLeft: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Reading reference...</span>}
+              {referenceFileError && <span style={{ display: 'block', marginTop: 8, fontSize: '0.8rem', color: 'var(--danger-color)' }}>{referenceFileError}</span>}
             </div>
           </div>
         )}

@@ -4,6 +4,7 @@ import { assignments, submissions, classrooms } from '@/db/schema';
 import { eq, and, sql, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse, parseBody } from '@/lib/utils';
 import { updateAssignmentSchema } from '@/lib/validations';
+import { deleteManagedSubmissionReferences } from '@/lib/storage/submission-files';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -88,6 +89,14 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
 
   try {
+    const ownedFiles = await db
+      .select({ fileReference: submissions.fileUrl })
+      .from(submissions)
+      .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+      .where(and(eq(assignments.id, id), eq(assignments.teacherId, userId)));
+
+    await deleteManagedSubmissionReferences(ownedFiles.map((row) => row.fileReference));
+
     const [deleted] = await db.delete(assignments)
       .where(and(eq(assignments.id, id), eq(assignments.teacherId, userId)))
       .returning();

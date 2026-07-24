@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { submissions, students, grades, assignments } from '@/db/schema';
 import { eq, and, desc, isNull } from 'drizzle-orm';
 import { getAuthUserId, errorResponse, successResponse } from '@/lib/utils';
+import { getSubmissionFileAccessPath } from '@/lib/storage/submission-files';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -61,7 +62,14 @@ export async function GET(_req: Request, { params }: Params) {
       .orderBy(desc(submissions.submittedAt))
       .limit(200); // BUG-8: cap response size for large classes
 
-    return successResponse(result);
+    return successResponse(result.map((submission) => ({
+      ...submission,
+      fileUrl: getSubmissionFileAccessPath({
+        submissionId: submission.id,
+        fileReference: submission.fileUrl,
+        googleDriveFileId: submission.googleDriveFileId,
+      }),
+    })));
   } catch (error) {
     console.error('GET /api/assignments/[id]/submissions error:', error);
     return errorResponse('Failed to fetch submissions', 500);

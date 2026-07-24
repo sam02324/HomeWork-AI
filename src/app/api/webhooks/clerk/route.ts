@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import { assignments, submissions, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { normalizeAppRole } from '@/lib/auth/roles';
+import { deleteManagedSubmissionReferences } from '@/lib/storage/submission-files';
 
 /** POST /api/webhooks/clerk — Sync Clerk user events to database */
 export async function POST(request: NextRequest) {
@@ -54,6 +55,13 @@ export async function POST(request: NextRequest) {
 
       case 'user.deleted': {
         if (event.data.id) {
+          const ownedFiles = await db
+            .select({ fileReference: submissions.fileUrl })
+            .from(submissions)
+            .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+            .where(eq(assignments.teacherId, event.data.id));
+
+          await deleteManagedSubmissionReferences(ownedFiles.map((row) => row.fileReference));
           await db.delete(users).where(eq(users.id, event.data.id));
         }
         break;
